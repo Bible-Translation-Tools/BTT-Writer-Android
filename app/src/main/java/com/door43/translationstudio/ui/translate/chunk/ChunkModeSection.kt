@@ -10,7 +10,6 @@ import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.ui.dialogs.ConfirmDialog
 import com.door43.translationstudio.ui.dialogs.ProgressDialog
-import com.door43.translationstudio.ui.translate.ModeComponent
 import com.door43.translationstudio.ui.translate.ModeScreenTemplate
 import com.door43.translationstudio.ui.translate.TranslateComponent
 
@@ -45,10 +44,10 @@ fun ChunkModeSection(
                     title = stringResource(R.string.chunk_done_title),
                     message = stringResource(R.string.chunk_done_prompt),
                     onDismiss = {
-                        component.onAction(ChunkModeComponent.Action.ReopenChunkConfirmed(false))
+                        component.onReopenChunkConfirmed(false)
                     },
                     onConfirm = {
-                        component.onAction(ChunkModeComponent.Action.ReopenChunkConfirmed(true))
+                        component.onReopenChunkConfirmed(true)
                     },
                     confirmText = stringResource(R.string.edit)
                 )
@@ -61,22 +60,16 @@ fun ChunkModeSection(
             typography = typography,
             selectedSource = sharedState.resourceContainer,
             targetTranslation = parentComponent.targetTranslation,
-            onSourceTabClick = {
-                parentComponent.onAction(TranslateComponent.Action.SelectSource(it))
-            },
+            onSourceTabClick = parentComponent::selectSource,
             onAddNewSourceClick = onSourceDialogOpen,
-            onRemoveSourceClick = {
-                parentComponent.onAction(TranslateComponent.Action.RemoveSource(it))
-            },
+            onRemoveSourceClick = parentComponent::removeSource,
             onTextChange = {
-                component.onAction(ChunkModeComponent.Action.ItemTextChanged(item, it))
+                component.onItemTextChanged(item, it)
             },
             onCardsSwiped = { sourceOnTop ->
-                component.onAction(ModeComponent.Action.CardsSwiped(item, sourceOnTop))
+                component.onCardsSwiped(item, sourceOnTop)
             },
-            onOpenChunkClick = {
-                component.onAction(ChunkModeComponent.Action.ReopenChunkClicked(item))
-            },
+            onOpenChunkClick = { component.reopenChunk(item) },
             onConflictClick = onConflictClick
         )
     }

@@ -34,14 +34,16 @@ interface ModeComponent<ITEM: TranslateItem> {
     val items: StateFlow<List<ITEM>>
     val progress: StateFlow<Progress?>
 
-    fun onAction(action: Action)
+    fun onCardsSwiped(item: Swipable, sourceOnTop: Boolean){}
+    fun openFootnote(note: Footnote)
+    fun deleteNote(note: Footnote){}
+    fun saveFootnote(note: Footnote){}
+    fun clearFootnote()
+
     fun updateItem(item: ITEM)
     fun updateItems(items: List<ITEM>)
     fun onNoteClicked(note: RenderNode.Note, chunkId: String, action: FootnoteAction)
-    fun onShowFootnote(note: Footnote)
     suspend fun handleResourceChange()
-
-    fun onCardsSwiped(item: Swipable, sourceOnTop: Boolean){}
 
     fun prepareTranslations(
         chunk: Chunk
@@ -122,13 +124,5 @@ interface ModeComponent<ITEM: TranslateItem> {
 
     interface State {
         val footnote: Footnote?
-    }
-
-    interface Action {
-        data class CardsSwiped(val item: Swipable, val sourceOnTop: Boolean) : Action
-        data class OpenFootnote(val note: Footnote) : Action
-        data class DeleteNote(val note: Footnote) : Action
-        data class SaveFootnote(val note: Footnote) : Action
-        data object ClearFootnote : Action
     }
 }

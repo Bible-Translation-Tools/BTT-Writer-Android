@@ -7,7 +7,6 @@ import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.ui.dialogs.ProgressDialog
-import com.door43.translationstudio.ui.translate.ModeComponent
 import com.door43.translationstudio.ui.translate.ModeScreenTemplate
 import com.door43.translationstudio.ui.translate.TranslateComponent
 
@@ -41,22 +40,10 @@ fun ReadModeSection(
             typography = typography,
             selectedSource = sharedState.resourceContainer,
             targetTranslation = parentComponent.targetTranslation,
-            onSourceTabClick = {
-                parentComponent.onAction(
-                    TranslateComponent.Action.SelectSource(it)
-                )
-            },
+            onSourceTabClick = parentComponent::selectSource,
             onAddNewSourceClick = onSourceDialogOpen,
-            onRemoveSourceClick = {
-                parentComponent.onAction(
-                    TranslateComponent.Action.RemoveSource(it)
-                )
-            },
-            onCardsSwiped = {
-                component.onAction(
-                    ModeComponent.Action.CardsSwiped(item, it)
-                )
-            },
+            onRemoveSourceClick = parentComponent::removeSource,
+            onCardsSwiped = { component.onCardsSwiped(item, it) },
             onBeginTranslation = onBeginTranslation
         )
     }

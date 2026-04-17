@@ -36,7 +36,10 @@ interface TranslateComponent {
 
     fun restartAutoCommitTimer()
     fun updateMergeFilter(on: Boolean)
-    fun onAction(action: Action)
+    fun removeSource(sourceId: String)
+    fun selectSource(sourceId: String)
+    fun saveLastViewMode(viewMode: TranslationViewMode)
+    fun saveLastFocus(chapterId: String, frameId: String?)
 
     fun openHome(withUpdate: Boolean = false)
     fun openDraft(translationId: String)
@@ -67,13 +70,6 @@ interface TranslateComponent {
         val sourceTabs: List<SourceTabItem> = emptyList(),
         val resourceContainer: ResourceContainer? = null
     )
-
-    sealed interface Action {
-        data class RemoveSource(val sourceId: String) : Action
-        data class SelectSource(val sourceId: String) : Action
-        data class SaveLastViewMode(val viewMode: TranslationViewMode) : Action
-        data class SaveLastFocus(val chapterId: String, val frameId: String?) : Action
-    }
 
     sealed interface Event {
         data class SnackbarMessage(val message: String) : Event

@@ -19,7 +19,6 @@ import com.door43.translationstudio.ui.translate.ChunkItem
 import com.door43.translationstudio.ui.translate.Footnote
 import com.door43.translationstudio.ui.translate.FootnoteAction
 import com.door43.translationstudio.ui.translate.ModeComponent
-import com.door43.translationstudio.ui.translate.ModeComponent.Action
 import com.door43.translationstudio.ui.translate.Swipable
 import com.door43.translationstudio.ui.translate.TranslateComponent
 import kotlinx.coroutines.CoroutineScope
@@ -41,16 +40,14 @@ import org.koin.core.component.inject
 interface ChunkModeComponent : ModeComponent<ChunkItem> {
     override val state: StateFlow<State>
 
+    fun onItemTextChanged(item: ChunkItem, text: String)
+    fun reopenChunk(item: ChunkItem)
+    fun onReopenChunkConfirmed(confirm: Boolean)
+
     data class State(
         val chunkToReopen: ChunkItem? = null,
         override val footnote: Footnote? = null
     ) : ModeComponent.State
-
-    sealed interface Action : ModeComponent.Action {
-        data class ItemTextChanged(val item: ChunkItem, val text: String) : Action
-        data class ReopenChunkClicked(val item: ChunkItem) : Action
-        data class ReopenChunkConfirmed(val confirm: Boolean) : Action
-    }
 }
 
 class DefaultChunkModeComponent(
@@ -101,14 +98,44 @@ class DefaultChunkModeComponent(
         progressManager.runTask(message, block)
     }
 
-    override fun onAction(action: Action) {
-        when (action) {
-            is Action.CardsSwiped -> onCardsSwiped(action.item, action.sourceOnTop)
-            is Action.OpenFootnote -> onShowFootnote(action.note)
+    override fun onCardsSwiped(item: Swipable, sourceOnTop: Boolean) {
+        updateItem(item.selfCopy(sourceOnTop = sourceOnTop) as ChunkItem)
+    }
 
-            is ChunkModeComponent.Action.ItemTextChanged -> onItemTextChanged(action.item, action.text)
-            is ChunkModeComponent.Action.ReopenChunkClicked -> onReopenChunkClicked(action.item)
-            is ChunkModeComponent.Action.ReopenChunkConfirmed -> onReopenChunkConfirmed(action.confirm)
+    override fun openFootnote(note: Footnote) {
+        _state.update { it.copy(footnote = note) }
+    }
+
+    override fun clearFootnote() {
+        _state.update { it.copy(footnote = null) }
+    }
+
+    override fun onItemTextChanged(item: ChunkItem, text: String) {
+        coroutineScope.launch {
+            item.saveTranslation(text)
+        }
+    }
+
+    override fun reopenChunk(item: ChunkItem) {
+        _state.value = _state.value.copy(
+            chunkToReopen = item
+        )
+    }
+
+    override fun onReopenChunkConfirmed(confirm: Boolean) {
+        coroutineScope.launch {
+            if (confirm) {
+                _state.value.chunkToReopen?.let {
+                    withContext(Dispatchers.IO) {
+                        it.chunk.reopen()
+                    }
+                    val updated = prepareItem(it.chunk, false)
+                    updateItem(updated)
+                }
+            }
+            _state.value = _state.value.copy(
+                chunkToReopen = null
+            )
         }
     }
 
@@ -139,14 +166,6 @@ class DefaultChunkModeComponent(
                 )
             )
         }
-    }
-
-    override fun onCardsSwiped(item: Swipable, sourceOnTop: Boolean) {
-        updateItem(item.selfCopy(sourceOnTop = sourceOnTop) as ChunkItem)
-    }
-
-    override fun onShowFootnote(note: Footnote) {
-        _state.update { it.copy(footnote = note) }
     }
 
     private fun prepareItem(chunk: Chunk, sourceOnTop: Boolean = true): ChunkItem {
@@ -207,35 +226,6 @@ class DefaultChunkModeComponent(
                     target.format
                 ).body
             }
-        }
-    }
-
-    private fun onItemTextChanged(item: ChunkItem, text: String) {
-        coroutineScope.launch {
-            item.saveTranslation(text)
-        }
-    }
-
-    private fun onReopenChunkClicked(item: ChunkItem) {
-        _state.value = _state.value.copy(
-            chunkToReopen = item
-        )
-    }
-
-    private fun onReopenChunkConfirmed(confirm: Boolean) {
-        coroutineScope.launch {
-            if (confirm) {
-                _state.value.chunkToReopen?.let {
-                    withContext(Dispatchers.IO) {
-                        it.chunk.reopen()
-                    }
-                    val updated = prepareItem(it.chunk, false)
-                    updateItem(updated)
-                }
-            }
-            _state.value = _state.value.copy(
-                chunkToReopen = null
-            )
         }
     }
 }

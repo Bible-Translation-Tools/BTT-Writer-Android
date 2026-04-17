@@ -67,15 +67,13 @@ fun <ITEM : TranslateItem> ModeScreenTemplate(
         FootnoteDialog(
             text = note.text,
             action = note.action,
-            onDismissRequest = {
-                component.onAction(ModeComponent.Action.ClearFootnote)
-            },
+            onDismissRequest = component::clearFootnote,
             onDeleteNote = {
-                component.onAction(ModeComponent.Action.DeleteNote(note))
+                component.deleteNote(note)
             },
             onSaveText = { newText ->
                 val newNote = note.copy(text = newText)
-                component.onAction(ModeComponent.Action.SaveFootnote(newNote))
+                component.saveFootnote(newNote)
             }
         )
     }

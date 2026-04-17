@@ -32,8 +32,8 @@ import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.core.entity.SourceTranslation
 import com.door43.translationstudio.getBestFontForLanguage
 import com.door43.translationstudio.ui.dialogs.export.DefaultExportComponent
-import com.door43.translationstudio.ui.dialogs.feedback.DefaultFeedbackComponent
 import com.door43.translationstudio.ui.dialogs.export.ExportComponent
+import com.door43.translationstudio.ui.dialogs.feedback.DefaultFeedbackComponent
 import com.door43.translationstudio.ui.dialogs.source.DefaultSelectSourcesComponent
 import com.door43.translationstudio.ui.dialogs.source.MAX_SOURCE_ITEMS
 import com.door43.translationstudio.ui.dialogs.source.SelectSourcesComponent
@@ -253,17 +253,31 @@ class DefaultTranslateComponent(
         _state.update { it.copy(mergeFilterOn = on) }
     }
 
-    override fun onAction(action: TranslateComponent.Action) {
-        when (action) {
-            is TranslateComponent.Action.RemoveSource -> launchWithProgress {
-                removeOpenSourceTranslation(action.sourceId)
-            }
-            is TranslateComponent.Action.SelectSource -> launchWithProgress {
-                setSelectedResourceContainer(action.sourceId)
-            }
-            is TranslateComponent.Action.SaveLastViewMode -> setLastViewMode(action.viewMode)
-            is TranslateComponent.Action.SaveLastFocus -> saveLastFocus(action.chapterId, action.frameId)
+    override fun removeSource(sourceId: String) {
+        launchWithProgress {
+            removeOpenSourceTranslation(sourceId)
         }
+    }
+
+    override fun selectSource(sourceId: String) {
+        launchWithProgress {
+            setSelectedResourceContainer(sourceId)
+        }
+    }
+
+    override fun saveLastViewMode(viewMode: TranslationViewMode) {
+        launchWithProgress {
+            _state.update { it.copy(viewMode = viewMode) }
+            _sharedState.update { it.copy(chunks = emptyList()) }
+            translator.setLastViewMode(
+                targetTranslationId = targetTranslation.id,
+                viewMode = viewMode
+            )
+        }
+    }
+
+    override fun saveLastFocus(chapterId: String, frameId: String?) {
+        translator.setLastFocus(targetTranslation.id, chapterId, frameId)
     }
 
     override fun openHome(withUpdate: Boolean) {
@@ -362,25 +376,10 @@ class DefaultTranslateComponent(
         return chunks
     }
 
-    private fun setLastViewMode(mode: TranslationViewMode) {
-        launchWithProgress {
-            _state.update { it.copy(viewMode = mode) }
-            _sharedState.update { it.copy(chunks = emptyList()) }
-            translator.setLastViewMode(
-                targetTranslationId = targetTranslation.id,
-                viewMode = mode
-            )
-        }
-    }
-
     private fun initLastFocus() {
         val chapter = translator.getLastFocusChapterId(targetTranslation.id)
         val frame = translator.getLastFocusFrameId(targetTranslation.id)
         _state.update { it.copy(lastFocusChapterId = chapter, lastFocusFrameId = frame) }
-    }
-
-    private fun saveLastFocus(chapterId: String, frameId: String?) {
-        translator.setLastFocus(targetTranslation.id, chapterId, frameId)
     }
 
     private fun getSelectedSourceTranslationId(): String? {

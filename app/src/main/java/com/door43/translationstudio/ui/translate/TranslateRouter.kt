@@ -43,11 +43,7 @@ fun TranslateRouter(
                     scrollCoordinator.pendingScrollChapter = PendingScrollItem(
                         chapterId = it
                     )
-                    component.onAction(
-                        TranslateComponent.Action.SaveLastViewMode(
-                            TranslationViewMode.CHUNK
-                        )
-                    )
+                    component.saveLastViewMode(TranslationViewMode.CHUNK)
                 }
             )
             is TranslateComponent.Child.Chunk -> ChunkModeSection(
@@ -62,9 +58,7 @@ fun TranslateRouter(
                         chapterId = chapterId,
                         chunkId = chunkId
                     )
-                    component.onAction(
-                        TranslateComponent.Action.SaveLastViewMode(TranslationViewMode.REVIEW)
-                    )
+                    component.saveLastViewMode(TranslationViewMode.REVIEW)
                 }
             )
             is TranslateComponent.Child.Review -> ReviewModeSection(
@@ -76,7 +70,7 @@ fun TranslateRouter(
                 onSearchConsumed = onSearchConsumed,
                 onSourceDialogOpen = onSourceDialogOpen,
                 onHasMergeConflicts = onHasMergeConflicts,
-                mergeConflictFilterOn = mergeConflictFilterOn,
+                mergeFilterOn = mergeConflictFilterOn,
                 onMergeConflictFilterReset = onMergeConflictFilterReset,
                 chunksDoneRequested = chunksDoneRequested,
                 onChunksDoneConsumed = onChunksDoneConsumed

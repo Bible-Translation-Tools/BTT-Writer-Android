@@ -28,9 +28,9 @@ import com.door43.translationstudio.ui.components.rememberTranslateMenuItems
 import com.door43.translationstudio.ui.dialogs.ProgressDialog
 import com.door43.translationstudio.ui.dialogs.export.ExportDialog
 import com.door43.translationstudio.ui.dialogs.feedback.FeedbackDialog
+import com.door43.translationstudio.ui.dialogs.source.SourceSelectionDialog
 import com.door43.translationstudio.ui.translate.components.NoSourceScreen
 import com.door43.translationstudio.ui.translate.components.TranslateSidebar
-import com.door43.translationstudio.ui.dialogs.source.SourceSelectionDialog
 import kotlinx.coroutines.launch
 
 @Composable
@@ -124,33 +124,25 @@ fun TargetTranslationScreen(
                     onReadClick = {
                         component.updateMergeFilter(false)
                         if (state.viewMode != TranslationViewMode.READ) {
-                            component.onAction(TranslateComponent.Action.SaveLastViewMode(
-                                TranslationViewMode.READ
-                            ))
+                            component.saveLastViewMode(TranslationViewMode.READ)
                         }
                     },
                     onChunkClick = {
                         component.updateMergeFilter(false)
                         if (state.viewMode != TranslationViewMode.CHUNK) {
-                            component.onAction(TranslateComponent.Action.SaveLastViewMode(
-                                TranslationViewMode.CHUNK
-                            ))
+                            component.saveLastViewMode(TranslationViewMode.CHUNK)
                         }
                     },
                     onReviewClick = {
                         component.updateMergeFilter(false)
                         if (state.viewMode != TranslationViewMode.REVIEW) {
-                            component.onAction(TranslateComponent.Action.SaveLastViewMode(
-                                TranslationViewMode.REVIEW
-                            ))
+                            component.saveLastViewMode(TranslationViewMode.REVIEW)
                         }
                     },
                     onMergeConflictClick = {
                         component.updateMergeFilter(!state.mergeFilterOn)
                         if (state.viewMode != TranslationViewMode.REVIEW) {
-                            component.onAction(TranslateComponent.Action.SaveLastViewMode(
-                                TranslationViewMode.REVIEW
-                            ))
+                            component.saveLastViewMode(TranslationViewMode.REVIEW)
                         }
                     },
                     onSliderValueChange = {

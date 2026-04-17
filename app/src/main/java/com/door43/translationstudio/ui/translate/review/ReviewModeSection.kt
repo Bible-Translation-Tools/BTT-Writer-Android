@@ -43,7 +43,7 @@ fun ReviewModeSection(
     onSearchConsumed: () -> Unit,
     onSourceDialogOpen: () -> Unit,
     onHasMergeConflicts: (Boolean) -> Unit,
-    mergeConflictFilterOn: Boolean = false,
+    mergeFilterOn: Boolean = false,
     onMergeConflictFilterReset: () -> Unit,
     chunksDoneRequested: Boolean,
     onChunksDoneConsumed: () -> Unit
@@ -60,23 +60,20 @@ fun ReviewModeSection(
     // Auto-disable conflict filter when no conflicts remain
     LaunchedEffect(hasConflicts) {
         onHasMergeConflicts(hasConflicts)
-        if (items.isNotEmpty() && !hasConflicts && mergeConflictFilterOn) {
+        if (items.isNotEmpty() && !hasConflicts && mergeFilterOn) {
             onMergeConflictFilterReset()
-            component.onAction(ReviewModeComponent.Action.SetMergeConflictFilterOn(false))
+            component.setMergeFilterOn(false)
         }
     }
 
-    LaunchedEffect(mergeConflictFilterOn) {
-        component.onAction(
-            ReviewModeComponent.Action.SetMergeConflictFilterOn(
-            mergeConflictFilterOn
-        ))
+    LaunchedEffect(mergeFilterOn) {
+        component.setMergeFilterOn(mergeFilterOn)
     }
 
     // Open search when requested from sidebar
     LaunchedEffect(searchRequested) {
         if (searchRequested) {
-            component.onAction(ReviewModeComponent.Action.OpenSearch)
+            component.openSearch()
             onSearchConsumed()
         }
     }
@@ -92,7 +89,7 @@ fun ReviewModeSection(
 
     LaunchedEffect(chunksDoneRequested) {
         if (chunksDoneRequested) {
-            component.onAction(ReviewModeComponent.Action.MarkAllDoneClicked)
+            component.toggleMarkAllDone()
             onChunksDoneConsumed()
         }
     }
@@ -102,21 +99,11 @@ fun ReviewModeSection(
             state.search?.let { search ->
                 SearchBar(
                     searchState = search,
-                    onQueryChange = {
-                        component.onAction(ReviewModeComponent.Action.UpdateSearchQuery(it))
-                    },
-                    onSubjectChange = {
-                        component.onAction(ReviewModeComponent.Action.SetSearchSubject(it))
-                    },
-                    onNext = {
-                        component.onAction(ReviewModeComponent.Action.NextMatch)
-                    },
-                    onPrev = {
-                        component.onAction(ReviewModeComponent.Action.PrevMatch)
-                    },
-                    onClose = {
-                        component.onAction(ReviewModeComponent.Action.CloseSearch)
-                    }
+                    onQueryChange = component::updateSearchQuery,
+                    onSubjectChange = component::setSearchSubject,
+                    onNext = component::nextMatch,
+                    onPrev = component::prevMatch,
+                    onClose = component::closeSearch
                 )
             }
             ModeScreenTemplate(
@@ -128,7 +115,7 @@ fun ReviewModeSection(
                     LaunchedEffect(state.url) {
                         if (state.url != null) {
                             urlHandler.openUri(state.url!!)
-                            component.onAction(ReviewModeComponent.Action.CleanUrl)
+                            component.cleanUrl()
                         }
                     }
 
@@ -139,12 +126,8 @@ fun ReviewModeSection(
                             message = AnnotatedString.fromHtml(
                                 stringResource(R.string.chunk_checklist_body)
                             ),
-                            onDismiss = {
-                                component.onAction(ReviewModeComponent.Action.ToggleDoneConfirmed(false))
-                            },
-                            onConfirm = {
-                                component.onAction(ReviewModeComponent.Action.ToggleDoneConfirmed(true))
-                            }
+                            onDismiss = { component.onDoneConfirmed(false) },
+                            onConfirm = { component.onDoneConfirmed(true) }
                         )
                     }
 
@@ -157,23 +140,17 @@ fun ReviewModeSection(
                                     stringResource(R.string.project_checklist_body)
                                 ),
                                 onDismiss = {
-                                    component.onAction(
-                                        ReviewModeComponent.Action.MarkAllDoneConfirmed(false)
-                                    )
+                                    component.onMarkAllDoneConfirmed(false)
                                 },
                                 onConfirm = {
-                                    component.onAction(
-                                        ReviewModeComponent.Action.MarkAllDoneConfirmed(true)
-                                    )
+                                    component.onMarkAllDoneConfirmed(true)
                                 }
                             )
                         }
                         is MarkAllDialogState.Result -> {
                             BaseDialog(
                                 onDismiss = {
-                                    component.onAction(
-                                        ReviewModeComponent.Action.MarkAllDoneConfirmed(false)
-                                    )
+                                    component.onMarkAllDoneConfirmed(false)
                                 },
                                 title = stringResource(R.string.result),
                                 message = AnnotatedString.fromHtml(
@@ -199,51 +176,29 @@ fun ReviewModeSection(
                     sourceTabs = sharedState.sourceTabs,
                     typography = typography,
                     resourcesOpen = state.resourcesOpen,
-                    onSourceTabClick = {
-                        parentComponent.onAction(TranslateComponent.Action.SelectSource(it))
-                    },
+                    onSourceTabClick = parentComponent::selectSource,
                     onAddNewSourceClick = onSourceDialogOpen,
-                    onRemoveSourceClick = {
-                        parentComponent.onAction(TranslateComponent.Action.RemoveSource(it))
-                    },
-                    onTextChange = {
-                        component.onAction(ReviewModeComponent.Action.ItemTextChanged(item, it))
-                    },
+                    onRemoveSourceClick = parentComponent::removeSource,
+                    onTextChange = { component.onItemTextChanged(item, it) },
                     onExpandedChange = { expanded ->
-                        component.onAction(ReviewModeComponent.Action.OpenResources(expanded))
-                        if (!expanded) component.onAction(ReviewModeComponent.Action.ClearHelp)
+                        component.openResources(expanded)
+                        if (!expanded) component.clearHelp()
                     },
-                    onRenderHelps = {
-                        component.onAction(ReviewModeComponent.Action.RenderHelps(item))
-                    },
-                    onHelpClick = {
-                        component.onAction(ReviewModeComponent.Action.OpenHelp(it))
-                    },
-                    onEditToggle = {
-                        component.onAction(ReviewModeComponent.Action.ToggleEdit(item))
-                    },
-                    onDoneToggle = {
-                        component.onAction(ReviewModeComponent.Action.ToggleDoneClicked(item))
-                    },
-                    onUndoClick = {
-                        component.onAction(ReviewModeComponent.Action.Undo(item))
-                    },
-                    onRedoClick = {
-                        component.onAction(ReviewModeComponent.Action.Redo(item))
-                    },
+                    onRenderHelps = { component.renderHelps(item) },
+                    onHelpClick = component::openHelp,
+                    onEditToggle = { component.toggleEdit(item) },
+                    onDoneToggle = { component.onToggleDone(item) },
+                    onUndoClick = { component.undo(item) },
+                    onRedoClick = { component.redo(item) },
                     onAddNoteClick = { caretPos ->
-                        component.onAction(ReviewModeComponent.Action.AddNoteClicked(item, caretPos))
+                        component.onAddNote(item, caretPos)
                     },
                     onDragDropVerse = { machineReadable, verseRawStart, verseRawEnd, targetRawPosition ->
-                        component.onAction(
-                            ReviewModeComponent.Action.DragDropVerse(
-                                item, machineReadable, verseRawStart, verseRawEnd, targetRawPosition
-                            )
+                        component.onDragDropVerse(
+                            item, machineReadable, verseRawStart, verseRawEnd, targetRawPosition
                         )
                     },
-                    onConflictSelected = {
-                        component.onAction(ReviewModeComponent.Action.SelectConflict(item, it))
-                    },
+                    onConflictSelected = { component.selectConflict(item, it) },
                     searchQuery = state.search?.let { search ->
                         if (search.query.length >= 2 && search.subject == SearchSubject.TARGET) {
                             search.query
@@ -258,11 +213,9 @@ fun ReviewModeSection(
             help = state.help,
             typography = typography,
             sourceLanguage = sharedState.resourceContainer?.language,
-            onClearHelp = { component.onAction(ReviewModeComponent.Action.ClearHelp) },
-            onOpenIndex = { component.onAction(ReviewModeComponent.Action.OpenIndex(it)) },
-            onOpenWord = { rcSlug, slug ->
-                component.onAction(ReviewModeComponent.Action.OpenWord(rcSlug, slug))
-            },
+            onClearHelp = component::clearHelp,
+            onOpenIndex = component::openIndex,
+            onOpenWord = component::openWord,
             modifier = Modifier
                 .fillMaxHeight()
                 .fillMaxWidth(1f / 3.08f)

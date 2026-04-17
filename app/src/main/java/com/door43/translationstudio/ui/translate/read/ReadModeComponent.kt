@@ -19,7 +19,6 @@ import com.door43.translationstudio.ui.navigation.ComponentScope
 import com.door43.translationstudio.ui.translate.Footnote
 import com.door43.translationstudio.ui.translate.FootnoteAction
 import com.door43.translationstudio.ui.translate.ModeComponent
-import com.door43.translationstudio.ui.translate.ModeComponent.Action
 import com.door43.translationstudio.ui.translate.ReadItem
 import com.door43.translationstudio.ui.translate.Swipable
 import com.door43.translationstudio.ui.translate.TranslateComponent
@@ -45,8 +44,6 @@ interface ReadModeComponent : ModeComponent<ReadItem> {
     data class State(
         override val footnote: Footnote? = null
     ) : ModeComponent.State
-
-    sealed interface Action : ModeComponent.Action
 }
 
 class DefaultReadModeComponent(
@@ -97,11 +94,16 @@ class DefaultReadModeComponent(
         progressManager.runTask(message, block)
     }
 
-    override fun onAction(action: Action) {
-        when (action) {
-            is Action.CardsSwiped -> onCardsSwiped(action.item, action.sourceOnTop)
-            is Action.OpenFootnote -> onShowFootnote(action.note)
-        }
+    override fun onCardsSwiped(item: Swipable, sourceOnTop: Boolean) {
+        updateItem(item.selfCopy(sourceOnTop = sourceOnTop) as ReadItem)
+    }
+
+    override fun openFootnote(note: Footnote) {
+        _state.update { it.copy(footnote = note) }
+    }
+
+    override fun clearFootnote() {
+        _state.update { it.copy(footnote = null) }
     }
 
     override fun updateItem(item: ReadItem) {
@@ -131,14 +133,6 @@ class DefaultReadModeComponent(
                 )
             )
         }
-    }
-
-    override fun onShowFootnote(note: Footnote) {
-        _state.update { it.copy(footnote = note) }
-    }
-
-    override fun onCardsSwiped(item: Swipable, sourceOnTop: Boolean) {
-        updateItem(item.selfCopy(sourceOnTop = sourceOnTop) as ReadItem)
     }
 
     private fun prepareItem(chunk: Chunk, sourceOnTop: Boolean = true): ReadItem {

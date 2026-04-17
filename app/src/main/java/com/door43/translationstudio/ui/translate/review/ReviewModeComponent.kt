@@ -34,7 +34,6 @@ import com.door43.translationstudio.ui.textadapters.ComposeTextAdapter
 import com.door43.translationstudio.ui.translate.Footnote
 import com.door43.translationstudio.ui.translate.FootnoteAction
 import com.door43.translationstudio.ui.translate.ModeComponent
-import com.door43.translationstudio.ui.translate.ModeComponent.Action
 import com.door43.translationstudio.ui.translate.ReviewItem
 import com.door43.translationstudio.ui.translate.TranslateComponent
 import com.door43.translationstudio.ui.translate.TranslateComponent.Companion.SEARCH_SOURCE
@@ -142,6 +141,38 @@ interface ReviewModeComponent : ModeComponent<ReviewItem> {
     override val state: StateFlow<State>
     val filteredItems: StateFlow<List<ReviewItem>>
 
+    fun onItemTextChanged(item: ReviewItem, text: String)
+    fun openResources(value: Boolean)
+    fun renderHelps(item: ReviewItem)
+    fun openHelp(item: HelpItem)
+    fun openIndex(rcSlug: String)
+    fun openWord(rcSlug: String, chapterSlug: String)
+    fun toggleEdit(item: ReviewItem)
+    fun onToggleDone(item: ReviewItem)
+    fun onDoneConfirmed(confirm: Boolean)
+    fun toggleMarkAllDone()
+    fun onMarkAllDoneConfirmed(confirm: Boolean)
+    fun undo(item: ReviewItem)
+    fun redo(item: ReviewItem)
+    fun onAddNote(item: ReviewItem, caretPosition: Int = -1)
+    fun clearHelp()
+    fun cleanUrl()
+    fun openSearch()
+    fun closeSearch()
+    fun updateSearchQuery(query: String)
+    fun setSearchSubject(subject: SearchSubject)
+    fun nextMatch()
+    fun prevMatch()
+    fun onDragDropVerse(
+        item: ReviewItem,
+        machineReadable: String,
+        verseRawStart: Int,
+        verseRawEnd: Int,
+        targetRawPosition: Int
+    )
+    fun selectConflict(item: ReviewItem, index: Int)
+    fun setMergeFilterOn(value: Boolean)
+
     data class State(
         val resourcesOpen: Boolean = false,
         val help: Help? = null,
@@ -152,40 +183,6 @@ interface ReviewModeComponent : ModeComponent<ReviewItem> {
         val mergeConflictFilterOn: Boolean = false,
         override val footnote: Footnote? = null
     ) : ModeComponent.State
-
-    sealed interface Action : ModeComponent.Action {
-        data class ItemTextChanged(val item: ReviewItem, val text: String) : Action
-        data class OpenResources(val value: Boolean) : Action
-        data class RenderHelps(val item: ReviewItem) : Action
-        data class OpenHelp(val item: HelpItem) : Action
-        data class OpenIndex(val rcSlug: String) : Action
-        data class OpenWord(val rcSlug: String, val slug: String) : Action
-        data class ToggleEdit(val item: ReviewItem) : Action
-        data class ToggleDoneClicked(val item: ReviewItem) : Action
-        data class ToggleDoneConfirmed(val confirm: Boolean) : Action
-        data object MarkAllDoneClicked : Action
-        data class MarkAllDoneConfirmed(val confirm: Boolean) : Action
-        data class Undo(val item: ReviewItem) : Action
-        data class Redo(val item: ReviewItem) : Action
-        data class AddNoteClicked(val item: ReviewItem, val caretPosition: Int = -1) : Action
-        data object ClearHelp : Action
-        data object CleanUrl : Action
-        data object OpenSearch : Action
-        data object CloseSearch : Action
-        data class UpdateSearchQuery(val query: String) : Action
-        data class SetSearchSubject(val subject: SearchSubject) : Action
-        data object NextMatch : Action
-        data object PrevMatch : Action
-        data class DragDropVerse(
-            val item: ReviewItem,
-            val machineReadable: String,
-            val verseRawStart: Int,
-            val verseRawEnd: Int,
-            val targetRawPosition: Int
-        ) : Action
-        data class SelectConflict(val item: ReviewItem, val index: Int) : Action
-        data class SetMergeConflictFilterOn(val value: Boolean) : Action
-    }
 }
 
 class DefaultReviewModeComponent(
@@ -262,38 +259,305 @@ class DefaultReviewModeComponent(
         progressManager.runTask(message, block)
     }
 
-    override fun onAction(action: Action) {
-        when (action) {
-            is Action.OpenFootnote -> onShowFootnote(action.note)
-            is Action.DeleteNote -> onDeleteFootnote(action.note)
-            is Action.SaveFootnote -> onSaveFootnote(action.note)
-            is Action.ClearFootnote -> { _state.update { it.copy(footnote = null) } }
-            is ReviewModeComponent.Action.OpenResources -> openResources(action.value)
-            is ReviewModeComponent.Action.RenderHelps -> onRenderHelps(action.item)
-            is ReviewModeComponent.Action.OpenHelp -> onOpenHelpItem(action.item)
-            is ReviewModeComponent.Action.OpenIndex -> openIndex(action.rcSlug)
-            is ReviewModeComponent.Action.OpenWord -> renderWord(action.rcSlug, action.slug)
-            is ReviewModeComponent.Action.ToggleEdit -> toggleEdit(action.item)
-            is ReviewModeComponent.Action.ToggleDoneClicked -> toggleDoneClicked(action.item)
-            is ReviewModeComponent.Action.ToggleDoneConfirmed -> toggleDoneConfirmed(action.confirm)
-            is ReviewModeComponent.Action.MarkAllDoneConfirmed -> markAllDoneConfirmed(action.confirm)
-            is ReviewModeComponent.Action.ItemTextChanged -> onItemTextChanged(action.item, action.text)
-            is ReviewModeComponent.Action.Undo -> onUndo(action.item)
-            is ReviewModeComponent.Action.Redo -> onRedo(action.item)
-            is ReviewModeComponent.Action.AddNoteClicked -> onAddNoteClicked(action.item, action.caretPosition)
-            is ReviewModeComponent.Action.DragDropVerse -> onDragDropVerse(action)
-            is ReviewModeComponent.Action.UpdateSearchQuery -> updateSearchQuery(action.query)
-            is ReviewModeComponent.Action.SetSearchSubject -> setSearchSubjectAndSearch(action.subject)
-            is ReviewModeComponent.Action.SelectConflict -> selectConflict(action.item, action.index)
-            is ReviewModeComponent.Action.SetMergeConflictFilterOn -> setMergeConflictFilterOn(action.value)
-            is ReviewModeComponent.Action.MarkAllDoneClicked -> markAllDoneClicked()
-            is ReviewModeComponent.Action.ClearHelp -> _state.update { it.copy(help = null) }
-            is ReviewModeComponent.Action.CleanUrl -> _state.update { it.copy(url = null) }
-            is ReviewModeComponent.Action.OpenSearch -> openSearch()
-            is ReviewModeComponent.Action.CloseSearch -> closeSearch()
-            is ReviewModeComponent.Action.NextMatch -> navigateMatch(forward = true)
-            is ReviewModeComponent.Action.PrevMatch -> navigateMatch(forward = false)
+    override fun onItemTextChanged(item: ReviewItem, text: String) {
+        coroutineScope.launch {
+            item.saveTranslation(text)
         }
+    }
+
+    override fun openResources(value: Boolean) {
+        _state.update { it.copy(resourcesOpen = value) }
+    }
+
+    override fun renderHelps(item: ReviewItem) {
+        if (!item.helps.isEmpty()) return
+
+        coroutineScope.launch {
+            val helps = withContext(Dispatchers.IO) {
+                renderHelps.execute(item.chunk)
+            }
+            updateItem(item.copy(helps = helps))
+        }
+    }
+
+    override fun openHelp(item: HelpItem) {
+        when (item) {
+            is HelpItem.Note -> renderTranslationHelp(item.data)
+            is HelpItem.Word -> openWord(item.rcSlug, item.data.chapter)
+            is HelpItem.Question -> renderTranslationHelp(item.data, true)
+        }
+    }
+
+    override fun openIndex(rcSlug: String) {
+        coroutineScope.launch {
+            val words = withContext(Dispatchers.IO) {
+                getResourceContainer(rcSlug)?.let { rc ->
+                    val chapters = rc.chapters()
+                    val words = listOf(*chapters).sorted()
+                    val titlePattern = Pattern.compile("#(.*)")
+
+                    words.map { slug ->
+                        val match = titlePattern.matcher(rc.readChunk(slug, "01"))
+                        val title = if (match.find()) match.group(1) else slug
+                        IndexWord(slug, title)
+                    }
+                } ?: emptyList()
+            }
+
+            _state.update { it.copy(help = Help.Index(rcSlug, words)) }
+        }
+    }
+
+    override fun openWord(rcSlug: String, chapterSlug: String) {
+        coroutineScope.launch {
+            withContext(Dispatchers.IO) {
+                getResourceContainer(rcSlug)?.let { twRc ->
+                    val word = twRc.readChunk(chapterSlug, "01")
+                    val pattern = Pattern.compile("#+([^\\n]+)\\n+([\\s\\S]*)")
+                    val match = pattern.matcher(word)
+                    var description = ""
+                    var title = ""
+
+                    if (match.find()) {
+                        title = match.group(1) ?: ""
+                        description = match.group(2) ?: ""
+                    }
+
+                    val body = renderHelpContents(description, twRc)
+
+                    _state.update { it.copy(help = Help.Words(title, body, rcSlug)) }
+                }
+            }
+        }
+    }
+
+    override fun toggleEdit(item: ReviewItem) {
+        coroutineScope.launch {
+            doToggleEdit(item)
+        }
+    }
+
+    override fun onToggleDone(item: ReviewItem) {
+        coroutineScope.launch {
+            val shouldComplete = item.targetMode != TargetMode.COMPLETE
+            if (shouldComplete) {
+                _state.value = _state.value.copy(chunkToDone = item)
+            } else {
+                updateDoneStatus(item, false)
+            }
+        }
+    }
+
+    override fun onDoneConfirmed(confirm: Boolean) {
+        coroutineScope.launch {
+            if (confirm) {
+                _state.value.chunkToDone?.let { item ->
+                    updateDoneStatus(item, true)
+                }
+            }
+            _state.value = _state.value.copy(
+                chunkToDone = null
+            )
+        }
+    }
+
+    override fun toggleMarkAllDone() {
+        _state.value = _state.value.copy(
+            markAllDoneState = MarkAllDialogState.Confirm
+        )
+    }
+
+    override fun onMarkAllDoneConfirmed(confirm: Boolean) {
+        _state.update { it.copy(markAllDoneState = null) }
+
+        if (!confirm) {
+            return
+        }
+
+        launchWithProgress(application.getString(R.string.loading)) {
+            val marked = withContext(Dispatchers.IO) {
+                var marked = 0
+                for (item in items.value) {
+                    try {
+                        if (item.targetMode == TargetMode.EDIT) {
+                            doToggleEdit(item)
+                        }
+                        markChunkCompleted(item)
+                        marked++
+                    } catch (e: Exception) {
+                        Logger.e(
+                            this::class.simpleName,
+                            "Error marking chunk done: ${item.id}",
+                            e
+                        )
+                    }
+                }
+
+                // Commit if any chunks were marked
+                if (marked > 0) {
+                    try {
+                        items.value.firstOrNull()?.chunk?.target?.commit()
+                    } catch (e: Exception) {
+                        Logger.e(
+                            this::class.simpleName,
+                            "Failed to commit translation",
+                            e
+                        )
+                    }
+                }
+
+                val chunks = items.value.map { it.chunk }
+                mapChunksToItems(chunks)
+
+                marked
+            }
+
+            _state.value = _state.value.copy(
+                markAllDoneState = MarkAllDialogState.Result(marked, items.value.size)
+            )
+        }
+    }
+
+    override fun undo(item: ReviewItem) {
+        navigateHistory(item) { history ->
+            if (history.atHead && !item.chunk.target.isClean) {
+                try {
+                    item.chunk.target.commitSync()
+                    history.loadCommits()
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+            history.previous
+        }
+    }
+
+    override fun redo(item: ReviewItem) {
+        navigateHistory(item) { it.next }
+    }
+
+    override fun onAddNote(item: ReviewItem, caretPosition: Int) {
+        openFootnote(
+            Footnote(
+                text = "",
+                machineReadable = "",
+                chunkId = item.id,
+                insertPosition = caretPosition,
+                action = FootnoteAction.EDIT
+            )
+        )
+    }
+
+    override fun clearHelp() {
+        _state.update { it.copy(help = null) }
+    }
+
+    override fun cleanUrl() {
+        _state.update { it.copy(url = null) }
+    }
+
+    override fun openSearch() {
+        val lastSubject = try {
+            SearchSubject.valueOf(getLastSearchSource())
+        } catch (_: Exception) {
+            SearchSubject.SOURCE
+        }
+        _state.update {
+            it.copy(search = SearchState(subject = lastSubject))
+        }
+    }
+
+    override fun closeSearch() {
+        _state.update { it.copy(search = null) }
+    }
+
+    override fun updateSearchQuery(query: String) {
+        _state.update {
+            it.copy(search = it.search?.copy(query = query))
+        }
+    }
+
+    override fun setSearchSubject(subject: SearchSubject) {
+        setLastSearchSource(subject)
+        _state.update {
+            it.copy(search = it.search?.copy(subject = subject))
+        }
+    }
+
+    override fun nextMatch() {
+        navigateMatch(forward = true)
+    }
+
+    override fun prevMatch() {
+        navigateMatch(forward = false)
+    }
+
+    override fun onDragDropVerse(
+        item: ReviewItem,
+        machineReadable: String,
+        verseRawStart: Int,
+        verseRawEnd: Int,
+        targetRawPosition: Int
+    ) {
+        coroutineScope.launch {
+            withContext(Dispatchers.IO) {
+                val originalText = fetchTargetText(
+                    item.chunk.target, item.chunk.chapterSlug, item.chunk.chunkSlug
+                )
+                val newText = VerseMarkerDrag.moveVerseByRawPosition(
+                    text = originalText,
+                    verseRawStart = verseRawStart,
+                    verseRawEnd = verseRawEnd,
+                    marker = machineReadable,
+                    targetRawPosition = targetRawPosition
+                )
+                item.saveTranslation(newText)
+                updateItem(prepareItem(item.chunk, TargetMode.MARKER))
+            }
+        }
+    }
+
+    override fun selectConflict(item: ReviewItem, index: Int) {
+        coroutineScope.launch {
+            withContext(Dispatchers.IO) {
+                item.mergeItems.getOrNull(index)?.let { conflict ->
+                    item.saveTranslation(conflict.toString())
+                    updateItem(prepareItem(item.chunk))
+                }
+            }
+        }
+    }
+
+    override fun setMergeFilterOn(value: Boolean) {
+        _state.update { state ->
+            state.copy(mergeConflictFilterOn = value)
+        }
+    }
+
+    override fun openFootnote(note: Footnote) {
+        _state.update { it.copy(footnote = note) }
+    }
+
+    override fun deleteNote(note: Footnote) {
+        _state.update { it.copy(footnote = null) }
+        replaceFootnoteInTarget(note, replacement = "")
+    }
+
+    override fun saveFootnote(note: Footnote) {
+        _state.update { it.copy(footnote = null) }
+        val newCode = if (note.text.isNotEmpty()) {
+            USFMNoteSpan.generateFootnote(note.text).machineReadable
+        } else ""
+
+        if (note.machineReadable.isEmpty()) {
+            insertFootnoteInTarget(note, newCode)
+        } else {
+            replaceFootnoteInTarget(note, newCode)
+        }
+    }
+
+    override fun clearFootnote() {
+        _state.update { it.copy(footnote = null) }
     }
 
     override fun updateItem(item: ReviewItem) {
@@ -323,10 +587,6 @@ class DefaultReviewModeComponent(
                 )
             )
         }
-    }
-
-    override fun onShowFootnote(note: Footnote) {
-        _state.update { it.copy(footnote = note) }
     }
 
     private fun mapChunksToItems(chunks: List<Chunk>) {
@@ -430,26 +690,6 @@ class DefaultReviewModeComponent(
         )
     }
 
-    private fun onDragDropVerse(action: ReviewModeComponent.Action.DragDropVerse) {
-        val item = action.item
-        coroutineScope.launch {
-            withContext(Dispatchers.IO) {
-                val originalText = fetchTargetText(
-                    item.chunk.target, item.chunk.chapterSlug, item.chunk.chunkSlug
-                )
-                val newText = VerseMarkerDrag.moveVerseByRawPosition(
-                    text = originalText,
-                    verseRawStart = action.verseRawStart,
-                    verseRawEnd = action.verseRawEnd,
-                    marker = action.machineReadable,
-                    targetRawPosition = action.targetRawPosition
-                )
-                item.saveTranslation(newText)
-                updateItem(prepareItem(item.chunk, TargetMode.MARKER))
-            }
-        }
-    }
-
     private fun fetchTargetText(
         target: TargetTranslation,
         chapterSlug: String,
@@ -467,34 +707,6 @@ class DefaultReviewModeComponent(
                     target.format
                 ).body
             }
-        }
-    }
-
-    private fun openSearch() {
-        val lastSubject = try {
-            SearchSubject.valueOf(getLastSearchSource())
-        } catch (_: Exception) {
-            SearchSubject.SOURCE
-        }
-        _state.update {
-            it.copy(search = SearchState(subject = lastSubject))
-        }
-    }
-
-    private fun closeSearch() {
-        _state.update { it.copy(search = null) }
-    }
-
-    private fun updateSearchQuery(query: String) {
-        _state.update {
-            it.copy(search = it.search?.copy(query = query))
-        }
-    }
-
-    private fun setSearchSubjectAndSearch(subject: SearchSubject) {
-        setLastSearchSource(subject)
-        _state.update {
-            it.copy(search = it.search?.copy(subject = subject))
         }
     }
 
@@ -617,46 +829,6 @@ class DefaultReviewModeComponent(
         }
     }
 
-    private fun selectConflict(item: ReviewItem, index: Int) {
-        coroutineScope.launch {
-            withContext(Dispatchers.IO) {
-                item.mergeItems.getOrNull(index)?.let { conflict ->
-                    item.saveTranslation(conflict.toString())
-                    updateItem(prepareItem(item.chunk))
-                }
-            }
-        }
-    }
-
-    private fun setMergeConflictFilterOn(value: Boolean) {
-        _state.update { state ->
-            state.copy(mergeConflictFilterOn = value)
-        }
-    }
-
-    private fun openResources(value: Boolean) {
-        _state.update { it.copy(resourcesOpen = value) }
-    }
-
-    private fun onRenderHelps(item: ReviewItem) {
-        if (!item.helps.isEmpty()) return
-
-        coroutineScope.launch {
-            val helps = withContext(Dispatchers.IO) {
-                renderHelps.execute(item.chunk)
-            }
-            updateItem(item.copy(helps = helps))
-        }
-    }
-
-    private fun onOpenHelpItem(item: HelpItem) {
-        when (item) {
-            is HelpItem.Note -> renderTranslationHelp(item.data)
-            is HelpItem.Word -> renderWord(item.rcSlug, item.data.chapter)
-            is HelpItem.Question -> renderTranslationHelp(item.data, true)
-        }
-    }
-
     private fun renderTranslationHelp(note: TranslationHelp, isTq: Boolean = false) {
         val title = note.title
         val body = renderHelpContents(note.body)
@@ -665,29 +837,6 @@ class DefaultReviewModeComponent(
         } else Help.Questions(title, body)
 
         _state.update { it.copy(help = help) }
-    }
-
-    private fun renderWord(rcSlug: String, chapterSlug: String) {
-        coroutineScope.launch {
-            withContext(Dispatchers.IO) {
-                getResourceContainer(rcSlug)?.let { twRc ->
-                    val word = twRc.readChunk(chapterSlug, "01")
-                    val pattern = Pattern.compile("#+([^\\n]+)\\n+([\\s\\S]*)")
-                    val match = pattern.matcher(word)
-                    var description = ""
-                    var title = ""
-
-                    if (match.find()) {
-                        title = match.group(1) ?: ""
-                        description = match.group(2) ?: ""
-                    }
-
-                    val body = renderHelpContents(description, twRc)
-
-                    _state.update { it.copy(help = Help.Words(title, body, rcSlug)) }
-                }
-            }
-        }
     }
 
     private fun renderHelpContents(
@@ -765,7 +914,7 @@ class DefaultReviewModeComponent(
                     is LinkData.TranslationWord -> {
                         twRc?.let { rc ->
                             _state.update { it.copy(help = null) }
-                            renderWord(rc.slug, link.id)
+                            openWord(rc.slug, link.id)
                         }
                     }
                     is LinkData.Article -> {
@@ -787,32 +936,6 @@ class DefaultReviewModeComponent(
         )
 
         return body
-    }
-
-    private fun openIndex(rcSlug: String) {
-        coroutineScope.launch {
-            val words = withContext(Dispatchers.IO) {
-                getResourceContainer(rcSlug)?.let { rc ->
-                    val chapters = rc.chapters()
-                    val words = listOf(*chapters).sorted()
-                    val titlePattern = Pattern.compile("#(.*)")
-
-                    words.map { slug ->
-                        val match = titlePattern.matcher(rc.readChunk(slug, "01"))
-                        val title = if (match.find()) match.group(1) else slug
-                        IndexWord(slug, title)
-                    }
-                } ?: emptyList()
-            }
-
-            _state.update { it.copy(help = Help.Index(rcSlug, words)) }
-        }
-    }
-
-    private fun toggleEdit(item: ReviewItem) {
-        coroutineScope.launch {
-            doToggleEdit(item)
-        }
     }
 
     private suspend fun doToggleEdit(item: ReviewItem) {
@@ -887,87 +1010,6 @@ class DefaultReviewModeComponent(
 
         val updatedText = prefix + currentText
         item.saveTranslation(updatedText)
-    }
-
-    private fun toggleDoneClicked(item: ReviewItem) {
-        coroutineScope.launch {
-            val shouldComplete = item.targetMode != TargetMode.COMPLETE
-            if (shouldComplete) {
-                _state.value = _state.value.copy(chunkToDone = item)
-            } else {
-                updateDoneStatus(item, false)
-            }
-        }
-    }
-
-    private fun toggleDoneConfirmed(confirm: Boolean) {
-        coroutineScope.launch {
-            if (confirm) {
-                _state.value.chunkToDone?.let { item ->
-                    updateDoneStatus(item, true)
-                }
-            }
-            _state.value = _state.value.copy(
-                chunkToDone = null
-            )
-        }
-    }
-
-    private fun markAllDoneClicked() {
-        _state.value = _state.value.copy(
-            markAllDoneState = MarkAllDialogState.Confirm
-        )
-    }
-
-    private fun markAllDoneConfirmed(confirm: Boolean) {
-        _state.update { it.copy(markAllDoneState = null) }
-
-        if (!confirm) {
-            return
-        }
-
-        launchWithProgress(application.getString(R.string.loading)) {
-            val marked = withContext(Dispatchers.IO) {
-                var marked = 0
-                for (item in items.value) {
-                    try {
-                        if (item.targetMode == TargetMode.EDIT) {
-                            doToggleEdit(item)
-                        }
-                        markChunkCompleted(item)
-                        marked++
-                    } catch (e: Exception) {
-                        Logger.e(
-                            this::class.simpleName,
-                            "Error marking chunk done: ${item.id}",
-                            e
-                        )
-                    }
-                }
-
-                // Commit if any chunks were marked
-                if (marked > 0) {
-                    try {
-                        items.value.firstOrNull()?.chunk?.target?.commit()
-                    } catch (e: Exception) {
-                        Logger.e(
-                            this::class.simpleName,
-                            "Failed to commit translation",
-                            e
-                        )
-                    }
-                }
-
-                val chunks = items.value.map { it.chunk }
-                mapChunksToItems(chunks)
-
-                marked
-            }
-
-            _state.value = _state.value.copy(
-                markAllDoneState = MarkAllDialogState.Result(marked, items.value.size)
-            )
-        }
     }
 
     private suspend fun updateDoneStatus(item: ReviewItem, shouldComplete: Boolean) {
@@ -1094,30 +1136,6 @@ class DefaultReviewModeComponent(
         }
     }
 
-    private fun onItemTextChanged(item: ReviewItem, text: String) {
-        coroutineScope.launch {
-            item.saveTranslation(text)
-        }
-    }
-
-    private fun onUndo(item: ReviewItem) {
-        navigateHistory(item) { history ->
-            if (history.atHead && !item.chunk.target.isClean) {
-                try {
-                    item.chunk.target.commitSync()
-                    history.loadCommits()
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
-            }
-            history.previous
-        }
-    }
-
-    private fun onRedo(item: ReviewItem) {
-        navigateHistory(item) { it.next }
-    }
-
     private fun navigateHistory(
         item: ReviewItem,
         navigate: (FileHistory) -> RevCommit?
@@ -1163,18 +1181,6 @@ class DefaultReviewModeComponent(
         }
     }
 
-    private fun onAddNoteClicked(item: ReviewItem, caretPosition: Int = -1) {
-        onShowFootnote(
-            Footnote(
-                text = "",
-                machineReadable = "",
-                chunkId = item.id,
-                insertPosition = caretPosition,
-                action = FootnoteAction.EDIT
-            )
-        )
-    }
-
     private fun createFileHistory(item: ReviewItem): FileHistory? {
         return when {
             item.chunk.isChapterReference -> item.chunk.target.getChapterReferenceHistory(
@@ -1186,24 +1192,6 @@ class DefaultReviewModeComponent(
             item.chunk.isProjectTitle -> item.chunk.target.projectTitleHistory
             item.chunk.isChunk -> item.chunk.target.getFrameHistory(item.ft)
             else -> null
-        }
-    }
-
-    private fun onDeleteFootnote(note: Footnote) {
-        _state.update { it.copy(footnote = null) }
-        replaceFootnoteInTarget(note, replacement = "")
-    }
-
-    private fun onSaveFootnote(note: Footnote) {
-        _state.update { it.copy(footnote = null) }
-        val newCode = if (note.text.isNotEmpty()) {
-            USFMNoteSpan.generateFootnote(note.text).machineReadable
-        } else ""
-
-        if (note.machineReadable.isEmpty()) {
-            insertFootnoteInTarget(note, newCode)
-        } else {
-            replaceFootnoteInTarget(note, newCode)
         }
     }
 

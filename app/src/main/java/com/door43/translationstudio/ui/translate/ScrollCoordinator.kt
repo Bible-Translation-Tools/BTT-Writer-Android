@@ -160,12 +160,7 @@ fun rememberScrollCoordinator(
             val safeIndex = dominantIndex.coerceIn(0, maxOf(0, chunks.size - 1))
             val item = chunks[safeIndex]
             coordinator.lastViewedChunk = item
-            component.onAction(
-                TranslateComponent.Action.SaveLastFocus(
-                    item.chapterSlug,
-                    item.chunkSlug
-                )
-            )
+            component.saveLastFocus(item.chapterSlug, item.chunkSlug)
         }
     }
 
