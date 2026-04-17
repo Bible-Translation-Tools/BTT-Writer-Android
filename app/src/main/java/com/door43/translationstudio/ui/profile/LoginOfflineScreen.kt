@@ -38,6 +38,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import com.door43.translationstudio.R
+import com.door43.translationstudio.ui.dialogs.PrivacyNoticeDialog
 import kotlinx.coroutines.launch
 
 enum class PrivacyDialogMode { INFO, CONFIRM }

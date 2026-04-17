@@ -1,4 +1,4 @@
-package com.door43.translationstudio.ui.home
+package com.door43.translationstudio.ui.dialogs.download
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -188,6 +188,7 @@ fun DownloadSourcesDialog(
                                 }
                             )
                         }
+
                         is DownloadListItem.SourceSelection -> {
                             SourceSelectionItemView(
                                 item = item,

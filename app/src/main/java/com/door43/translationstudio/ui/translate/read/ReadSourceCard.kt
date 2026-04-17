@@ -27,7 +27,7 @@ import com.door43.translationstudio.core.TextStyleType
 import com.door43.translationstudio.core.TranslationType
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.getComposeTextStyle
-import com.door43.translationstudio.ui.translate.SourceTabItem
+import com.door43.translationstudio.ui.dialogs.source.SourceTabItem
 import com.door43.translationstudio.ui.translate.components.SourceTabRow
 import org.unfoldingword.resourcecontainer.ResourceContainer
 

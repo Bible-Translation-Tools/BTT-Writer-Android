@@ -28,7 +28,7 @@ import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.door43.translationstudio.ui.translate.RCItem
+import com.door43.translationstudio.ui.dialogs.source.RCItem
 
 @Composable
 fun SourceHeaderRow(title: String, showStatusIcons: Boolean) {

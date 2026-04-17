@@ -21,10 +21,10 @@ import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.core.Validation
 import com.door43.translationstudio.rendering.RenderingGroup
 import com.door43.translationstudio.rendering.RenderingProvider
-import com.door43.translationstudio.ui.dialogs.DefaultExportComponent
-import com.door43.translationstudio.ui.dialogs.DefaultFeedbackComponent
-import com.door43.translationstudio.ui.dialogs.ExportComponent
-import com.door43.translationstudio.ui.dialogs.FeedbackComponent
+import com.door43.translationstudio.ui.dialogs.export.DefaultExportComponent
+import com.door43.translationstudio.ui.dialogs.feedback.DefaultFeedbackComponent
+import com.door43.translationstudio.ui.dialogs.export.ExportComponent
+import com.door43.translationstudio.ui.dialogs.feedback.FeedbackComponent
 import com.door43.translationstudio.ui.navigation.ComponentScope
 import com.door43.translationstudio.ui.textadapters.ComposeTextAdapter
 import com.door43.usecases.ValidateProject

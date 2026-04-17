@@ -7,8 +7,10 @@ import com.door43.translationstudio.core.Chunk
 import com.door43.translationstudio.core.Progress
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.TranslationViewMode
-import com.door43.translationstudio.ui.dialogs.ExportComponent
-import com.door43.translationstudio.ui.dialogs.FeedbackComponent
+import com.door43.translationstudio.ui.dialogs.export.ExportComponent
+import com.door43.translationstudio.ui.dialogs.feedback.FeedbackComponent
+import com.door43.translationstudio.ui.dialogs.source.SelectSourcesComponent
+import com.door43.translationstudio.ui.dialogs.source.SourceTabItem
 import com.door43.translationstudio.ui.translate.chunk.ChunkModeComponent
 import com.door43.translationstudio.ui.translate.read.ReadModeComponent
 import com.door43.translationstudio.ui.translate.review.ReviewModeComponent

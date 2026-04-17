@@ -1,4 +1,4 @@
-package com.door43.translationstudio.ui.dialogs
+package com.door43.translationstudio.ui.dialogs.export
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -43,6 +43,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.Translator
+import com.door43.translationstudio.ui.dialogs.BaseDialog
+import com.door43.translationstudio.ui.dialogs.ConfirmDialog
+import com.door43.translationstudio.ui.dialogs.LoginOnlineDialog
+import com.door43.translationstudio.ui.dialogs.OverlayDialog
+import com.door43.translationstudio.ui.dialogs.PrintDialog
+import com.door43.translationstudio.ui.dialogs.ProgressDialog
 import org.koin.compose.koinInject
 
 private const val EXPORT_GENERIC_MIME_TYPE = "application/octet-stream"
@@ -270,10 +276,11 @@ fun ExportDialog(
                     TextButton(
                         onClick = {
                             onDismiss()
-                            val message = "Failed to upload the translation of ${component.projectName}" +
-                                    "into ${component.targetTranslation.targetLanguageName}.\n" +
-                                    "targetTranslation: ${component.targetTranslation.id}" +
-                                    "\n--------\n\n"
+                            val message =
+                                "Failed to upload the translation of ${component.projectName}" +
+                                        "into ${component.targetTranslation.targetLanguageName}.\n" +
+                                        "targetTranslation: ${component.targetTranslation.id}" +
+                                        "\n--------\n\n"
                             component.showFeedbackDialog(message)
                         }
                     ) {

@@ -1,4 +1,4 @@
-package com.door43.translationstudio.ui.translate.dialogs
+package com.door43.translationstudio.ui.dialogs
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -25,7 +25,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.door43.translationstudio.R
-import com.door43.translationstudio.ui.dialogs.OverlayDialog
 import com.door43.translationstudio.ui.translate.FootnoteAction
 import kotlinx.coroutines.delay
 

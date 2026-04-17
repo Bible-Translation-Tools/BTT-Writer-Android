@@ -31,9 +31,13 @@ import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.core.entity.SourceTranslation
 import com.door43.translationstudio.getBestFontForLanguage
-import com.door43.translationstudio.ui.dialogs.DefaultExportComponent
-import com.door43.translationstudio.ui.dialogs.DefaultFeedbackComponent
-import com.door43.translationstudio.ui.dialogs.ExportComponent
+import com.door43.translationstudio.ui.dialogs.export.DefaultExportComponent
+import com.door43.translationstudio.ui.dialogs.feedback.DefaultFeedbackComponent
+import com.door43.translationstudio.ui.dialogs.export.ExportComponent
+import com.door43.translationstudio.ui.dialogs.source.DefaultSelectSourcesComponent
+import com.door43.translationstudio.ui.dialogs.source.MAX_SOURCE_ITEMS
+import com.door43.translationstudio.ui.dialogs.source.SelectSourcesComponent
+import com.door43.translationstudio.ui.dialogs.source.SourceTabItem
 import com.door43.translationstudio.ui.launchWithProgress
 import com.door43.translationstudio.ui.navigation.ComponentScope
 import com.door43.translationstudio.ui.navigation.RootComponent

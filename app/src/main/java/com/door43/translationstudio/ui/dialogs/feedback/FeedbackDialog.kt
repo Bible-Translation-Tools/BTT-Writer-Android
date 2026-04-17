@@ -1,4 +1,4 @@
-package com.door43.translationstudio.ui.dialogs
+package com.door43.translationstudio.ui.dialogs.feedback
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -26,6 +26,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
+import com.door43.translationstudio.ui.dialogs.BaseDialog
+import com.door43.translationstudio.ui.dialogs.ConfirmDialog
+import com.door43.translationstudio.ui.dialogs.OverlayDialog
+import com.door43.translationstudio.ui.dialogs.ProgressDialog
 
 @Composable
 fun FeedbackDialog(

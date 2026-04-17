@@ -1,4 +1,4 @@
-package com.door43.translationstudio.ui.home
+package com.door43.translationstudio.ui.dialogs.import
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
@@ -48,6 +48,7 @@ import com.door43.translationstudio.core.TranslationType
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.getComposeTextStyle
 import com.door43.translationstudio.ui.dialogs.OverlayDialog
+import com.door43.translationstudio.ui.home.RepositoryItem
 import org.koin.compose.koinInject
 
 @Composable

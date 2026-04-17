@@ -1,4 +1,4 @@
-package com.door43.translationstudio.ui.translate.dialogs
+package com.door43.translationstudio.ui.dialogs.source
 
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -38,8 +38,6 @@ import com.door43.translationstudio.R
 import com.door43.translationstudio.ui.dialogs.ConfirmDialog
 import com.door43.translationstudio.ui.dialogs.OverlayDialog
 import com.door43.translationstudio.ui.dialogs.ProgressDialog
-import com.door43.translationstudio.ui.translate.RCItem
-import com.door43.translationstudio.ui.translate.SelectSourcesComponent
 import com.door43.translationstudio.ui.translate.components.SourceHeaderRow
 import com.door43.translationstudio.ui.translate.components.SourceItemRow
 

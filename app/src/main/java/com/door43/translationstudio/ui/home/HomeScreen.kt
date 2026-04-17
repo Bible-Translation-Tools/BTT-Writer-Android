@@ -44,9 +44,13 @@ import com.door43.translationstudio.ui.components.HomeSidebar
 import com.door43.translationstudio.ui.components.LocalSnackbarHostState
 import com.door43.translationstudio.ui.components.rememberHomeMenuItems
 import com.door43.translationstudio.ui.dialogs.ConfirmDialog
-import com.door43.translationstudio.ui.dialogs.ExportDialog
-import com.door43.translationstudio.ui.dialogs.FeedbackDialog
+import com.door43.translationstudio.ui.dialogs.import.ImportDialog
+import com.door43.translationstudio.ui.dialogs.import.ImportUsfmDialog
 import com.door43.translationstudio.ui.dialogs.ProgressDialog
+import com.door43.translationstudio.ui.dialogs.download.DownloadSourcesDialog
+import com.door43.translationstudio.ui.dialogs.export.ExportDialog
+import com.door43.translationstudio.ui.dialogs.feedback.FeedbackDialog
+import com.door43.translationstudio.ui.dialogs.update.UpdateLibraryDialog
 import org.koin.compose.koinInject
 
 @Composable

@@ -45,8 +45,8 @@ import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.ui.PrimaryDarkBlue
 import com.door43.translationstudio.ui.components.CardsSkeletonList
 import com.door43.translationstudio.ui.components.LocalSnackbarHostState
-import com.door43.translationstudio.ui.dialogs.ExportDialog
-import com.door43.translationstudio.ui.dialogs.FeedbackDialog
+import com.door43.translationstudio.ui.dialogs.export.ExportDialog
+import com.door43.translationstudio.ui.dialogs.feedback.FeedbackDialog
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 

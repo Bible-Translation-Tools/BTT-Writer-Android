@@ -1,4 +1,4 @@
-package com.door43.translationstudio.ui.translate
+package com.door43.translationstudio.ui.dialogs.source
 
 import android.app.Application
 import android.util.Log
@@ -34,6 +34,7 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.door43client.models.Translation
+import java.lang.Exception
 
 const val MAX_SOURCE_ITEMS = 3
 
@@ -273,7 +274,7 @@ class DefaultSelectSourcesComponent(
                         "Checking for updates on " + sourceTranslation.resourceContainerSlug + " finished, needs updates: " + hasUpdates
                     )
                 }
-            } catch (e: java.lang.Exception) {
+            } catch (e: Exception) {
                 e.printStackTrace()
             }
 
