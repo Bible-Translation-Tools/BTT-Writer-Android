@@ -44,25 +44,21 @@ import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.App
 import com.door43.translationstudio.R
-import com.door43.translationstudio.ui.dialogs.ConfirmDialog
 import com.door43.translationstudio.ui.dialogs.ActionDialog
+import com.door43.translationstudio.ui.dialogs.ConfirmDialog
 import com.door43.translationstudio.ui.dialogs.ProgressDialog
-import org.koin.androidx.compose.koinViewModel
 
 private const val UPDATE_OPTIONS_HELP_URL =
     "http://help.door43.org/en/knowledgebase/9-translationstudio/docs/5-update-options"
 
 @Composable
 fun UpdateLibraryDialog(
+    component: UpdateLibraryComponent,
     modifier: Modifier = Modifier,
-    triggerUpdate: Boolean = false,
-    triggerUpdateConsumed: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    val viewModel: UpdateLibraryViewModel = koinViewModel()
-
-    val state by viewModel.state.collectAsStateWithLifecycle()
-    val progress by viewModel.progress.collectAsStateWithLifecycle()
+    val state by component.state.collectAsStateWithLifecycle()
+    val progress by component.progress.collectAsStateWithLifecycle()
 
     val uriHandler = LocalUriHandler.current
 
@@ -70,25 +66,18 @@ fun UpdateLibraryDialog(
         contract = ActivityResultContracts.GetContent()
     ) { uri ->
         uri?.let {
-            viewModel.onAction(UpdateAction.ImportIndex(it))
+            component.onAction(UpdateLibraryComponent.UpdateAction.ImportIndex(it))
         }
     }
 
     var showIndexUpdatedDialog by rememberSaveable { mutableStateOf(false) }
     var showDownloadSourcesDialog by rememberSaveable { mutableStateOf(false) }
 
-    LaunchedEffect(viewModel) {
-        viewModel.event.collect { event ->
+    LaunchedEffect(component) {
+        component.event.collect { event ->
             when (event) {
-                is UpdateEvent.IndexUpdated -> showIndexUpdatedDialog = true
+                is UpdateLibraryComponent.UpdateEvent.IndexUpdated -> showIndexUpdatedDialog = true
             }
-        }
-    }
-
-    LaunchedEffect(triggerUpdate) {
-        if (triggerUpdate) {
-            triggerUpdateConsumed()
-            viewModel.onAction(UpdateAction.UpdateSource)
         }
     }
 
@@ -157,7 +146,7 @@ fun UpdateLibraryDialog(
                         UpdateOptionItem(
                             stringResource(R.string.update_source)
                         ) {
-                            viewModel.onAction(UpdateAction.UpdateSource)
+                            component.onAction(UpdateLibraryComponent.UpdateAction.UpdateSource)
                         }
                         UpdateOptionItem(
                             stringResource(R.string.import_index)
@@ -167,7 +156,7 @@ fun UpdateLibraryDialog(
                         UpdateOptionItem(
                             stringResource(R.string.download_index)
                         ) {
-                            viewModel.onAction(UpdateAction.DownloadIndex)
+                            component.onAction(UpdateLibraryComponent.UpdateAction.DownloadIndex)
                         }
                         UpdateOptionItem(
                             stringResource(R.string.download_sources)
@@ -177,13 +166,13 @@ fun UpdateLibraryDialog(
                         UpdateOptionItem(
                             stringResource(R.string.update_languages)
                         ) {
-                            viewModel.onAction(UpdateAction.UpdateLanguages)
+                            component.onAction(UpdateLibraryComponent.UpdateAction.UpdateLanguages)
                         }
                         UpdateOptionItem(
                             text = stringResource(R.string.check_app_update),
                             textColor = MaterialTheme.colorScheme.tertiary
                         ) {
-                            viewModel.onAction(UpdateAction.CheckAppUpdate)
+                            component.onAction(UpdateLibraryComponent.UpdateAction.CheckAppUpdate)
                         }
                     }
                 }
@@ -224,7 +213,7 @@ fun UpdateLibraryDialog(
         ActionDialog(
             title = title,
             message = message,
-            onDismiss = { viewModel.onAction(UpdateAction.ClearResult) }
+            onDismiss = { component.onAction(UpdateLibraryComponent.UpdateAction.ClearResult) }
         ) { onInfoDismiss ->
             TextButton(
                 onClick = onInfoDismiss
@@ -239,10 +228,10 @@ fun UpdateLibraryDialog(
             title = stringResource(R.string.apk_update_available),
             message = stringResource(R.string.download_latest_apk),
             onDismiss = {
-                viewModel.onAction(UpdateAction.ClearLatestRelease)
+                component.onAction(UpdateLibraryComponent.UpdateAction.ClearLatestRelease)
             },
             onConfirm = {
-                viewModel.onAction(UpdateAction.DownloadLatestRelease(release))
+                component.onAction(UpdateLibraryComponent.UpdateAction.DownloadLatestRelease(release))
             }
         )
     }
@@ -256,11 +245,11 @@ fun UpdateLibraryDialog(
                 result.updatedCount
             ),
             onDismiss = {
-                viewModel.onAction(UpdateAction.ClearUpdateSourceResult)
+                component.onAction(UpdateLibraryComponent.UpdateAction.ClearUpdateSourceResult)
             },
             onConfirm = {
                 showDownloadSourcesDialog = true
-                viewModel.onAction(UpdateAction.ClearUpdateSourceResult)
+                component.onAction(UpdateLibraryComponent.UpdateAction.ClearUpdateSourceResult)
             }
         )
     }

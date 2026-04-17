@@ -23,8 +23,6 @@ import com.door43.translationstudio.rendering.RenderingProvider
 import com.door43.translationstudio.ui.dialogs.ExportViewModel
 import com.door43.translationstudio.ui.dialogs.FeedbackViewModel
 import com.door43.translationstudio.ui.home.DownloadSourcesViewModel
-import com.door43.translationstudio.ui.home.ImportViewModel
-import com.door43.translationstudio.ui.home.UpdateLibraryViewModel
 import com.door43.translationstudio.ui.home.UsfmImportViewModel
 import com.door43.translationstudio.ui.translate.dialogs.SourceSelectionViewModel
 import com.door43.usecases.AdvancedGogsRepoSearch
@@ -127,13 +125,11 @@ val appModule = module {
     singleOf(::DownloadImages)
     singleOf(::UpdateApp)
 
-    viewModelOf(::ImportViewModel)
     viewModelOf(::UsfmImportViewModel)
     viewModelOf(::FeedbackViewModel)
     viewModelOf(::ExportViewModel)
     viewModelOf(::DownloadSourcesViewModel)
     viewModelOf(::SourceSelectionViewModel)
-    viewModelOf(::UpdateLibraryViewModel)
 }
 
 val prodDataModule = module {

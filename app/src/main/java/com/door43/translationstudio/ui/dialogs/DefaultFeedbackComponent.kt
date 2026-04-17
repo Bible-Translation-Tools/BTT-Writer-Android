@@ -1,18 +1,22 @@
 package com.door43.translationstudio.ui.dialogs
 
 import android.app.Application
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
+import com.arkivanov.decompose.ComponentContext
+import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.door43.translationstudio.App
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.ProgressManager
 import com.door43.translationstudio.core.ProgressOwner
 import com.door43.translationstudio.core.TaskHandle
 import com.door43.translationstudio.ui.launchWithProgress
+import com.door43.translationstudio.ui.navigation.ComponentScope
 import com.door43.usecases.CheckForLatestRelease
 import com.door43.usecases.DownloadLatestRelease
 import com.door43.usecases.UploadFeedback
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -22,33 +26,20 @@ import kotlinx.coroutines.withContext
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
-data class FeedbackState(
-    val message: String = "",
-    val release: CheckForLatestRelease.Release? = null,
-    val uploadError: String? = null
-)
-
-sealed interface FeedbackAction {
-    data class ReportBug(val message: String) : FeedbackAction
-    data class UploadFeedback(val message: String) : FeedbackAction
-    data class DownloadLatestRelease(val release: CheckForLatestRelease.Release) : FeedbackAction
-    data object ClearError : FeedbackAction
-    data object ClearRelease : FeedbackAction
-}
-
-sealed interface FeedbackEvent {
-    data class SnackbarMessage(val message: String) : FeedbackEvent
-}
-
-class FeedbackViewModel(
-    private val checkForLatestRelease: CheckForLatestRelease,
-    private val downloadLatestRelease: DownloadLatestRelease,
-    private val uploadFeedback: UploadFeedback
-) : ViewModel(), FeedbackComponent, KoinComponent, ProgressOwner {
+class DefaultFeedbackComponent(
+    componentContext: ComponentContext,
+) : FeedbackComponent,
+    ComponentContext by componentContext,
+    ComponentScope, ProgressOwner, KoinComponent {
 
     private val application: Application by inject()
+    private val checkForLatestRelease: CheckForLatestRelease by inject()
+    private val downloadLatestRelease: DownloadLatestRelease by inject()
+    private val uploadFeedback: UploadFeedback by inject()
 
-    private val progressManager = ProgressManager(viewModelScope)
+    override val coroutineScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
+
+    private val progressManager = ProgressManager(coroutineScope)
     override val progress get() = progressManager.progress
 
     private val _state = MutableStateFlow(FeedbackState())
@@ -56,6 +47,12 @@ class FeedbackViewModel(
 
     private val _event = Channel<FeedbackEvent>(Channel.BUFFERED)
     override val event = _event.receiveAsFlow()
+
+    init {
+        lifecycle.doOnDestroy {
+            coroutineScope.cancel()
+        }
+    }
 
     override fun onAction(action: FeedbackAction) {
         when (action) {

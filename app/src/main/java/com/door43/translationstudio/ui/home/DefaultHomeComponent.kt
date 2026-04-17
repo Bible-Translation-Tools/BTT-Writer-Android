@@ -2,7 +2,12 @@ package com.door43.translationstudio.ui.home
 
 import android.app.Application
 import android.net.Uri
+import androidx.core.net.toUri
 import com.arkivanov.decompose.ComponentContext
+import com.arkivanov.decompose.router.slot.SlotNavigation
+import com.arkivanov.decompose.router.slot.activate
+import com.arkivanov.decompose.router.slot.childSlot
+import com.arkivanov.decompose.router.slot.dismiss
 import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
@@ -15,6 +20,7 @@ import com.door43.translationstudio.core.ProgressOwner
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.TaskHandle
 import com.door43.translationstudio.core.Translator
+import com.door43.translationstudio.ui.dialogs.DefaultFeedbackComponent
 import com.door43.translationstudio.ui.launchWithProgress
 import com.door43.translationstudio.ui.navigation.ComponentScope
 import com.door43.translationstudio.ui.navigation.RootComponent
@@ -84,6 +90,15 @@ class DefaultHomeComponent(
         add(BookSort.Alphabetical)
     }
 
+    private val dialogNavigation = SlotNavigation<HomeComponent.DialogConfig>()
+
+    override val dialogSlot = childSlot(
+        source = dialogNavigation,
+        serializer = HomeComponent.DialogConfig.serializer(),
+        handleBackButton = true,
+        childFactory = ::createDialogChild
+    )
+
     private val bookList = BibleCodes.getBibleBooks()
 
     override var lastFocusTargetTranslation: String?
@@ -117,8 +132,10 @@ class DefaultHomeComponent(
                     is RootComponent.SharedEvent.SnackbarMessage -> {
                         _event.trySend(HomeComponent.Event.SnackbarMessage(event.message))
                     }
-                    is RootComponent.SharedEvent.RequestLibraryUpdate -> requestUpdateLibrary()
-                    is RootComponent.SharedEvent.ImportProject -> importProject(event.uri)
+                    is RootComponent.SharedEvent.RequestLibraryUpdate -> {
+                        showUpdateLibraryDialog(triggerUpdate = true)
+                    }
+                    is RootComponent.SharedEvent.ImportProject -> showImportDialog(event.uri)
                 }
             }
         }
@@ -177,9 +194,7 @@ class DefaultHomeComponent(
     }
 
     override fun importProject(uri: Uri) {
-        coroutineScope.launch {
-            _event.trySend(HomeComponent.Event.ImportProject(uri))
-        }
+        showImportDialog(uri)
     }
 
     override fun loadWithProgress(translationIds: List<String>) {
@@ -217,7 +232,27 @@ class DefaultHomeComponent(
     }
 
     override fun requestUpdateLibrary() {
-        _event.trySend(HomeComponent.Event.OpenUpdateLibrary)
+        showUpdateLibraryDialog(triggerUpdate = true)
+    }
+
+    override fun showFeedbackDialog() {
+        dialogNavigation.activate(HomeComponent.DialogConfig.Feedback)
+    }
+
+    override fun showImportDialog(projectUri: Uri?) {
+        dialogNavigation.activate(
+            HomeComponent.DialogConfig.Import(projectUri?.toString())
+        )
+    }
+
+    override fun showUpdateLibraryDialog(triggerUpdate: Boolean) {
+        dialogNavigation.activate(
+            HomeComponent.DialogConfig.UpdateLibrary(triggerUpdate)
+        )
+    }
+
+    override fun dismissDialog() {
+        dialogNavigation.dismiss()
     }
 
     override fun logout() {
@@ -415,5 +450,41 @@ class DefaultHomeComponent(
 
     private fun getTargetTranslation(translationId: String): TargetTranslation? {
         return translator.getTargetTranslation(translationId)
+    }
+
+    private fun createDialogChild(
+        config: HomeComponent.DialogConfig,
+        componentContext: ComponentContext
+    ): HomeComponent.DialogChild = when (config) {
+        is HomeComponent.DialogConfig.Feedback -> HomeComponent.DialogChild.Feedback(
+            component = DefaultFeedbackComponent(
+                componentContext = componentContext
+            )
+        )
+        is HomeComponent.DialogConfig.Import -> HomeComponent.DialogChild.Import(
+            component = DefaultImportComponent(
+                componentContext = componentContext,
+                projectUri = config.projectUri?.toUri(),
+                onResult = ::onImportResult
+            )
+        )
+        is HomeComponent.DialogConfig.UpdateLibrary -> HomeComponent.DialogChild.UpdateLibrary(
+            component = DefaultUpdateLibraryComponent(
+                componentContext = componentContext,
+                triggerUpdate = config.triggerUpdate
+            )
+        )
+    }
+
+    private fun onImportResult(result: ImportComponent.Result) {
+        when (result) {
+            is ImportComponent.Result.MergeConflict -> {
+                dismissDialog()
+                openProject(result.translationId, true)
+            }
+            is ImportComponent.Result.ProjectsImported -> {
+                loadWithProgress(result.translationIds)
+            }
+        }
     }
 }

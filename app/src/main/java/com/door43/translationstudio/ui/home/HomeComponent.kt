@@ -1,10 +1,14 @@
 package com.door43.translationstudio.ui.home
 
 import android.net.Uri
+import com.arkivanov.decompose.router.slot.ChildSlot
+import com.arkivanov.decompose.value.Value
 import com.door43.translationstudio.core.Progress
 import com.door43.translationstudio.core.TargetTranslation
+import com.door43.translationstudio.ui.dialogs.FeedbackComponent
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.serialization.Serializable
 import java.io.File
 
 enum class ProjectSort {
@@ -34,6 +38,7 @@ interface HomeComponent {
     val state: StateFlow<HomeState>
     val event: Flow<Event>
     val progress: StateFlow<Progress?>
+    val dialogSlot: Value<ChildSlot<*, DialogChild>>
 
     val projectSortOptions: List<ProjectSort>
     val bookSortOptions: List<BookSort>
@@ -49,6 +54,11 @@ interface HomeComponent {
     fun loadWithProgress(translationIds: List<String>)
     fun hideProjectInfo()
     fun requestUpdateLibrary()
+
+    fun showFeedbackDialog()
+    fun showImportDialog(projectUri: Uri? = null)
+    fun showUpdateLibraryDialog(triggerUpdate: Boolean = false)
+    fun dismissDialog()
 
     fun onNewTranslation()
     fun onChangeTranslationLanguage(
@@ -80,8 +90,24 @@ interface HomeComponent {
 
     sealed interface Event {
         data class SnackbarMessage(val message: String) : Event
-        data class ImportProject(val uri: Uri) : Event
-        data object OpenUpdateLibrary : Event
+    }
+
+    @Serializable
+    sealed interface DialogConfig {
+        @Serializable
+        data object Feedback : DialogConfig
+
+        @Serializable
+        data class Import(val projectUri: String? = null) : DialogConfig
+
+        @Serializable
+        data class UpdateLibrary(val triggerUpdate: Boolean = false) : DialogConfig
+    }
+
+    sealed interface DialogChild {
+        data class Feedback(val component: FeedbackComponent) : DialogChild
+        data class Import(val component: ImportComponent) : DialogChild
+        data class UpdateLibrary(val component: UpdateLibraryComponent) : DialogChild
     }
 
     sealed interface Result {

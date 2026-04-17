@@ -2,10 +2,10 @@ package com.door43.translationstudio.ui.home
 
 import android.app.Application
 import android.net.Uri
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
+import com.arkivanov.decompose.ComponentContext
+import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.door43.data.IDirectoryProvider
-import com.door43.translationstudio.App.Companion.deviceLanguageCode
+import com.door43.translationstudio.App
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.ProgressManager
 import com.door43.translationstudio.core.ProgressOwner
@@ -14,15 +14,18 @@ import com.door43.translationstudio.core.TargetTranslationMigrator
 import com.door43.translationstudio.core.TaskHandle
 import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.ui.launchWithProgress
+import com.door43.translationstudio.ui.navigation.ComponentScope
 import com.door43.usecases.AdvancedGogsRepoSearch
 import com.door43.usecases.CloneRepository
 import com.door43.usecases.ImportProjects
 import com.door43.usecases.RegisterSSHKeys
 import com.door43.util.FileUtilities
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
@@ -37,73 +40,47 @@ import java.io.File
 import java.io.IOException
 import java.security.InvalidParameterException
 
-data class MergeConflict(
-    val translation: TargetTranslation,
-    val hasMergeConflict: Boolean,
-    val isFromServer: Boolean,
-    val onResolve: () -> Unit,
-    val onOverwrite: () -> Unit,
-    val onCancel: () -> Unit
-)
-
-data class ImportState(
-    val mergeConflict: MergeConflict? = null,
-    val sourceConflict: ImportProjects.ImportSourceResult? = null,
-    val resultMessage: Pair<String, String>? = null,
-    val backups: List<File> = emptyList(),
-    val repositories: List<RepositoryItem> = emptyList(),
-    val repoToImport: RepositoryItem? = null
-)
-
-sealed interface ImportAction {
-    data class ImportProject(val uri: Uri, val overwrite: Boolean) : ImportAction
-    data class ImportSourceUri(val uri: Uri, val overwrite: Boolean) : ImportAction
-    data class ImportBackup(val backup: File) : ImportAction
-    data class SearchRepositories(val user: String, val repo: String) : ImportAction
-    data class ImportRepo(
-        val repo: RepositoryItem,
-        val accepted: Boolean,
-        val overwrite: Boolean
-    ) : ImportAction
-    data object RegisterKeys : ImportAction
-    data object ClearResult : ImportAction
-    data object ClearMergeConflict : ImportAction
-    data object ClearSourceConflict : ImportAction
-    data object ClearImportRepo : ImportAction
-}
-
-sealed interface ImportEvent {
-    data class ResolveMergeConflict(val translationId: String) : ImportEvent
-    data class ProjectImported(val translationId: String) : ImportEvent
-    data object AuthRequested : ImportEvent
-}
-
-class ImportViewModel(
-    private val translator: Translator,
-    private val advancedGogsRepoSearch: AdvancedGogsRepoSearch,
-    private val cloneRepository: CloneRepository,
-    private val registerSSHKeys: RegisterSSHKeys,
-    private val importProjects: ImportProjects,
-    private val library: Door43Client,
-    private val directoryProvider: IDirectoryProvider,
-    private val targetTranslationMigrator: TargetTranslationMigrator
-) : ViewModel(), KoinComponent, ProgressOwner {
+class DefaultImportComponent(
+    componentContext: ComponentContext,
+    projectUri: Uri?,
+    private val onResult: (ImportComponent.Result) -> Unit
+) : ImportComponent,
+    ComponentContext by componentContext,
+    ComponentScope, ProgressOwner, KoinComponent {
 
     private val application: Application by inject()
+    private val translator: Translator by inject()
+    private val advancedGogsRepoSearch: AdvancedGogsRepoSearch by inject()
+    private val cloneRepository: CloneRepository by inject()
+    private val registerSSHKeys: RegisterSSHKeys by inject()
+    private val importProjects: ImportProjects by inject()
+    private val library: Door43Client by inject()
+    private val directoryProvider: IDirectoryProvider by inject()
+    private val targetTranslationMigrator: TargetTranslationMigrator by inject()
 
-    private val progressManager = ProgressManager(viewModelScope)
+    override val coroutineScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
+
+    private val progressManager = ProgressManager(coroutineScope)
     override val progress get() = progressManager.progress
 
-    private val _state = MutableStateFlow(ImportState())
-    val state: StateFlow<ImportState> = _state.asStateFlow()
+    private val _state = MutableStateFlow(ImportComponent.State())
+    override val state = _state.asStateFlow()
 
-    private val _event = Channel<ImportEvent>(Channel.BUFFERED)
-    val event = _event.receiveAsFlow()
+    private val _event = Channel<ImportComponent.Event>(Channel.BUFFERED)
+    override val event = _event.receiveAsFlow()
 
     init {
-        viewModelScope.launch {
+        coroutineScope.launch {
             val backups = getBackupTranslations().sorted()
             _state.update { it.copy(backups = backups) }
+        }
+
+        projectUri?.let { uri ->
+            importProject(uri, false)
+        }
+
+        lifecycle.doOnDestroy {
+            coroutineScope.cancel()
         }
     }
 
@@ -111,27 +88,33 @@ class ImportViewModel(
         progressManager.runTask(message, block)
     }
 
-    fun onAction(action: ImportAction) {
+    override fun onAction(action: ImportComponent.Action) {
         when (action) {
-            is ImportAction.ImportProject -> importProject(action.uri, action.overwrite)
-            is ImportAction.ImportSourceUri -> importSource(action.uri, action.overwrite)
-            is ImportAction.ImportBackup -> importBackup(action.backup)
-            is ImportAction.SearchRepositories -> searchRepositories(
+            is ImportComponent.Action.ImportProject -> importProject(action.uri, action.overwrite)
+            is ImportComponent.Action.ImportSourceUri -> importSource(action.uri, action.overwrite)
+            is ImportComponent.Action.ImportBackup -> importBackup(action.backup)
+            is ImportComponent.Action.SearchRepositories -> searchRepositories(
                 action.user,
                 action.repo
             )
-            is ImportAction.ImportRepo -> importRepository(
+            is ImportComponent.Action.ImportRepo -> importRepository(
                 action.repo,
                 action.accepted,
                 action.overwrite
             )
-            is ImportAction.RegisterKeys -> forceRegisterSSHKeys()
-            is ImportAction.ClearResult -> _state.update {
+            is ImportComponent.Action.RegisterKeys -> forceRegisterSSHKeys()
+            is ImportComponent.Action.ClearResult -> _state.update {
                 it.copy(resultMessage = null, repositories = emptyList())
             }
-            is ImportAction.ClearMergeConflict -> _state.update { it.copy(mergeConflict = null) }
-            is ImportAction.ClearSourceConflict -> _state.update { it.copy(sourceConflict = null) }
-            is ImportAction.ClearImportRepo -> _state.update { it.copy(repoToImport = null) }
+            is ImportComponent.Action.ClearMergeConflict -> _state.update { it.copy(mergeConflict = null) }
+            is ImportComponent.Action.ClearSourceConflict -> _state.update { it.copy(sourceConflict = null) }
+            is ImportComponent.Action.ClearImportRepo -> _state.update { it.copy(repoToImport = null) }
+            is ImportComponent.Action.UsfmProjectsImported -> {
+                onResult(ImportComponent.Result.ProjectsImported(action.translationIds))
+            }
+            is ImportComponent.Action.UsfmMergeConflict -> {
+                onResult(ImportComponent.Result.MergeConflict(action.translationId))
+            }
         }
     }
 
@@ -170,7 +153,7 @@ class ImportViewModel(
                                     }
                                 },
                                 onCancel = {
-                                    viewModelScope.launch {
+                                    coroutineScope.launch {
                                         resetToMaster()
                                     }
                                 }
@@ -178,9 +161,9 @@ class ImportViewModel(
                         }
                     }
                     result.success -> {
-                        _event.trySend(ImportEvent.ProjectImported(
-                            result.importedSlug!!
-                        ))
+                        result.importedSlug?.let {
+                            onResult(ImportComponent.Result.ProjectsImported(listOf(it)))
+                        }
                         updateResult(
                             application.getString(R.string.import_from_storage),
                             application.getString(R.string.import_success) +
@@ -266,8 +249,8 @@ class ImportViewModel(
         val repoName = repository.fullName.split("/".toRegex())
         var projectName = ""
         var languageName = ""
-        var code = "en" // default font language if language is not found
-        var direction = "ltr" // default font language direction if language is not found
+        var code = "en"
+        var direction = "ltr"
         var unsupportedTag = ""
         var targetTranslationSlug = ""
 
@@ -281,7 +264,7 @@ class ImportViewModel(
                 val resourceTypeSlug = TargetTranslation.getResourceTypeFromId(
                     targetTranslationSlug
                 )
-                if (resourceTypeSlug != "text") { // we only support text
+                if (resourceTypeSlug != "text") {
                     unsupportedTag = when (resourceTypeSlug) {
                         "tw" -> application.getString(R.string.translation_words)
                         "tn" -> application.getString(R.string.label_translation_notes)
@@ -291,7 +274,7 @@ class ImportViewModel(
                 }
 
                 val project = library.index.getProject(
-                    sourceLanguageSlug = deviceLanguageCode,
+                    sourceLanguageSlug = App.deviceLanguageCode,
                     projectSlug = projectSlug,
                     enableDefaultLanguage = true
                 )
@@ -391,7 +374,7 @@ class ImportViewModel(
                                                     }
                                                 },
                                                 onCancel = {
-                                                    viewModelScope.launch {
+                                                    coroutineScope.launch {
                                                         resetToMaster()
                                                     }
                                                 }
@@ -407,12 +390,13 @@ class ImportViewModel(
                                     reportImportFailed()
                                 }
                             } else {
-                                // restore the new target translation
                                 try {
                                     translator.restoreTargetTranslation(tempTargetTranslation)
-                                    _event.trySend(ImportEvent.ProjectImported(
-                                        tempTargetTranslation.id
-                                    ))
+                                    onResult(
+                                        ImportComponent.Result.ProjectsImported(
+                                            listOf(tempTargetTranslation.id)
+                                        )
+                                    )
                                     updateResult(
                                         title = application.getString(R.string.import_from_door43),
                                         message = application.getString(R.string.title_import_success)
@@ -441,7 +425,7 @@ class ImportViewModel(
                     }
                 } else {
                     _state.update { it.copy(repoToImport = repo) }
-                    _event.trySend(ImportEvent.AuthRequested)
+                    _event.trySend(ImportComponent.Event.AuthRequested)
                 }
             }
             else -> {
@@ -463,9 +447,7 @@ class ImportViewModel(
     private fun resolveMergeConflict() {
         val result = _state.value.mergeConflict ?: return
         if (result.hasMergeConflict) {
-            _event.trySend(
-                ImportEvent.ResolveMergeConflict(result.translation.id)
-            )
+            onResult(ImportComponent.Result.MergeConflict(result.translation.id))
         } else {
             val title = if (result.isFromServer) {
                 application.getString(R.string.import_from_door43)
@@ -521,7 +503,7 @@ class ImportViewModel(
             Logger.i(this.javaClass.name, "SSH keys were registered with the server")
             onSuccess()
         } else {
-            _event.trySend(ImportEvent.AuthRequested)
+            _event.trySend(ImportComponent.Event.AuthRequested)
         }
     }
 

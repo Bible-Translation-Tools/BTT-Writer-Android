@@ -2,20 +2,24 @@ package com.door43.translationstudio.ui.home
 
 import android.app.Application
 import android.net.Uri
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
+import com.arkivanov.decompose.ComponentContext
+import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.ProgressManager
 import com.door43.translationstudio.core.ProgressOwner
 import com.door43.translationstudio.core.TaskHandle
 import com.door43.translationstudio.ui.launchWithProgress
+import com.door43.translationstudio.ui.navigation.ComponentScope
 import com.door43.usecases.CheckForLatestRelease
 import com.door43.usecases.DownloadIndex
 import com.door43.usecases.DownloadLatestRelease
 import com.door43.usecases.UpdateCatalogs
 import com.door43.usecases.UpdateSource
 import com.door43.util.FileUtilities
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -25,62 +29,56 @@ import kotlinx.coroutines.withContext
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
-data class UpdateState(
-    val resultMessage: Pair<String, String>? = null,
-    val latestRelease: CheckForLatestRelease.Release? = null,
-    val updateSourceResult: UpdateSource.Result? = null
-)
-
-sealed interface UpdateAction {
-    data object UpdateSource : UpdateAction
-    data class ImportIndex(val uri: Uri) : UpdateAction
-    data object DownloadIndex : UpdateAction
-    data object UpdateLanguages : UpdateAction
-    data object CheckAppUpdate : UpdateAction
-    data class DownloadLatestRelease(val release: CheckForLatestRelease.Release) : UpdateAction
-    data object ClearResult : UpdateAction
-    data object ClearLatestRelease : UpdateAction
-    data object ClearUpdateSourceResult : UpdateAction
-}
-
-sealed interface UpdateEvent {
-    data object IndexUpdated : UpdateEvent
-}
-
-class UpdateLibraryViewModel(
-    private val downloadIndex: DownloadIndex,
-    private val updateCatalogs: UpdateCatalogs,
-    private val checkForLatestRelease: CheckForLatestRelease,
-    private val downloadLatestRelease: DownloadLatestRelease,
-    private val updateSource: UpdateSource
-) : ViewModel(), KoinComponent, ProgressOwner {
+class DefaultUpdateLibraryComponent(
+    componentContext: ComponentContext,
+    triggerUpdate: Boolean = false,
+) : UpdateLibraryComponent,
+    ComponentContext by componentContext,
+    ComponentScope, ProgressOwner, KoinComponent {
 
     private val application: Application by inject()
+    private val downloadIndex: DownloadIndex by inject()
+    private val updateCatalogs: UpdateCatalogs by inject()
+    private val checkForLatestRelease: CheckForLatestRelease by inject()
+    private val downloadLatestRelease: DownloadLatestRelease by inject()
+    private val updateSource: UpdateSource by inject()
 
-    private val progressManager = ProgressManager(viewModelScope)
+    override val coroutineScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
+
+    private val progressManager = ProgressManager(coroutineScope)
     override val progress get() = progressManager.progress
 
-    private val _state = MutableStateFlow(UpdateState())
-    val state = _state.asStateFlow()
+    private val _state = MutableStateFlow(UpdateLibraryComponent.UpdateState())
+    override val state = _state.asStateFlow()
 
-    private val _event = Channel<UpdateEvent>(Channel.BUFFERED)
-    val event = _event.receiveAsFlow()
+    private val _event = Channel<UpdateLibraryComponent.UpdateEvent>(Channel.BUFFERED)
+    override val event = _event.receiveAsFlow()
+
+    init {
+        if (triggerUpdate) {
+            updateSource()
+        }
+
+        lifecycle.doOnDestroy {
+            coroutineScope.cancel()
+        }
+    }
 
     override suspend fun runTask(message: String?, block: suspend (TaskHandle) -> Unit) {
         progressManager.runTask(message, block)
     }
 
-    fun onAction(action: UpdateAction) {
+    override fun onAction(action: UpdateLibraryComponent.UpdateAction) {
         when (action) {
-            is UpdateAction.ImportIndex -> importIndex(action.uri)
-            is UpdateAction.DownloadLatestRelease -> downloadLatestRelease(action.release)
-            is UpdateAction.UpdateSource -> updateSource()
-            is UpdateAction.DownloadIndex -> downloadIndex()
-            is UpdateAction.UpdateLanguages -> updateLanguages()
-            is UpdateAction.CheckAppUpdate -> checkAppUpdate()
-            is UpdateAction.ClearResult -> _state.update { it.copy(resultMessage = null) }
-            is UpdateAction.ClearLatestRelease -> _state.update { it.copy(latestRelease = null) }
-            is UpdateAction.ClearUpdateSourceResult -> _state.update {
+            is UpdateLibraryComponent.UpdateAction.ImportIndex -> importIndex(action.uri)
+            is UpdateLibraryComponent.UpdateAction.DownloadLatestRelease -> downloadLatestRelease(action.release)
+            is UpdateLibraryComponent.UpdateAction.UpdateSource -> updateSource()
+            is UpdateLibraryComponent.UpdateAction.DownloadIndex -> downloadIndex()
+            is UpdateLibraryComponent.UpdateAction.UpdateLanguages -> updateLanguages()
+            is UpdateLibraryComponent.UpdateAction.CheckAppUpdate -> checkAppUpdate()
+            is UpdateLibraryComponent.UpdateAction.ClearResult -> _state.update { it.copy(resultMessage = null) }
+            is UpdateLibraryComponent.UpdateAction.ClearLatestRelease -> _state.update { it.copy(latestRelease = null) }
+            is UpdateLibraryComponent.UpdateAction.ClearUpdateSourceResult -> _state.update {
                 it.copy(updateSourceResult = null)
             }
         }
@@ -119,7 +117,7 @@ class UpdateLibraryViewModel(
                     downloadIndex.import(uri)
                 }
                 if (success) {
-                    _event.trySend(UpdateEvent.IndexUpdated)
+                    _event.trySend(UpdateLibraryComponent.UpdateEvent.IndexUpdated)
                 } else {
                     updateResultMessage(
                         title = application.getString(R.string.error),
@@ -145,7 +143,7 @@ class UpdateLibraryViewModel(
                 }
             }
             if (success) {
-                _event.trySend(UpdateEvent.IndexUpdated)
+                _event.trySend(UpdateLibraryComponent.UpdateEvent.IndexUpdated)
             } else {
                 updateResultMessage(
                     title = application.getString(R.string.error),
@@ -182,7 +180,9 @@ class UpdateLibraryViewModel(
     }
 
     private fun checkAppUpdate() {
-        launchWithProgress {
+        launchWithProgress(
+            application.getString(R.string.checking_for_updates)
+        ) {
             val result = withContext(Dispatchers.IO) {
                 checkForLatestRelease.execute()
             }

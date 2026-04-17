@@ -1,6 +1,5 @@
 package com.door43.translationstudio.ui.home
 
-import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -38,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.ui.components.HomeSidebar
@@ -60,18 +60,14 @@ fun HomeScreen(
 
     val progress by component.progress.collectAsStateWithLifecycle()
 
-    var showFeedbackDialog by rememberSaveable { mutableStateOf(false) }
-    var showImportDialog by rememberSaveable { mutableStateOf(false) }
-    var showUpdateLibraryDialog by rememberSaveable { mutableStateOf(false) }
-    var triggerUpdateLibrary by rememberSaveable { mutableStateOf(false) }
+    val dialogSlot by component.dialogSlot.subscribeAsState()
 
-    var projectToImport by remember { mutableStateOf<Uri?>(null) }
     var showExitConfirmation by rememberSaveable { mutableStateOf(false) }
 
     val menuItems = rememberHomeMenuItems(
-        onUpdateClick = { showUpdateLibraryDialog = true },
-        onImport = { showImportDialog = true },
-        onFeedback = { showFeedbackDialog = true },
+        onUpdateClick = { component.showUpdateLibraryDialog() },
+        onImport = { component.showImportDialog() },
+        onFeedback = { component.showFeedbackDialog() },
         onShareApp = component::shareApp,
         onLogout = component::logout,
         onSettings = component::openSettings
@@ -88,14 +84,6 @@ fun HomeScreen(
             when (event) {
                 is HomeComponent.Event.SnackbarMessage -> {
                     snackbarHostState.showSnackbar(event.message)
-                }
-                is HomeComponent.Event.ImportProject -> {
-                    showImportDialog = true
-                    projectToImport = event.uri
-                }
-                is HomeComponent.Event.OpenUpdateLibrary -> {
-                    showUpdateLibraryDialog = true
-                    triggerUpdateLibrary = true
                 }
             }
         }
@@ -223,33 +211,27 @@ fun HomeScreen(
         }
     }
 
-    if (showFeedbackDialog) {
-        FeedbackDialog(
-            onDismiss = { showFeedbackDialog = false }
-        )
-    }
-
-    if (showImportDialog) {
-        ImportDialog(
-            onDismiss = { showImportDialog = false },
-            onMergeConflict = {
-                showImportDialog = false
-                component.openProject(it, true)
-            },
-            onProjectsImported = component::loadWithProgress,
-            projectImportUri = projectToImport,
-            onProjectUriConsumed = { projectToImport = null }
-        )
-    }
-
-    if (showUpdateLibraryDialog) {
-        UpdateLibraryDialog(
-            triggerUpdate = triggerUpdateLibrary,
-            triggerUpdateConsumed = { triggerUpdateLibrary = false },
-            onDismiss = {
-                showUpdateLibraryDialog = false
+    dialogSlot.child?.instance?.let { child ->
+        when (child) {
+            is HomeComponent.DialogChild.Feedback -> {
+                FeedbackDialog(
+                    component = child.component,
+                    onDismiss = component::dismissDialog
+                )
             }
-        )
+            is HomeComponent.DialogChild.Import -> {
+                ImportDialog(
+                    component = child.component,
+                    onDismiss = component::dismissDialog
+                )
+            }
+            is HomeComponent.DialogChild.UpdateLibrary -> {
+                UpdateLibraryDialog(
+                    component = child.component,
+                    onDismiss = component::dismissDialog
+                )
+            }
+        }
     }
 
     if (showExitConfirmation) {
@@ -259,9 +241,7 @@ fun HomeScreen(
             confirmText = stringResource(R.string.yes),
             dismissText = stringResource(R.string.no),
             onConfirm = component::exitApp,
-            onDismiss = {
-                showExitConfirmation = false
-            }
+            onDismiss = { showExitConfirmation = false }
         )
     }
 
