@@ -22,7 +22,17 @@ interface ImportComponent {
     val progress: StateFlow<Progress?>
     val event: Flow<Event>
 
-    fun onAction(action: Action)
+    fun importUsfm(fileUri: Uri)
+    fun importProject(uri: Uri, overwrite: Boolean)
+    fun importSource(uri: Uri, overwrite: Boolean)
+    fun importBackup(backup: File)
+    fun importRepo(repo: RepositoryItem, accepted: Boolean, overwrite: Boolean)
+    fun searchRepositories(user: String, repo: String)
+    fun registerKeys()
+    fun clearResult()
+    fun clearMergeConflict()
+    fun clearSourceConflict()
+    fun clearImportRepo()
 
     data class State(
         val mergeConflict: MergeConflict? = null,
@@ -37,27 +47,9 @@ interface ImportComponent {
         data object AuthRequested : Event
     }
 
-    sealed interface Action {
-        data class ImportProject(val uri: Uri, val overwrite: Boolean) : Action
-        data class ImportSourceUri(val uri: Uri, val overwrite: Boolean) : Action
-        data class ImportBackup(val backup: File) : Action
-        data class SearchRepositories(val user: String, val repo: String) : Action
-        data class ImportRepo(
-            val repo: RepositoryItem,
-            val accepted: Boolean,
-            val overwrite: Boolean
-        ) : Action
-        data object RegisterKeys : Action
-        data object ClearResult : Action
-        data object ClearMergeConflict : Action
-        data object ClearSourceConflict : Action
-        data object ClearImportRepo : Action
-        data class UsfmProjectsImported(val translationIds: List<String>) : Action
-        data class UsfmMergeConflict(val translationId: String) : Action
-    }
-
     sealed interface Result {
         data class MergeConflict(val translationId: String) : Result
         data class ProjectsImported(val translationIds: List<String>) : Result
+        data class OpenUsfmImport(val fileUri: String) : Result
     }
 }

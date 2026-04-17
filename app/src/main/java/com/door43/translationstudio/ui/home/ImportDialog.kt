@@ -41,8 +41,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
-import com.door43.translationstudio.ui.dialogs.ConfirmDialog
 import com.door43.translationstudio.ui.dialogs.ActionDialog
+import com.door43.translationstudio.ui.dialogs.ConfirmDialog
 import com.door43.translationstudio.ui.dialogs.OverlayDialog
 import com.door43.translationstudio.ui.dialogs.ProgressDialog
 
@@ -52,7 +52,7 @@ private const val IMPORT_INFO_URL =
 @Composable
 fun ImportDialog(
     component: ImportComponent,
-    onDismiss: () -> Unit,
+    onDismiss: () -> Unit
 ) {
     val state by component.state.collectAsStateWithLifecycle()
     val progress by component.progress.collectAsStateWithLifecycle()
@@ -61,19 +61,17 @@ fun ImportDialog(
 
     val uriHandler = LocalUriHandler.current
 
-    var usfmUri by rememberSaveable { mutableStateOf<Uri?>(null) }
-
     val openUSFMContent = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
-        uri?.let { usfmUri = it }
+        uri?.let(component::importUsfm)
     }
 
     val openProjectContent = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         uri?.let {
-            component.onAction(ImportComponent.Action.ImportProject(it, false))
+            component.importProject(it, false)
         }
     }
 
@@ -81,7 +79,7 @@ fun ImportDialog(
         contract = ActivityResultContracts.OpenDocumentTree()
     ) { uri: Uri? ->
         uri?.let {
-            component.onAction(ImportComponent.Action.ImportSourceUri(it, false))
+            component.importSource(it, false)
         }
     }
 
@@ -183,26 +181,13 @@ fun ImportDialog(
     if (showImportServerDialog) {
         ImportFromServerDialog(
             repositories = state.repositories,
-            onSearch = { user, repo ->
-                component.onAction(
-                    ImportComponent.Action.SearchRepositories(
-                        user,
-                        repo
-                    )
-                )
-            },
+            onSearch = component::searchRepositories,
             onRepoSelected = { repo ->
-                component.onAction(
-                    ImportComponent.Action.ImportRepo(
-                        repo = repo,
-                        accepted = false,
-                        overwrite = false
-                    )
-                )
+                component.importRepo(repo, accepted = false, overwrite = false)
             },
             onDismiss = {
                 showImportServerDialog = false
-                component.onAction(ImportComponent.Action.ClearResult)
+                component.clearResult()
             }
         )
     }
@@ -212,7 +197,7 @@ fun ImportDialog(
             backups = state.backups,
             onBackupSelected = {
                 showImportBackupDialog = false
-                component.onAction(ImportComponent.Action.ImportBackup(it))
+                component.importBackup(it)
             },
             onDismiss = { showImportBackupDialog = false }
         )
@@ -225,7 +210,7 @@ fun ImportDialog(
             onDismiss = { showAuthDialog = false },
             onConfirm = {
                 showAuthDialog = false
-                component.onAction(ImportComponent.Action.RegisterKeys)
+                component.registerKeys()
             }
         )
     }
@@ -240,17 +225,9 @@ fun ImportDialog(
                 ),
                 onConfirm = {
                     unsupportedRepoAccepted = true
-                    component.onAction(
-                        ImportComponent.Action.ImportRepo(
-                            repo = repo,
-                            accepted = true,
-                            overwrite = false
-                        )
-                    )
+                    component.importRepo(repo, accepted = true, overwrite = false)
                 },
-                onDismiss = {
-                    component.onAction(ImportComponent.Action.ClearImportRepo)
-                },
+                onDismiss = component::clearImportRepo,
                 confirmText = stringResource(R.string.label_import)
             )
         }
@@ -270,7 +247,7 @@ fun ImportDialog(
             message = message,
             onDismiss = {
                 unsupportedRepoAccepted = false
-                component.onAction(ImportComponent.Action.ClearMergeConflict)
+                component.clearMergeConflict()
             },
         ) { onInfoDismiss ->
             Row(
@@ -311,13 +288,11 @@ fun ImportDialog(
             message = result.error ?: "Unknown error",
             onConfirm = {
                 result.uri?.let { uri ->
-                    component.onAction(ImportComponent.Action.ImportSourceUri(uri, true))
+                    component.importSource(uri, true)
                 }
-                component.onAction(ImportComponent.Action.ClearSourceConflict)
+                component.clearSourceConflict()
             },
-            onDismiss = {
-                component.onAction(ImportComponent.Action.ClearSourceConflict)
-            }
+            onDismiss = component::clearSourceConflict
         )
     }
 
@@ -326,7 +301,7 @@ fun ImportDialog(
             title = title,
             message = message,
             onDismiss = {
-                component.onAction(ImportComponent.Action.ClearResult)
+                component.clearResult()
                 showImportServerDialog = false
             }
         ) { onInfoDismiss ->
@@ -342,20 +317,6 @@ fun ImportDialog(
         ProgressDialog(
             message = it.message,
             progress = it.value
-        )
-    }
-
-    usfmUri?.let { uri ->
-        UsfmImportDialog(
-            uri = uri,
-            onProjectsImported = {
-                component.onAction(ImportComponent.Action.UsfmProjectsImported(it))
-                onDismiss()
-            },
-            onMergeConflict = {
-                component.onAction(ImportComponent.Action.UsfmMergeConflict(it))
-            },
-            onDismiss = { usfmUri = null }
         )
     }
 }

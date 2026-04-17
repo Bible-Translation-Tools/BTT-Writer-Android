@@ -474,6 +474,13 @@ class DefaultHomeComponent(
                 triggerUpdate = config.triggerUpdate
             )
         )
+        is HomeComponent.DialogConfig.ImportUsfm -> HomeComponent.DialogChild.ImportUsfm(
+            DefaultImportUsfmComponent(
+                componentContext = componentContext,
+                fileUri = config.fileUri,
+                onResult = ::onImportUsfmResult
+            )
+        )
     }
 
     private fun onImportResult(result: ImportComponent.Result) {
@@ -484,6 +491,23 @@ class DefaultHomeComponent(
             }
             is ImportComponent.Result.ProjectsImported -> {
                 loadWithProgress(result.translationIds)
+            }
+            is ImportComponent.Result.OpenUsfmImport -> {
+                dialogNavigation.activate(
+                    HomeComponent.DialogConfig.ImportUsfm(result.fileUri)
+                )
+            }
+        }
+    }
+
+    private fun onImportUsfmResult(result: ImportUsfmComponent.Result) {
+        when (result) {
+            is ImportUsfmComponent.Result.ProjectsImported -> {
+                loadWithProgress(result.translationIds)
+            }
+            is ImportUsfmComponent.Result.MergeConflict -> {
+                dismissDialog()
+                openProject(result.translationId, true)
             }
         }
     }

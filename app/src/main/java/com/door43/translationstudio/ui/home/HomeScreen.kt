@@ -231,6 +231,12 @@ fun HomeScreen(
                     onDismiss = component::dismissDialog
                 )
             }
+            is HomeComponent.DialogChild.ImportUsfm -> {
+                ImportUsfmDialog(
+                    component = child.component,
+                    onDismiss = component::dismissDialog
+                )
+            }
         }
     }
 

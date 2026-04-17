@@ -2,8 +2,9 @@ package com.door43.translationstudio.ui.home
 
 import android.app.Application
 import android.net.Uri
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
+import androidx.core.net.toUri
+import com.arkivanov.decompose.ComponentContext
+import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.App.Companion.deviceLanguageCode
@@ -12,20 +13,23 @@ import com.door43.translationstudio.core.MergeConflictsHandler
 import com.door43.translationstudio.core.MissingNameItem
 import com.door43.translationstudio.core.ProcessUSFM
 import com.door43.translationstudio.core.Profile
+import com.door43.translationstudio.core.Progress
 import com.door43.translationstudio.core.ProgressManager
 import com.door43.translationstudio.core.ProgressOwner
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.TaskHandle
 import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.ui.launchWithProgress
+import com.door43.translationstudio.ui.navigation.ComponentScope
 import com.door43.usecases.ImportProjects
 import com.door43.util.FileUtilities
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
 import org.koin.core.component.KoinComponent
@@ -42,90 +46,163 @@ enum class UsfmStep {
     DONE
 }
 
-data class UsfmImportState(
-    val step: UsfmStep = UsfmStep.LANGUAGE,
-    val uri: Uri? = null,
-    val targetLanguage: TargetLanguage? = null,
-    val processedResult: String = "",
-    val infoMessage: Pair<String, String>? = null,
-    val importSuccess: Boolean = false,
-    val importedTranslationIds: List<String> = emptyList(),
-    val currentMissingItem: MissingNameItem? = null,
-    val currentMissingDescription: String = "",
-    val missingNamePrompt: String? = null,
-    val existentTranslations: List<TargetTranslation> = emptyList(),
-    val languages: List<TargetLanguage> = emptyList(),
-    val filteredLanguages: List<TargetLanguage> = emptyList(),
-    val categories: List<CategoryEntry> = emptyList(),
-    val filteredCategories: List<CategoryEntry> = emptyList(),
-    val categoryStack: List<Long> = listOf(0L),
-    val started: Boolean = false
-)
+interface ImportUsfmComponent {
 
-sealed interface UsfmAction {
-    data class LanguageSelected(val language: TargetLanguage) : UsfmAction
-    data class BookSelected(val projectId: String) : UsfmAction
-    data class Search(val query: String) : UsfmAction
-    data class CategorySelected(val categoryId: Long) : UsfmAction
-    data object NavigateBack : UsfmAction
-    data object SkipBook : UsfmAction
-    data object ConfirmImport : UsfmAction
-    data class MergeImport(val overwrite: Boolean) : UsfmAction
-    data object Cleanup : UsfmAction
-    data class ProjectsImported(val translationIds: List<String>) : UsfmAction
+    val state: StateFlow<State>
+    val progress: StateFlow<Progress?>
+
+    fun languageSelected(language: TargetLanguage)
+    fun bookSelected(projectId: String)
+    fun categorySelected(categoryId: Long)
+    fun search(query: String)
+    fun navigateBack()
+    fun skipBook()
+    fun confirmImport()
+    fun mergeImport(overwrite: Boolean)
+    fun onProjectsImported(translationIds: List<String>)
+
+    data class State(
+        val step: UsfmStep = UsfmStep.LANGUAGE,
+        val uri: Uri? = null,
+        val targetLanguage: TargetLanguage? = null,
+        val processedResult: String = "",
+        val infoMessage: Pair<String, String>? = null,
+        val importSuccess: Boolean = false,
+        val importedTranslationIds: List<String> = emptyList(),
+        val currentMissingItem: MissingNameItem? = null,
+        val currentMissingDescription: String = "",
+        val missingNamePrompt: String? = null,
+        val existentTranslations: List<TargetTranslation> = emptyList(),
+        val languages: List<TargetLanguage> = emptyList(),
+        val filteredLanguages: List<TargetLanguage> = emptyList(),
+        val categories: List<CategoryEntry> = emptyList(),
+        val filteredCategories: List<CategoryEntry> = emptyList(),
+        val categoryStack: List<Long> = listOf(0L),
+        val started: Boolean = false
+    )
+
+    sealed interface Result {
+        data class ProjectsImported(val translationIds: List<String>) : Result
+        data class MergeConflict(val translationId: String) : Result
+    }
 }
 
-sealed interface UsfmEvent {
-    data class ProjectsImported(val translationIds: List<String>) : UsfmEvent
-    data class ResolveMergeConflict(val translationId: String) : UsfmEvent
-}
-
-class UsfmImportViewModel(
-    private val translator: Translator,
-    private val importProjects: ImportProjects,
-    private val library: Door43Client,
-    private val directoryProvider: IDirectoryProvider,
-    private val assetsProvider: AssetsProvider,
-    private val profile: Profile
-) : ViewModel(), KoinComponent, ProgressOwner {
+class DefaultImportUsfmComponent(
+    componentContext: ComponentContext,
+    fileUri: String,
+    private val onResult: (ImportUsfmComponent.Result) -> Unit
+) : ImportUsfmComponent,
+    ComponentContext by componentContext,
+    KoinComponent, ComponentScope, ProgressOwner {
 
     private val application: Application by inject()
+    private val translator: Translator by inject()
+    private val importProjects: ImportProjects by inject()
+    private val library: Door43Client by inject()
+    private val directoryProvider: IDirectoryProvider by inject()
+    private val assetsProvider: AssetsProvider by inject()
+    private val profile: Profile by inject()
 
-    private val progressManager = ProgressManager(viewModelScope)
+    override val coroutineScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
+
+    private val progressManager = ProgressManager(coroutineScope)
     override val progress get() = progressManager.progress
 
-    private val _state = MutableStateFlow(UsfmImportState())
-    val state: StateFlow<UsfmImportState> = _state.asStateFlow()
-
-    private val _event = Channel<UsfmEvent>(Channel.BUFFERED)
-    val event = _event.receiveAsFlow()
+    private val _state = MutableStateFlow(ImportUsfmComponent.State())
+    override val state: StateFlow<ImportUsfmComponent.State> = _state.asStateFlow()
 
     private var processUSFM: ProcessUSFM? = null
     private var missingNameCounter = 0
+
+    init {
+        startImport(fileUri.toUri())
+
+        lifecycle.doOnDestroy {
+            coroutineScope.cancel()
+        }
+    }
 
     override suspend fun runTask(message: String?, block: suspend (TaskHandle) -> Unit) {
         progressManager.runTask(message, block)
     }
 
-    fun onAction(action: UsfmAction) {
-        when (action) {
-            is UsfmAction.LanguageSelected -> processFile(action.language)
-            is UsfmAction.BookSelected -> setBook(action.projectId)
-            is UsfmAction.Search -> search(action.query)
-            is UsfmAction.CategorySelected -> navigateToCategory(action.categoryId)
-            is UsfmAction.NavigateBack -> navigateBack()
-            is UsfmAction.SkipBook -> promptNextName()
-            is UsfmAction.ConfirmImport -> doImport(false)
-            is UsfmAction.MergeImport -> doImport(action.overwrite)
-            is UsfmAction.ProjectsImported -> {
-                _event.trySend(UsfmEvent.ProjectsImported(action.translationIds))
-                cleanup()
+    override fun languageSelected(language: TargetLanguage) {
+        processFile(language)
+    }
+
+    override fun bookSelected(projectId: String) {
+        setBook(projectId)
+    }
+
+    override fun categorySelected(categoryId: Long) {
+        navigateToCategory(categoryId)
+    }
+
+    override fun search(query: String) {
+        val languages = _state.value.languages
+        if (query.isEmpty()) {
+            _state.update { it.copy(filteredLanguages = languages) }
+            return
+        }
+        val lowerQuery = query.lowercase(Locale.getDefault())
+        val filtered = languages.filter { language ->
+            language.slug.lowercase(Locale.getDefault()).startsWith(lowerQuery) ||
+                    language.name.lowercase(Locale.getDefault()).contains(lowerQuery)
+        }
+        val sorted = filtered.sortedWith(Comparator { lhs, rhs ->
+            var lhId = lhs.slug
+            var rhId = rhs.slug
+            if (lhId.lowercase(Locale.getDefault()).startsWith(lowerQuery)) {
+                lhId = "!!$lhId"
             }
-            is UsfmAction.Cleanup -> cleanup()
+            if (rhId.lowercase(Locale.getDefault()).startsWith(lowerQuery)) {
+                rhId = "!!$rhId"
+            }
+            if (lhs.name.lowercase(Locale.getDefault()).startsWith(lowerQuery)) {
+                lhId = "!$lhId"
+            }
+            if (rhs.name.lowercase(Locale.getDefault()).startsWith(lowerQuery)) {
+                rhId = "!$rhId"
+            }
+            lhId.compareTo(rhId, ignoreCase = true)
+        })
+        _state.update { it.copy(filteredLanguages = sorted) }
+    }
+
+    override fun navigateBack() {
+        val stack = _state.value.categoryStack
+        if (stack.size <= 1) return
+        val parentId = stack[stack.size - 2]
+        val categories = library.index.getProjectCategories(
+            parentId, deviceLanguageCode, "all"
+        )
+        _state.update {
+            it.copy(
+                categories = categories,
+                filteredCategories = categories,
+                categoryStack = stack.dropLast(1)
+            )
         }
     }
 
-    fun startImport(uri: Uri) {
+    override fun skipBook() {
+        promptNextName()
+    }
+
+    override fun confirmImport() {
+        doImport(false)
+    }
+
+    override fun mergeImport(overwrite: Boolean) {
+        doImport(overwrite)
+    }
+
+    override fun onProjectsImported(translationIds: List<String>) {
+        processUSFM?.cleanup()
+        onResult(ImportUsfmComponent.Result.ProjectsImported(translationIds))
+    }
+
+    private fun startImport(uri: Uri) {
         if (_state.value.started) return
         val filename = FileUtilities.getFileName(application, uri)
         val isUsfm = filename.contains(Translator.USFM_EXTENSION, ignoreCase = true)
@@ -137,7 +214,7 @@ class UsfmImportViewModel(
                     library.index.getTargetLanguages().sorted()
                 }
                 _state.update {
-                    UsfmImportState(
+                    ImportUsfmComponent.State(
                         started = true,
                         uri = uri,
                         step = UsfmStep.LANGUAGE,
@@ -298,8 +375,8 @@ class UsfmImportViewModel(
                     translator
                 )
                 if (hasConflicts) {
-                    _event.trySend(UsfmEvent.ResolveMergeConflict(it.id))
-                    cleanup()
+                    processUSFM?.cleanup()
+                    onResult(ImportUsfmComponent.Result.MergeConflict(it.id))
                     return@launchWithProgress
                 }
             }
@@ -314,37 +391,6 @@ class UsfmImportViewModel(
         }
     }
 
-    private fun search(query: String) {
-        val languages = _state.value.languages
-        if (query.isEmpty()) {
-            _state.update { it.copy(filteredLanguages = languages) }
-            return
-        }
-        val lowerQuery = query.lowercase(Locale.getDefault())
-        val filtered = languages.filter { language ->
-            language.slug.lowercase(Locale.getDefault()).startsWith(lowerQuery) ||
-                    language.name.lowercase(Locale.getDefault()).contains(lowerQuery)
-        }
-        val sorted = filtered.sortedWith(Comparator { lhs, rhs ->
-            var lhId = lhs.slug
-            var rhId = rhs.slug
-            if (lhId.lowercase(Locale.getDefault()).startsWith(lowerQuery)) {
-                lhId = "!!$lhId"
-            }
-            if (rhId.lowercase(Locale.getDefault()).startsWith(lowerQuery)) {
-                rhId = "!!$rhId"
-            }
-            if (lhs.name.lowercase(Locale.getDefault()).startsWith(lowerQuery)) {
-                lhId = "!$lhId"
-            }
-            if (rhs.name.lowercase(Locale.getDefault()).startsWith(lowerQuery)) {
-                rhId = "!$rhId"
-            }
-            lhId.compareTo(rhId, ignoreCase = true)
-        })
-        _state.update { it.copy(filteredLanguages = sorted) }
-    }
-
     private fun navigateToCategory(categoryId: Long) {
         val categories = library.index.getProjectCategories(
             categoryId, deviceLanguageCode, "all"
@@ -356,28 +402,5 @@ class UsfmImportViewModel(
                 categoryStack = it.categoryStack + categoryId
             )
         }
-    }
-
-    private fun navigateBack() {
-        val stack = _state.value.categoryStack
-        if (stack.size <= 1) return
-        val parentId = stack[stack.size - 2]
-        val categories = library.index.getProjectCategories(
-            parentId, deviceLanguageCode, "all"
-        )
-        _state.update {
-            it.copy(
-                categories = categories,
-                filteredCategories = categories,
-                categoryStack = stack.dropLast(1)
-            )
-        }
-    }
-
-    private fun cleanup() {
-        processUSFM?.cleanup()
-        processUSFM = null
-        missingNameCounter = 0
-        _state.update { UsfmImportState() }
     }
 }

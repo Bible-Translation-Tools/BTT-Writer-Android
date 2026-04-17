@@ -8,31 +8,31 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 
 interface UpdateLibraryComponent {
-    val state: StateFlow<UpdateState>
+    val state: StateFlow<State>
     val progress: StateFlow<Progress?>
-    val event: Flow<UpdateEvent>
+    val event: Flow<Event>
 
-    fun onAction(action: UpdateAction)
+    fun onAction(action: Action)
 
-    data class UpdateState(
+    data class State(
         val resultMessage: Pair<String, String>? = null,
         val latestRelease: CheckForLatestRelease.Release? = null,
         val updateSourceResult: UpdateSource.Result? = null
     )
 
-    sealed interface UpdateAction {
-        data object UpdateSource : UpdateAction
-        data class ImportIndex(val uri: Uri) : UpdateAction
-        data object DownloadIndex : UpdateAction
-        data object UpdateLanguages : UpdateAction
-        data object CheckAppUpdate : UpdateAction
-        data class DownloadLatestRelease(val release: CheckForLatestRelease.Release) : UpdateAction
-        data object ClearResult : UpdateAction
-        data object ClearLatestRelease : UpdateAction
-        data object ClearUpdateSourceResult : UpdateAction
+    sealed interface Action {
+        data object UpdateSource : Action
+        data class ImportIndex(val uri: Uri) : Action
+        data object DownloadIndex : Action
+        data object UpdateLanguages : Action
+        data object CheckAppUpdate : Action
+        data class DownloadLatestRelease(val release: CheckForLatestRelease.Release) : Action
+        data object ClearResult : Action
+        data object ClearLatestRelease : Action
+        data object ClearUpdateSourceResult : Action
     }
 
-    sealed interface UpdateEvent {
-        data object IndexUpdated : UpdateEvent
+    sealed interface Event {
+        data object IndexUpdated : Event
     }
 }

@@ -66,7 +66,7 @@ fun UpdateLibraryDialog(
         contract = ActivityResultContracts.GetContent()
     ) { uri ->
         uri?.let {
-            component.onAction(UpdateLibraryComponent.UpdateAction.ImportIndex(it))
+            component.onAction(UpdateLibraryComponent.Action.ImportIndex(it))
         }
     }
 
@@ -76,7 +76,7 @@ fun UpdateLibraryDialog(
     LaunchedEffect(component) {
         component.event.collect { event ->
             when (event) {
-                is UpdateLibraryComponent.UpdateEvent.IndexUpdated -> showIndexUpdatedDialog = true
+                is UpdateLibraryComponent.Event.IndexUpdated -> showIndexUpdatedDialog = true
             }
         }
     }
@@ -146,7 +146,7 @@ fun UpdateLibraryDialog(
                         UpdateOptionItem(
                             stringResource(R.string.update_source)
                         ) {
-                            component.onAction(UpdateLibraryComponent.UpdateAction.UpdateSource)
+                            component.onAction(UpdateLibraryComponent.Action.UpdateSource)
                         }
                         UpdateOptionItem(
                             stringResource(R.string.import_index)
@@ -156,7 +156,7 @@ fun UpdateLibraryDialog(
                         UpdateOptionItem(
                             stringResource(R.string.download_index)
                         ) {
-                            component.onAction(UpdateLibraryComponent.UpdateAction.DownloadIndex)
+                            component.onAction(UpdateLibraryComponent.Action.DownloadIndex)
                         }
                         UpdateOptionItem(
                             stringResource(R.string.download_sources)
@@ -166,13 +166,13 @@ fun UpdateLibraryDialog(
                         UpdateOptionItem(
                             stringResource(R.string.update_languages)
                         ) {
-                            component.onAction(UpdateLibraryComponent.UpdateAction.UpdateLanguages)
+                            component.onAction(UpdateLibraryComponent.Action.UpdateLanguages)
                         }
                         UpdateOptionItem(
                             text = stringResource(R.string.check_app_update),
                             textColor = MaterialTheme.colorScheme.tertiary
                         ) {
-                            component.onAction(UpdateLibraryComponent.UpdateAction.CheckAppUpdate)
+                            component.onAction(UpdateLibraryComponent.Action.CheckAppUpdate)
                         }
                     }
                 }
@@ -213,7 +213,7 @@ fun UpdateLibraryDialog(
         ActionDialog(
             title = title,
             message = message,
-            onDismiss = { component.onAction(UpdateLibraryComponent.UpdateAction.ClearResult) }
+            onDismiss = { component.onAction(UpdateLibraryComponent.Action.ClearResult) }
         ) { onInfoDismiss ->
             TextButton(
                 onClick = onInfoDismiss
@@ -228,10 +228,10 @@ fun UpdateLibraryDialog(
             title = stringResource(R.string.apk_update_available),
             message = stringResource(R.string.download_latest_apk),
             onDismiss = {
-                component.onAction(UpdateLibraryComponent.UpdateAction.ClearLatestRelease)
+                component.onAction(UpdateLibraryComponent.Action.ClearLatestRelease)
             },
             onConfirm = {
-                component.onAction(UpdateLibraryComponent.UpdateAction.DownloadLatestRelease(release))
+                component.onAction(UpdateLibraryComponent.Action.DownloadLatestRelease(release))
             }
         )
     }
@@ -245,11 +245,11 @@ fun UpdateLibraryDialog(
                 result.updatedCount
             ),
             onDismiss = {
-                component.onAction(UpdateLibraryComponent.UpdateAction.ClearUpdateSourceResult)
+                component.onAction(UpdateLibraryComponent.Action.ClearUpdateSourceResult)
             },
             onConfirm = {
                 showDownloadSourcesDialog = true
-                component.onAction(UpdateLibraryComponent.UpdateAction.ClearUpdateSourceResult)
+                component.onAction(UpdateLibraryComponent.Action.ClearUpdateSourceResult)
             }
         )
     }

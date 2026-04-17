@@ -88,40 +88,101 @@ class DefaultImportComponent(
         progressManager.runTask(message, block)
     }
 
-    override fun onAction(action: ImportComponent.Action) {
-        when (action) {
-            is ImportComponent.Action.ImportProject -> importProject(action.uri, action.overwrite)
-            is ImportComponent.Action.ImportSourceUri -> importSource(action.uri, action.overwrite)
-            is ImportComponent.Action.ImportBackup -> importBackup(action.backup)
-            is ImportComponent.Action.SearchRepositories -> searchRepositories(
-                action.user,
-                action.repo
-            )
-            is ImportComponent.Action.ImportRepo -> importRepository(
-                action.repo,
-                action.accepted,
-                action.overwrite
-            )
-            is ImportComponent.Action.RegisterKeys -> forceRegisterSSHKeys()
-            is ImportComponent.Action.ClearResult -> _state.update {
-                it.copy(resultMessage = null, repositories = emptyList())
+    override fun importUsfm(fileUri: Uri) {
+        onResult(ImportComponent.Result.OpenUsfmImport(fileUri.toString()))
+    }
+
+    override fun importProject(uri: Uri, overwrite: Boolean) {
+        importProject(uri, overwrite, application.getString(R.string.import_source_text))
+    }
+
+    override fun importSource(uri: Uri, overwrite: Boolean) {
+        launchWithProgress(
+            application.getString(R.string.import_source_text)
+        ) {
+            val result = withContext(Dispatchers.IO) {
+                importProjects.importSource(uri, overwrite)
             }
-            is ImportComponent.Action.ClearMergeConflict -> _state.update { it.copy(mergeConflict = null) }
-            is ImportComponent.Action.ClearSourceConflict -> _state.update { it.copy(sourceConflict = null) }
-            is ImportComponent.Action.ClearImportRepo -> _state.update { it.copy(repoToImport = null) }
-            is ImportComponent.Action.UsfmProjectsImported -> {
-                onResult(ImportComponent.Result.ProjectsImported(action.translationIds))
-            }
-            is ImportComponent.Action.UsfmMergeConflict -> {
-                onResult(ImportComponent.Result.MergeConflict(action.translationId))
+
+            when {
+                result.success -> {
+                    val dirName = FileUtilities.getDirectoryName(application, uri)
+                    updateResult(
+                        application.getString(R.string.success),
+                        application.getString(R.string.import_success) + " $dirName"
+                    )
+                }
+                result.hasConflict -> {
+                    _state.update { it.copy(sourceConflict = result) }
+                }
+                else -> {
+                    updateResult(
+                        application.getString(R.string.could_not_import),
+                        result.error ?: "Unknown error"
+                    )
+                }
             }
         }
+    }
+
+    override fun importBackup(backup: File) {
+        val uri = Uri.fromFile(backup)
+        val message = application.resources.getString(
+            R.string.importing_file,
+            backup.name
+        )
+        importProject(uri, false, message)
+    }
+
+    override fun importRepo(repo: RepositoryItem, accepted: Boolean, overwrite: Boolean) {
+        launchWithProgress(
+            application.getString(R.string.cloning_repository)
+        ) { handle ->
+            if (repo.isSupported || accepted) {
+                cloneRepository(repo, overwrite, handle)
+            } else {
+                _state.update { it.copy(repoToImport = repo) }
+            }
+        }
+    }
+
+    override fun searchRepositories(user: String, repo: String) {
+        launchWithProgress(
+            application.getString(R.string.searching_repositories)
+        ) { handle ->
+            val result = withContext(Dispatchers.IO) {
+                advancedGogsRepoSearch.execute(user, repo, 50) { progress, message ->
+                    handle.update(progress, message)
+                }
+            }
+            _state.update { it.copy(repositories = result.map(::mapRepository)) }
+        }
+    }
+
+    override fun registerKeys() {
+        forceRegisterSSHKeys()
+    }
+
+    override fun clearResult() {
+        _state.update { it.copy(resultMessage = null, repositories = emptyList()) }
+    }
+
+    override fun clearMergeConflict() {
+        _state.update { it.copy(mergeConflict = null) }
+    }
+
+    override fun clearSourceConflict() {
+        _state.update { it.copy(sourceConflict = null) }
+    }
+
+    override fun clearImportRepo() {
+        _state.update { it.copy(repoToImport = null) }
     }
 
     private fun importProject(
         uri: Uri,
         overwrite: Boolean,
-        message: String = application.getString(R.string.import_source_text)
+        message: String
     ) {
         launchWithProgress(message) { handle ->
             val filename = FileUtilities.getFileName(application, uri)
@@ -194,57 +255,6 @@ class DefaultImportComponent(
         }
     }
 
-    private fun importSource(uri: Uri, overwrite: Boolean) {
-        launchWithProgress(
-            application.getString(R.string.import_source_text)
-        ) {
-            val result = withContext(Dispatchers.IO) {
-                importProjects.importSource(uri, overwrite)
-            }
-
-            when {
-                result.success -> {
-                    val dirName = FileUtilities.getDirectoryName(application, uri)
-                    updateResult(
-                        application.getString(R.string.success),
-                        application.getString(R.string.import_success) + " $dirName"
-                    )
-                }
-                result.hasConflict -> {
-                    _state.update { it.copy(sourceConflict = result) }
-                }
-                else -> {
-                    updateResult(
-                        application.getString(R.string.could_not_import),
-                        result.error ?: "Unknown error"
-                    )
-                }
-            }
-        }
-    }
-
-    private fun importBackup(backup: File) {
-        val uri = Uri.fromFile(backup)
-        val message = application.resources.getString(
-            R.string.importing_file,
-            backup.name
-        )
-        importProject(uri, false, message)
-    }
-
-    private fun searchRepositories(user: String, repo: String) {
-        launchWithProgress(
-            application.getString(R.string.searching_repositories)
-        ) { handle ->
-            val result = withContext(Dispatchers.IO) {
-                advancedGogsRepoSearch.execute(user, repo, 50) { progress, message ->
-                    handle.update(progress, message)
-                }
-            }
-            _state.update { it.copy(repositories = result.map(::mapRepository)) }
-        }
-    }
-
     private fun mapRepository(repository: Repository): RepositoryItem {
         val repoName = repository.fullName.split("/".toRegex())
         var projectName = ""
@@ -309,18 +319,6 @@ class DefaultImportComponent(
             repository.isPrivate,
             unsupportedTag
         )
-    }
-
-    private fun importRepository(repo: RepositoryItem, accepted: Boolean, overwrite: Boolean) {
-        launchWithProgress(
-            application.getString(R.string.cloning_repository)
-        ) { handle ->
-            if (repo.isSupported || accepted) {
-                cloneRepository(repo, overwrite, handle)
-            } else {
-                _state.update { it.copy(repoToImport = repo) }
-            }
-        }
     }
 
     private suspend fun cloneRepository(

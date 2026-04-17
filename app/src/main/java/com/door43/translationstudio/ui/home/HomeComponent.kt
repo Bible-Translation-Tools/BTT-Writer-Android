@@ -102,12 +102,16 @@ interface HomeComponent {
 
         @Serializable
         data class UpdateLibrary(val triggerUpdate: Boolean = false) : DialogConfig
+
+        @Serializable
+        data class ImportUsfm(val fileUri: String) : DialogConfig
     }
 
     sealed interface DialogChild {
         data class Feedback(val component: FeedbackComponent) : DialogChild
         data class Import(val component: ImportComponent) : DialogChild
         data class UpdateLibrary(val component: UpdateLibraryComponent) : DialogChild
+        data class ImportUsfm(val component: ImportUsfmComponent) : DialogChild
     }
 
     sealed interface Result {

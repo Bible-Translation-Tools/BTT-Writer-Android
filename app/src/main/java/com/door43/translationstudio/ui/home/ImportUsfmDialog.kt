@@ -1,6 +1,5 @@
 package com.door43.translationstudio.ui.home
 
-import android.net.Uri
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.width
@@ -15,7 +14,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -27,44 +25,22 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
 import com.door43.translationstudio.ui.components.SearchBar
-import com.door43.translationstudio.ui.dialogs.ConfirmDialog
 import com.door43.translationstudio.ui.dialogs.ActionDialog
+import com.door43.translationstudio.ui.dialogs.ConfirmDialog
 import com.door43.translationstudio.ui.dialogs.OverlayDialog
 import com.door43.translationstudio.ui.dialogs.ProgressDialog
 import com.door43.translationstudio.ui.newtranslation.LanguagesList
 import com.door43.translationstudio.ui.newtranslation.ProjectList
-import org.koin.androidx.compose.koinViewModel
 import org.unfoldingword.door43client.models.CategoryEntry
 import org.unfoldingword.door43client.models.TargetLanguage
 
 @Composable
-fun UsfmImportDialog(
-    uri: Uri,
-    onProjectsImported: (List<String>) -> Unit,
-    onMergeConflict: (String) -> Unit,
-    onDismiss: () -> Unit,
-    viewModel: UsfmImportViewModel = koinViewModel()
+fun ImportUsfmDialog(
+    component: ImportUsfmComponent,
+    onDismiss: () -> Unit
 ) {
-    val state by viewModel.state.collectAsStateWithLifecycle()
-    val progress by viewModel.progress.collectAsStateWithLifecycle()
-
-    val onCloseDialog: () -> Unit = {
-        viewModel.onAction(UsfmAction.Cleanup)
-        onDismiss()
-    }
-
-    LaunchedEffect(uri) {
-        viewModel.startImport(uri)
-    }
-
-    LaunchedEffect(viewModel) {
-        viewModel.event.collect { event ->
-            when (event) {
-                is UsfmEvent.ProjectsImported -> onProjectsImported(event.translationIds)
-                is UsfmEvent.ResolveMergeConflict -> onMergeConflict(event.translationId)
-            }
-        }
-    }
+    val state by component.state.collectAsStateWithLifecycle()
+    val progress by component.progress.collectAsStateWithLifecycle()
 
     if (!state.started) return
 
@@ -72,13 +48,9 @@ fun UsfmImportDialog(
         UsfmStep.LANGUAGE -> {
             UsfmLanguageSelectionDialog(
                 languages = state.filteredLanguages,
-                onLanguageSelected = {
-                    viewModel.onAction(UsfmAction.LanguageSelected(it))
-                },
-                onSearch = {
-                    viewModel.onAction(UsfmAction.Search(it))
-                },
-                onDismiss = onCloseDialog
+                onLanguageSelected = component::languageSelected,
+                onSearch = component::search,
+                onDismiss = onDismiss
             )
         }
 
@@ -88,16 +60,10 @@ fun UsfmImportDialog(
                 description = state.currentMissingDescription,
                 categories = state.filteredCategories,
                 isAtRootCategory = state.categoryStack.size <= 1,
-                onProjectSelected = {
-                    viewModel.onAction(UsfmAction.BookSelected(it))
-                },
-                onCategorySelected = {
-                    viewModel.onAction(UsfmAction.CategorySelected(it))
-                },
-                onNavigateBack = {
-                    viewModel.onAction(UsfmAction.NavigateBack)
-                },
-                onSkip = { viewModel.onAction(UsfmAction.SkipBook) }
+                onProjectSelected = component::bookSelected,
+                onCategorySelected = component::categorySelected,
+                onNavigateBack = component::navigateBack,
+                onSkip = component::skipBook
             )
         }
 
@@ -106,20 +72,16 @@ fun UsfmImportDialog(
                 UsfmMergeConflictDialog(
                     message = state.processedResult,
                     conflictIds = state.existentTranslations.map { it.id },
-                    onMerge = {
-                        viewModel.onAction(UsfmAction.MergeImport(false))
-                    },
-                    onOverwrite = {
-                        viewModel.onAction(UsfmAction.MergeImport(true))
-                    },
-                    onCancel = onCloseDialog
+                    onMerge = { component.mergeImport(false) },
+                    onOverwrite = { component.mergeImport(true) },
+                    onCancel = onDismiss
                 )
             } else {
                 ConfirmDialog(
                     title = stringResource(R.string.title_processing_usfm_summary),
                     message = state.processedResult,
-                    onConfirm = { viewModel.onAction(UsfmAction.ConfirmImport) },
-                    onDismiss = onCloseDialog,
+                    onConfirm = component::confirmImport,
+                    onDismiss = onDismiss,
                     confirmText = stringResource(R.string.label_continue),
                     dismissText = stringResource(R.string.menu_cancel)
                 )
@@ -138,9 +100,9 @@ fun UsfmImportDialog(
                 ),
                 onDismiss = {
                     if (state.importSuccess) {
-                        viewModel.onAction(UsfmAction.ProjectsImported(state.importedTranslationIds))
+                        component.onProjectsImported(state.importedTranslationIds)
                     } else {
-                        onCloseDialog()
+                        onDismiss()
                     }
                 }
             ) { onInfoDismiss ->
@@ -155,7 +117,7 @@ fun UsfmImportDialog(
         ActionDialog(
             title = title,
             message = message,
-            onDismiss = onCloseDialog
+            onDismiss = onDismiss
         ) { onInfoDismiss ->
             TextButton(onClick = onInfoDismiss) {
                 Text(stringResource(R.string.dismiss))

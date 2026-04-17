@@ -48,10 +48,10 @@ class DefaultUpdateLibraryComponent(
     private val progressManager = ProgressManager(coroutineScope)
     override val progress get() = progressManager.progress
 
-    private val _state = MutableStateFlow(UpdateLibraryComponent.UpdateState())
+    private val _state = MutableStateFlow(UpdateLibraryComponent.State())
     override val state = _state.asStateFlow()
 
-    private val _event = Channel<UpdateLibraryComponent.UpdateEvent>(Channel.BUFFERED)
+    private val _event = Channel<UpdateLibraryComponent.Event>(Channel.BUFFERED)
     override val event = _event.receiveAsFlow()
 
     init {
@@ -68,17 +68,17 @@ class DefaultUpdateLibraryComponent(
         progressManager.runTask(message, block)
     }
 
-    override fun onAction(action: UpdateLibraryComponent.UpdateAction) {
+    override fun onAction(action: UpdateLibraryComponent.Action) {
         when (action) {
-            is UpdateLibraryComponent.UpdateAction.ImportIndex -> importIndex(action.uri)
-            is UpdateLibraryComponent.UpdateAction.DownloadLatestRelease -> downloadLatestRelease(action.release)
-            is UpdateLibraryComponent.UpdateAction.UpdateSource -> updateSource()
-            is UpdateLibraryComponent.UpdateAction.DownloadIndex -> downloadIndex()
-            is UpdateLibraryComponent.UpdateAction.UpdateLanguages -> updateLanguages()
-            is UpdateLibraryComponent.UpdateAction.CheckAppUpdate -> checkAppUpdate()
-            is UpdateLibraryComponent.UpdateAction.ClearResult -> _state.update { it.copy(resultMessage = null) }
-            is UpdateLibraryComponent.UpdateAction.ClearLatestRelease -> _state.update { it.copy(latestRelease = null) }
-            is UpdateLibraryComponent.UpdateAction.ClearUpdateSourceResult -> _state.update {
+            is UpdateLibraryComponent.Action.ImportIndex -> importIndex(action.uri)
+            is UpdateLibraryComponent.Action.DownloadLatestRelease -> downloadLatestRelease(action.release)
+            is UpdateLibraryComponent.Action.UpdateSource -> updateSource()
+            is UpdateLibraryComponent.Action.DownloadIndex -> downloadIndex()
+            is UpdateLibraryComponent.Action.UpdateLanguages -> updateLanguages()
+            is UpdateLibraryComponent.Action.CheckAppUpdate -> checkAppUpdate()
+            is UpdateLibraryComponent.Action.ClearResult -> _state.update { it.copy(resultMessage = null) }
+            is UpdateLibraryComponent.Action.ClearLatestRelease -> _state.update { it.copy(latestRelease = null) }
+            is UpdateLibraryComponent.Action.ClearUpdateSourceResult -> _state.update {
                 it.copy(updateSourceResult = null)
             }
         }
@@ -117,7 +117,7 @@ class DefaultUpdateLibraryComponent(
                     downloadIndex.import(uri)
                 }
                 if (success) {
-                    _event.trySend(UpdateLibraryComponent.UpdateEvent.IndexUpdated)
+                    _event.trySend(UpdateLibraryComponent.Event.IndexUpdated)
                 } else {
                     updateResultMessage(
                         title = application.getString(R.string.error),
@@ -143,7 +143,7 @@ class DefaultUpdateLibraryComponent(
                 }
             }
             if (success) {
-                _event.trySend(UpdateLibraryComponent.UpdateEvent.IndexUpdated)
+                _event.trySend(UpdateLibraryComponent.Event.IndexUpdated)
             } else {
                 updateResultMessage(
                     title = application.getString(R.string.error),
