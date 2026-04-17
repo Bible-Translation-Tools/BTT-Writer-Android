@@ -20,9 +20,7 @@ import com.door43.translationstudio.core.TargetTranslationMigrator
 import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.rendering.RenderingProvider
-import com.door43.translationstudio.ui.dialogs.ExportViewModel
 import com.door43.translationstudio.ui.dialogs.FeedbackViewModel
-import com.door43.translationstudio.ui.translate.dialogs.SourceSelectionViewModel
 import com.door43.usecases.AdvancedGogsRepoSearch
 import com.door43.usecases.BackupRC
 import com.door43.usecases.CheckForLatestRelease
@@ -124,8 +122,6 @@ val appModule = module {
     singleOf(::UpdateApp)
 
     viewModelOf(::FeedbackViewModel)
-    viewModelOf(::ExportViewModel)
-    viewModelOf(::SourceSelectionViewModel)
 }
 
 val prodDataModule = module {

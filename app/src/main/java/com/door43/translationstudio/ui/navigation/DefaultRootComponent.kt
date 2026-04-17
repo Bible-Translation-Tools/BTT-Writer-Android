@@ -118,7 +118,8 @@ class DefaultRootComponent(
             component = DefaultTranslateComponent(
                 componentContext = componentContext,
                 translationId = config.translationId,
-                startWithMergeFilter = config.startWithMergeFilter,
+                initialViewMode = null,
+                mergeFilterOn = config.mergeFilterOn,
                 sharedFlow = sharedFlow,
                 onResult = ::onTranslateResult
             )
@@ -298,7 +299,7 @@ class DefaultRootComponent(
         navigation.bringToFront(
             Config.Translate(
                 translationId = translationId,
-                startWithMergeFilter = startWithMergeFilter,
+                mergeFilterOn = startWithMergeFilter,
             )
         )
     }

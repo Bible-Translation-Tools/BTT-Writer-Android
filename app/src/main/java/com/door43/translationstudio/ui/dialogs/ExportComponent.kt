@@ -3,8 +3,8 @@ package com.door43.translationstudio.ui.dialogs
 import android.app.Application
 import android.net.Uri
 import androidx.core.net.toUri
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
+import com.arkivanov.decompose.ComponentContext
+import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
@@ -14,12 +14,14 @@ import com.door43.translationstudio.R
 import com.door43.translationstudio.core.DownloadImages
 import com.door43.translationstudio.core.MergeConflictsHandler
 import com.door43.translationstudio.core.Profile
+import com.door43.translationstudio.core.Progress
 import com.door43.translationstudio.core.ProgressManager
 import com.door43.translationstudio.core.ProgressOwner
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.TaskHandle
 import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.ui.launchWithProgress
+import com.door43.translationstudio.ui.navigation.ComponentScope
 import com.door43.usecases.CreateRepository
 import com.door43.usecases.ExportProjects
 import com.door43.usecases.GogsLogout
@@ -27,8 +29,12 @@ import com.door43.usecases.PullTargetTranslation
 import com.door43.usecases.PushTargetTranslation
 import com.door43.usecases.RegisterSSHKeys
 import com.door43.util.FileUtilities
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -53,99 +59,141 @@ data class UploadSuccess(
     val details: String? = null
 )
 
-data class ExportState(
-    val info: DialogMessage? = null,
-    val uploadError: DialogMessage? = null,
-    val mergeConflict: DialogMessage? = null,
-    val uploadSuccess: UploadSuccess? = null
-)
+interface ExportComponent {
 
-sealed interface ExportEvent {
-    data class SnackbarMessage(val message: String) : ExportEvent
-    data class AppExport(val file: File) : ExportEvent
-    data object OnLogin : ExportEvent
-    data object OnLogout : ExportEvent
-    data object AuthRequested : ExportEvent
-}
+    val state: StateFlow<State>
+    val event: Flow<Event>
+    val progress: StateFlow<Progress?>
 
-sealed interface ExportAction {
-    data class PrintPdf(
-        val includeImages: Boolean,
-        val includeIncomplete: Boolean,
-        val uri: Uri
-    ) : ExportAction
-    data class ExportUsfm(val uri: Uri) : ExportAction
-    data class ExportProject(val uri: Uri) : ExportAction
-    data object ClearExport : ExportAction
-    data object ExportToApp : ExportAction
-    data object ExportToCloud : ExportAction
-    data class Logout(val thenLogin: Boolean) : ExportAction
-    data object RegisterKeys : ExportAction
-    data object ClearInfoMessage : ExportAction
-    data object ClearErrorMessage : ExportAction
-    data object ClearUploadSuccess : ExportAction
-    data object ResetToMaster : ExportAction
-    data object ClearMergeConflict : ExportAction
-}
-
-class ExportViewModel(
-    private val export: ExportProjects,
-    private val downloadImages: DownloadImages,
-    private val translator: Translator,
-    private val profile: Profile,
-    private val directoryProvider: IDirectoryProvider,
-    private val library: Door43Client,
-    private val gogsLogout: GogsLogout,
-    private val createRepository: CreateRepository,
-    private val pullTargetTranslation: PullTargetTranslation,
-    private val pushTargetTranslation: PushTargetTranslation,
-    private val registerSSHKeys: RegisterSSHKeys,
-    private val prefRepository: IPreferenceRepository,
     val targetTranslation: TargetTranslation
-) : ViewModel(), KoinComponent, ProgressOwner {
-
-    private val application: Application by inject()
-
-    private val progressManager = ProgressManager(viewModelScope)
-    override val progress get() = progressManager.progress
-
-    private val _state = MutableStateFlow(ExportState())
-    val state: StateFlow<ExportState> = _state.asStateFlow()
-
-    private val _event = Channel<ExportEvent>(Channel.BUFFERED)
-    val event = _event.receiveAsFlow()
-
     val projectName: String
     val projectTitle: String
+    val startFromPrint: Boolean
+
+    fun onMergeConflict()
+    fun onAction(action: Action)
+
+    data class State(
+        val info: DialogMessage? = null,
+        val uploadError: DialogMessage? = null,
+        val mergeConflict: DialogMessage? = null,
+        val uploadSuccess: UploadSuccess? = null
+    )
+
+    sealed interface Event {
+        data class SnackbarMessage(val message: String) : Event
+        data object AuthRequested : Event
+    }
+
+    sealed interface Action {
+        data class PrintPdf(
+            val includeImages: Boolean,
+            val includeIncomplete: Boolean,
+            val uri: Uri
+        ) : Action
+        data class ExportUsfm(val uri: Uri) : Action
+        data class ExportProject(val uri: Uri) : Action
+        data object ClearExport : Action
+        data object ExportToApp : Action
+        data object ExportToCloud : Action
+        data class Logout(val thenLogin: Boolean) : Action
+        data object RegisterKeys : Action
+        data object ClearInfoMessage : Action
+        data object ClearErrorMessage : Action
+        data object ClearUploadSuccess : Action
+        data object ResetToMaster : Action
+        data object ClearMergeConflict : Action
+    }
+
+    sealed interface Result {
+        data class Error(val text: String) : Result
+        data class ExportToApp(val file: File) : Result
+        data object OpenLogin : Result
+        data object Logout : Result
+        data class MergeConflict(val translationId: String) : Result
+    }
+}
+
+class DefaultExportComponent(
+    componentContext: ComponentContext,
+    translationId: String,
+    override val startFromPrint: Boolean,
+    private val onResult: (ExportComponent.Result) -> Unit
+) : ExportComponent,
+    ComponentContext by componentContext,
+    KoinComponent, ComponentScope, ProgressOwner {
+
+    private val application: Application by inject()
+    private val export: ExportProjects by inject()
+    private val downloadImages: DownloadImages by inject()
+    private val translator: Translator by inject()
+    private val profile: Profile by inject()
+    private val directoryProvider: IDirectoryProvider by inject()
+    private val library: Door43Client by inject()
+    private val gogsLogout: GogsLogout by inject()
+    private val createRepository: CreateRepository by inject()
+    private val pullTargetTranslation: PullTargetTranslation by inject()
+    private val pushTargetTranslation: PushTargetTranslation by inject()
+    private val registerSSHKeys: RegisterSSHKeys by inject()
+    private val prefRepository: IPreferenceRepository by inject()
+
+    override val coroutineScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
+
+    private val progressManager = ProgressManager(coroutineScope)
+    override val progress get() = progressManager.progress
+
+    private val _state = MutableStateFlow(ExportComponent.State())
+    override val state: StateFlow<ExportComponent.State> = _state.asStateFlow()
+
+    private val _event = Channel<ExportComponent.Event>(Channel.BUFFERED)
+    override val event = _event.receiveAsFlow()
+
+    override lateinit var targetTranslation: TargetTranslation
+    override lateinit var projectName: String
+    override lateinit var projectTitle: String
 
     init {
-        projectName = getProject()?.name ?: targetTranslation.projectId
-        projectTitle = "$projectName - ${targetTranslation.targetLanguageName}"
+        translator.getTargetTranslation(translationId)?.let { translation ->
+            targetTranslation = translation
+            projectName = getProject()?.name ?: targetTranslation.projectId
+            projectTitle = "$projectName - ${targetTranslation.targetLanguageName}"
+        } ?: run {
+            val error = application.getString(R.string.target_translation_not_found)
+            onResult(ExportComponent.Result.Error(error))
+        }
+
+        lifecycle.doOnDestroy {
+            coroutineScope.cancel()
+        }
     }
 
     override suspend fun runTask(message: String?, block: suspend (TaskHandle) -> Unit) {
         progressManager.runTask(message, block)
     }
 
-    fun onAction(action: ExportAction) {
+    override fun onMergeConflict() {
+        onResult(ExportComponent.Result.MergeConflict(targetTranslation.id))
+    }
+
+    override fun onAction(action: ExportComponent.Action) {
         when (action) {
-            is ExportAction.PrintPdf -> exportPDF(
+            is ExportComponent.Action.PrintPdf -> exportPDF(
                 action.uri,
                 action.includeImages,
                 action.includeIncomplete
             )
-            is ExportAction.ExportUsfm -> exportUSFM(action.uri)
-            is ExportAction.ExportProject -> exportProject(action.uri)
-            is ExportAction.ExportToApp -> exportToApp()
-            is ExportAction.ExportToCloud -> exportToCloud()
-            is ExportAction.ClearExport -> clearInfo()
-            is ExportAction.Logout -> logout(action.thenLogin)
-            is ExportAction.RegisterKeys -> forceRegisterSSHKeys()
-            is ExportAction.ClearInfoMessage -> clearInfo()
-            is ExportAction.ClearUploadSuccess -> clearUploadSuccess()
-            is ExportAction.ResetToMaster -> resetToMaster()
-            is ExportAction.ClearMergeConflict -> clearMergeConflict()
-            is ExportAction.ClearErrorMessage -> clearError()
+            is ExportComponent.Action.ExportUsfm -> exportUSFM(action.uri)
+            is ExportComponent.Action.ExportProject -> exportProject(action.uri)
+            is ExportComponent.Action.ExportToApp -> exportToApp()
+            is ExportComponent.Action.ExportToCloud -> exportToCloud()
+            is ExportComponent.Action.ClearExport -> clearInfo()
+            is ExportComponent.Action.Logout -> logout(action.thenLogin)
+            is ExportComponent.Action.RegisterKeys -> forceRegisterSSHKeys()
+            is ExportComponent.Action.ClearInfoMessage -> clearInfo()
+            is ExportComponent.Action.ClearUploadSuccess -> clearUploadSuccess()
+            is ExportComponent.Action.ResetToMaster -> resetToMaster()
+            is ExportComponent.Action.ClearMergeConflict -> clearMergeConflict()
+            is ExportComponent.Action.ClearErrorMessage -> clearError()
         }
     }
 
@@ -305,7 +353,7 @@ class ExportViewModel(
                 if (!directoryProvider.hasSSHKeys()) {
                     registerSSHKeys(false, handle)
                 } else {
-                    _event.trySend(ExportEvent.AuthRequested)
+                    _event.trySend(ExportComponent.Event.AuthRequested)
                 }
             }
             PullTargetTranslation.Status.NO_REMOTE_REPO -> {
@@ -369,7 +417,7 @@ class ExportViewModel(
             }
             result.status == PushTargetTranslation.Status.AUTH_FAILURE -> {
                 Logger.i(this.javaClass.name, "Authentication failed")
-                _event.trySend(ExportEvent.AuthRequested)
+                _event.trySend(ExportComponent.Event.AuthRequested)
             }
             result.status.isRejected -> {
                 Logger.i(this.javaClass.name, "Push Rejected")
@@ -405,7 +453,7 @@ class ExportViewModel(
             Logger.i(this.javaClass.name, "SSH keys were registered with the server")
             pullTargetTranslation(MergeStrategy.RECURSIVE, handle)
         } else {
-            _event.trySend(ExportEvent.AuthRequested)
+            _event.trySend(ExportComponent.Event.AuthRequested)
         }
     }
 
@@ -438,9 +486,9 @@ class ExportViewModel(
             }
 
             if (thenLogin) {
-                _event.trySend(ExportEvent.OnLogin)
+                onResult(ExportComponent.Result.OpenLogin)
             } else {
-                _event.trySend(ExportEvent.OnLogout)
+                onResult(ExportComponent.Result.Logout)
             }
         }
     }
@@ -457,7 +505,7 @@ class ExportViewModel(
                     exportFile
                 } catch (e: Exception) {
                     Logger.e(
-                        this@ExportViewModel::class.simpleName,
+                        this@DefaultExportComponent::class.simpleName,
                         "Failed to export the target translation " + targetTranslation.id,
                         e
                     )
@@ -466,9 +514,10 @@ class ExportViewModel(
             }
 
             if (exportFile?.exists() == true) {
-                _event.trySend(ExportEvent.AppExport(exportFile))
+                onResult(ExportComponent.Result.ExportToApp(exportFile))
             } else {
-                _event.trySend(ExportEvent.SnackbarMessage(
+                _event.trySend(
+                    ExportComponent.Event.SnackbarMessage(
                     application.getString(R.string.translation_export_failed)
                 ))
             }

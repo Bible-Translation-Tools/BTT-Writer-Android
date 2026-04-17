@@ -33,8 +33,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.door43.translationstudio.ui.translate.dialogs.MAX_SOURCE_ITEMS
-import com.door43.translationstudio.ui.translate.dialogs.SourceTabItem
+import com.door43.translationstudio.ui.translate.MAX_SOURCE_ITEMS
+import com.door43.translationstudio.ui.translate.SourceTabItem
 
 @Composable
 fun SourceTabRow(

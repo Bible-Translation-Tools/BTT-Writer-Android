@@ -42,37 +42,25 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Profile
-import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.Translator
 import org.koin.compose.koinInject
-import org.koin.compose.viewmodel.koinViewModel
-import org.koin.core.parameter.parametersOf
-import java.io.File
 
 private const val EXPORT_GENERIC_MIME_TYPE = "application/octet-stream"
 private const val EXPORT_PDF_MIME_TYPE: String = "application/pdf"
 
 @Composable
 fun ExportDialog(
-    targetTranslation: TargetTranslation,
-    openPrint: Boolean,
-    onDismiss: () -> Unit,
-    onExportToApp: (File) -> Unit,
-    onLogin: () -> Unit,
-    onLogout: () -> Unit,
-    onMergeConflict: () -> Unit
+    component: ExportComponent,
+    onDismiss: () -> Unit
 ) {
-    val viewModel: ExportViewModel = koinViewModel {
-        parametersOf(targetTranslation)
-    }
     val profile: Profile = koinInject()
 
-    val state by viewModel.state.collectAsStateWithLifecycle()
-    val progress by viewModel.progress.collectAsStateWithLifecycle()
+    val state by component.state.collectAsStateWithLifecycle()
+    val progress by component.progress.collectAsStateWithLifecycle()
 
     val snackbarHostState = remember { SnackbarHostState() }
 
-    var showPrintDialog by rememberSaveable { mutableStateOf(openPrint) }
+    var showPrintDialog by rememberSaveable { mutableStateOf(component.startFromPrint) }
     var showInternetUsageDialog by rememberSaveable { mutableStateOf(false) }
     var showAuthDialog by rememberSaveable { mutableStateOf(false) }
     var showLoginDialog by rememberSaveable { mutableStateOf(false) }
@@ -87,8 +75,8 @@ fun ExportDialog(
         contract = ActivityResultContracts.CreateDocument(EXPORT_PDF_MIME_TYPE),
         onResult = { uri ->
             uri?.let {
-                viewModel.onAction(
-                    ExportAction.PrintPdf(
+                component.onAction(
+                    ExportComponent.Action.PrintPdf(
                         includeImages = imagesToInclude,
                         includeIncomplete = incompleteToInclude,
                         it
@@ -103,8 +91,8 @@ fun ExportDialog(
         contract = ActivityResultContracts.CreateDocument(EXPORT_GENERIC_MIME_TYPE),
         onResult = { uri ->
             uri?.let {
-                viewModel.onAction(
-                    ExportAction.ExportUsfm(it)
+                component.onAction(
+                    ExportComponent.Action.ExportUsfm(it)
                 )
             }
         }
@@ -114,23 +102,20 @@ fun ExportDialog(
         contract = ActivityResultContracts.CreateDocument(EXPORT_GENERIC_MIME_TYPE),
         onResult = { uri ->
             uri?.let {
-                viewModel.onAction(
-                    ExportAction.ExportProject(it)
+                component.onAction(
+                    ExportComponent.Action.ExportProject(it)
                 )
             }
         }
     )
 
-    LaunchedEffect(viewModel) {
-        viewModel.event.collect { event ->
+    LaunchedEffect(component) {
+        component.event.collect { event ->
             when (event) {
-                is ExportEvent.SnackbarMessage -> {
+                is ExportComponent.Event.SnackbarMessage -> {
                     snackbarHostState.showSnackbar(event.message)
                 }
-                is ExportEvent.AppExport -> onExportToApp(event.file)
-                is ExportEvent.OnLogin -> onLogin()
-                is ExportEvent.OnLogout -> onLogout()
-                is ExportEvent.AuthRequested -> showAuthDialog = true
+                is ExportComponent.Event.AuthRequested -> showAuthDialog = true
             }
         }
     }
@@ -161,7 +146,7 @@ fun ExportDialog(
                 icon = Icons.Default.CloudUpload,
                 onClick = {
                     if (profile.gogsUser != null) {
-                        viewModel.onAction(ExportAction.ExportToCloud)
+                        component.onAction(ExportComponent.Action.ExportToCloud)
                     } else {
                         showLoginDialog = true
                     }
@@ -180,7 +165,7 @@ fun ExportDialog(
                 )
                 TextButton(
                     onClick = {
-                        viewModel.onAction(ExportAction.Logout(false))
+                        component.onAction(ExportComponent.Action.Logout(false))
                     },
                     shape = RoundedCornerShape(4.dp)
                 ) {
@@ -193,14 +178,14 @@ fun ExportDialog(
 
             HorizontalDivider()
 
-            if (!viewModel.targetTranslation.isObsProject) {
+            if (!component.targetTranslation.isObsProject) {
                 ExportOptionRow(
                     title = stringResource(id = R.string.export_to_usfm),
                     tip = stringResource(id = R.string.tip_export_to_usfm),
                     icon = Icons.Default.SdCard,
                     onClick = {
                         usfmPickerLauncher.launch(
-                            "${targetTranslation.id}.${Translator.USFM_EXTENSION}"
+                            "${component.targetTranslation.id}.${Translator.USFM_EXTENSION}"
                         )
                     }
                 )
@@ -223,7 +208,7 @@ fun ExportDialog(
                 icon = Icons.Default.SdCard,
                 onClick = {
                     projectPickerLauncher.launch(
-                        "${targetTranslation.id}.${Translator.TSTUDIO_EXTENSION}"
+                        "${component.targetTranslation.id}.${Translator.TSTUDIO_EXTENSION}"
                     )
                 }
             )
@@ -234,7 +219,7 @@ fun ExportDialog(
                 title = stringResource(id = R.string.backup_to_app),
                 icon = Icons.Default.Share,
                 onClick = {
-                    viewModel.onAction(ExportAction.ExportToApp)
+                    component.onAction(ExportComponent.Action.ExportToApp)
                 }
             )
 
@@ -258,7 +243,7 @@ fun ExportDialog(
             title = it.title,
             message = it.message,
             onDismiss = {
-                viewModel.onAction(ExportAction.ClearInfoMessage)
+                component.onAction(ExportComponent.Action.ClearInfoMessage)
             },
             buttons = { onDismiss ->
                 TextButton(onClick = onDismiss) {
@@ -273,7 +258,7 @@ fun ExportDialog(
             title = it.title,
             message = it.message,
             onDismiss = {
-                viewModel.onAction(ExportAction.ClearErrorMessage)
+                component.onAction(ExportComponent.Action.ClearErrorMessage)
             },
             buttons = { onDismiss ->
                 Row(
@@ -300,18 +285,18 @@ fun ExportDialog(
         UploadSuccessDialog(
             info = info,
             onDismiss = {
-                viewModel.onAction(ExportAction.ClearUploadSuccess)
+                component.onAction(ExportComponent.Action.ClearUploadSuccess)
             }
         )
     }
 
     if (showPrintDialog) {
         PrintDialog(
-            projectTitle = viewModel.projectTitle,
-            isObs = viewModel.targetTranslation.isObsProject,
+            projectTitle = component.projectTitle,
+            isObs = component.targetTranslation.isObsProject,
             onDismiss = {
                 showPrintDialog = false
-                if (openPrint) onDismiss()
+                if (component.startFromPrint) onDismiss()
             },
             onPrint = { includeImages, includeIncomplete ->
                 incompleteToInclude = includeIncomplete
@@ -321,7 +306,7 @@ fun ExportDialog(
                     showInternetUsageDialog = true
                 } else {
                     pdfPickerLauncher.launch(
-                        "${targetTranslation.id}.${Translator.PDF_EXTENSION}"
+                        "${component.targetTranslation.id}.${Translator.PDF_EXTENSION}"
                     )
                 }
             }
@@ -335,7 +320,7 @@ fun ExportDialog(
             onDismiss = { showInternetUsageDialog = false },
             onConfirm = {
                 pdfPickerLauncher.launch(
-                    "${targetTranslation.id}.${Translator.PDF_EXTENSION}"
+                    "${component.targetTranslation.id}.${Translator.PDF_EXTENSION}"
                 )
             }
         )
@@ -348,7 +333,7 @@ fun ExportDialog(
             onDismiss = { showAuthDialog = false },
             onConfirm = {
                 showAuthDialog = false
-                viewModel.onAction(ExportAction.RegisterKeys)
+                component.onAction(ExportComponent.Action.RegisterKeys)
             }
         )
     }
@@ -356,16 +341,16 @@ fun ExportDialog(
     if (showLoginDialog) {
         LoginOnlineDialog(
             onLogin = {
-                viewModel.onAction(ExportAction.Logout(true))
+                component.onAction(ExportComponent.Action.Logout(true))
             },
             onDismiss = { showLoginDialog = false }
         )
     }
 
     if (showFeedbackDialog) {
-        val message = "Failed to upload the translation of ${viewModel.projectName}" +
-                "into ${targetTranslation.targetLanguageName}.\n" +
-                "targetTranslation: ${targetTranslation.id}" +
+        val message = "Failed to upload the translation of ${component.projectName}" +
+                "into ${component.targetTranslation.targetLanguageName}.\n" +
+                "targetTranslation: ${component.targetTranslation.id}" +
                 "\n--------\n\n"
 
         FeedbackDialog(
@@ -378,7 +363,7 @@ fun ExportDialog(
         ActionDialog(
             title = conflict.title,
             message = conflict.message,
-            onDismiss = { viewModel.onAction(ExportAction.ClearMergeConflict) },
+            onDismiss = { component.onAction(ExportComponent.Action.ClearMergeConflict) },
             buttons = { onInfoDismiss ->
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -388,7 +373,7 @@ fun ExportDialog(
                         onClick = {
                             onInfoDismiss()
                             onDismiss()
-                            onMergeConflict()
+                            component.onMergeConflict()
                         }
                     ) {
                         Text(stringResource(R.string.yes))
@@ -396,7 +381,7 @@ fun ExportDialog(
                     TextButton(
                         onClick = {
                             onInfoDismiss()
-                            viewModel.onAction(ExportAction.ResetToMaster)
+                            component.onAction(ExportComponent.Action.ResetToMaster)
                         }
                     ) {
                         Text(stringResource(R.string.no))

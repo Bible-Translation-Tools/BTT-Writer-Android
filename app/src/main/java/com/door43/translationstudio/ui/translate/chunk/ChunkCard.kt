@@ -9,8 +9,8 @@ import androidx.compose.ui.unit.dp
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.ui.translate.ChunkItem
+import com.door43.translationstudio.ui.translate.SourceTabItem
 import com.door43.translationstudio.ui.translate.components.StackedCardFlipper
-import com.door43.translationstudio.ui.translate.dialogs.SourceTabItem
 import org.unfoldingword.resourcecontainer.ResourceContainer
 
 @Composable

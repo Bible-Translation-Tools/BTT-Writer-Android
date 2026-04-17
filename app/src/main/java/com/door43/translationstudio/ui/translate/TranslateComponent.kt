@@ -1,14 +1,15 @@
 package com.door43.translationstudio.ui.translate
 
+import com.arkivanov.decompose.router.slot.ChildSlot
 import com.arkivanov.decompose.router.stack.ChildStack
 import com.arkivanov.decompose.value.Value
 import com.door43.translationstudio.core.Chunk
 import com.door43.translationstudio.core.Progress
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.TranslationViewMode
+import com.door43.translationstudio.ui.dialogs.ExportComponent
+import com.door43.translationstudio.ui.dialogs.FeedbackComponent
 import com.door43.translationstudio.ui.translate.chunk.ChunkModeComponent
-import com.door43.translationstudio.ui.translate.dialogs.RCItem
-import com.door43.translationstudio.ui.translate.dialogs.SourceTabItem
 import com.door43.translationstudio.ui.translate.read.ReadModeComponent
 import com.door43.translationstudio.ui.translate.review.ReviewModeComponent
 import kotlinx.coroutines.channels.SendChannel
@@ -21,6 +22,7 @@ import java.io.File
 interface TranslateComponent {
 
     val stack: Value<ChildStack<*, Child>>
+    val dialogSlot: Value<ChildSlot<*, DialogChild>>
 
     val state: StateFlow<State>
     val sharedState: StateFlow<SharedState>
@@ -28,13 +30,12 @@ interface TranslateComponent {
     val event: Flow<Event>
     val eventSender: SendChannel<Event>
 
-    val startWithMergeFilter: Boolean
     val targetTranslation: TargetTranslation
 
     fun restartAutoCommitTimer()
     fun onAction(action: Action)
 
-    fun openHome(withUpdate: Boolean)
+    fun openHome(withUpdate: Boolean = false)
     fun openDraft(translationId: String)
     fun openPublishProject(translationId: String)
     fun openLogin()
@@ -42,12 +43,18 @@ interface TranslateComponent {
     fun openSettings()
     fun exportToApp(file: File)
 
+    fun showFeedbackDialog()
+    fun showSelectSourcesDialog()
+    fun showExportDialog(startFromPrint: Boolean = false)
+    fun dismissDialog()
+
     companion object {
         const val SEARCH_SOURCE = "search_source"
     }
 
     data class State(
         val viewMode: TranslationViewMode = TranslationViewMode.LOADING,
+        val mergeFilterOn: Boolean = false,
         val draftAvailable: Boolean = false,
         val showDraftAvailable: Boolean = false,
         val lastFocusChapterId: String? = null,
@@ -66,7 +73,6 @@ interface TranslateComponent {
         data class SelectSource(val sourceId: String) : Action
         data class SaveLastViewMode(val viewMode: TranslationViewMode) : Action
         data class SaveLastFocus(val chapterId: String, val frameId: String?) : Action
-        data class ConfirmSelectedSources(val selectedItems: List<RCItem>) : Action
     }
 
     sealed interface Event {
@@ -105,5 +111,23 @@ interface TranslateComponent {
 
         @Serializable
         data object Review : Config
+    }
+
+    @Serializable
+    sealed interface DialogConfig {
+        @Serializable
+        data object Feedback : DialogConfig
+
+        @Serializable
+        data class SelectSources(val translationId: String) : DialogConfig
+
+        @Serializable
+        data class Export(val translationId: String, val startFromPrint: Boolean) : DialogConfig
+    }
+
+    sealed interface DialogChild {
+        data class Feedback(val component: FeedbackComponent) : DialogChild
+        data class SelectSources(val component: SelectSourcesComponent) : DialogChild
+        data class Export(val component: ExportComponent) : DialogChild
     }
 }

@@ -3,6 +3,10 @@ package com.door43.translationstudio.ui.translate
 import android.app.Application
 import android.graphics.Typeface
 import com.arkivanov.decompose.ComponentContext
+import com.arkivanov.decompose.router.slot.SlotNavigation
+import com.arkivanov.decompose.router.slot.activate
+import com.arkivanov.decompose.router.slot.childSlot
+import com.arkivanov.decompose.router.slot.dismiss
 import com.arkivanov.decompose.router.stack.ChildStack
 import com.arkivanov.decompose.router.stack.StackNavigation
 import com.arkivanov.decompose.router.stack.childStack
@@ -27,13 +31,13 @@ import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.core.entity.SourceTranslation
 import com.door43.translationstudio.getBestFontForLanguage
+import com.door43.translationstudio.ui.dialogs.DefaultExportComponent
+import com.door43.translationstudio.ui.dialogs.DefaultFeedbackComponent
+import com.door43.translationstudio.ui.dialogs.ExportComponent
 import com.door43.translationstudio.ui.launchWithProgress
 import com.door43.translationstudio.ui.navigation.ComponentScope
 import com.door43.translationstudio.ui.navigation.RootComponent
 import com.door43.translationstudio.ui.translate.chunk.DefaultChunkModeComponent
-import com.door43.translationstudio.ui.translate.dialogs.MAX_SOURCE_ITEMS
-import com.door43.translationstudio.ui.translate.dialogs.RCItem
-import com.door43.translationstudio.ui.translate.dialogs.SourceTabItem
 import com.door43.translationstudio.ui.translate.read.DefaultReadModeComponent
 import com.door43.translationstudio.ui.translate.review.DefaultReviewModeComponent
 import kotlinx.coroutines.CoroutineScope
@@ -71,8 +75,8 @@ import java.util.TimerTask
 class DefaultTranslateComponent(
     componentContext: ComponentContext,
     translationId: String,
-    initialViewMode: TranslationViewMode? = null,
-    override val startWithMergeFilter: Boolean,
+    initialViewMode: TranslationViewMode?,
+    mergeFilterOn: Boolean,
     private val sharedFlow: SharedFlow<RootComponent.SharedEvent>,
     private val onResult: (TranslateComponent.Result) -> Unit
 ) : TranslateComponent,
@@ -92,6 +96,15 @@ class DefaultTranslateComponent(
 
     private val progressManager = ProgressManager(coroutineScope)
     override val progress get() = progressManager.progress
+
+    private val dialogNavigation = SlotNavigation<TranslateComponent.DialogConfig>()
+
+    override val dialogSlot = childSlot(
+        source = dialogNavigation,
+        serializer = TranslateComponent.DialogConfig.serializer(),
+        handleBackButton = true,
+        childFactory = ::createDialogChild
+    )
 
     private val commitOnDestroy = instanceKeeper.getOrCreate {
         CommitOnDestroyInstance()
@@ -155,6 +168,7 @@ class DefaultTranslateComponent(
             _state.update {
                 it.copy(
                     viewMode = lastViewMode,
+                    mergeFilterOn = mergeFilterOn,
                     draftAvailable = draftAvailable,
                     showDraftAvailable = draftAvailable && targetTranslation.numTranslated == 0,
                     projectTitle = projectTitle
@@ -242,7 +256,6 @@ class DefaultTranslateComponent(
             }
             is TranslateComponent.Action.SaveLastViewMode -> setLastViewMode(action.viewMode)
             is TranslateComponent.Action.SaveLastFocus -> saveLastFocus(action.chapterId, action.frameId)
-            is TranslateComponent.Action.ConfirmSelectedSources -> confirmSelectedSources(action.selectedItems)
         }
     }
 
@@ -272,6 +285,27 @@ class DefaultTranslateComponent(
 
     override fun exportToApp(file: File) {
         onResult(TranslateComponent.Result.ExportToApp(file))
+    }
+
+    override fun showFeedbackDialog() {
+        dialogNavigation.activate(TranslateComponent.DialogConfig.Feedback)
+    }
+
+    override fun showSelectSourcesDialog() {
+        dialogNavigation.activate(
+            TranslateComponent.DialogConfig.SelectSources(
+                translationId = targetTranslation.id
+            )
+        )
+    }
+
+    override fun showExportDialog(startFromPrint: Boolean) {
+        dialogNavigation.activate(
+            TranslateComponent.DialogConfig.Export(
+                translationId = targetTranslation.id,
+                startFromPrint = startFromPrint
+            )
+        )
     }
 
     private fun openUsedSourceTranslations() {
@@ -453,11 +487,9 @@ class DefaultTranslateComponent(
         )
     }
 
-    private fun confirmSelectedSources(selectedItems: List<RCItem>) {
+    private fun confirmSelectedSources(selectedIds: Set<String>) {
         launchWithProgress {
-            val selectedIds = selectedItems.mapNotNull { it.containerSlug }.toSet()
-
-            if (selectedItems.size > MAX_SOURCE_ITEMS) return@launchWithProgress
+            if (selectedIds.size > MAX_SOURCE_ITEMS) return@launchWithProgress
 
             val oldSourceTranslationIds = getOpenSourceTranslations().toSet()
             val toDelete = (oldSourceTranslationIds subtract selectedIds)
@@ -563,6 +595,76 @@ class DefaultTranslateComponent(
         }
 
         return null to null
+    }
+
+    override fun dismissDialog() {
+        dialogNavigation.dismiss()
+    }
+
+    private fun createDialogChild(
+        config: TranslateComponent.DialogConfig,
+        componentContext: ComponentContext
+    ): TranslateComponent.DialogChild = when (config) {
+        is TranslateComponent.DialogConfig.Feedback -> TranslateComponent.DialogChild.Feedback(
+            component = DefaultFeedbackComponent(
+                componentContext = componentContext
+            )
+        )
+        is TranslateComponent.DialogConfig.SelectSources -> TranslateComponent.DialogChild.SelectSources(
+            component = DefaultSelectSourcesComponent(
+                componentContext = componentContext,
+                translationId = config.translationId,
+                onResult = ::onSelectSourcesResult
+            )
+        )
+        is TranslateComponent.DialogConfig.Export -> TranslateComponent.DialogChild.Export(
+            component = DefaultExportComponent(
+                componentContext = componentContext,
+                translationId = config.translationId,
+                startFromPrint = config.startFromPrint,
+                onResult = ::onExportResult
+            )
+        )
+    }
+
+    private fun onSelectSourcesResult(result: SelectSourcesComponent.Result) {
+        when (result) {
+            is SelectSourcesComponent.Result.Error -> {
+                dismissDialog()
+                onResult(TranslateComponent.Result.Error(result.text))
+            }
+            is SelectSourcesComponent.Result.ConfirmedSources -> {
+                dismissDialog()
+                confirmSelectedSources(result.sources)
+            }
+            is SelectSourcesComponent.Result.UpdateSources -> openHome(true)
+        }
+    }
+
+    private fun onExportResult(result: ExportComponent.Result) {
+        when (result) {
+            is ExportComponent.Result.Error -> {
+                dismissDialog()
+                onResult(TranslateComponent.Result.Error(result.text))
+            }
+            is ExportComponent.Result.ExportToApp -> {
+                onResult(TranslateComponent.Result.ExportToApp(result.file))
+            }
+            is ExportComponent.Result.OpenLogin -> {
+                dismissDialog()
+                onResult(TranslateComponent.Result.OpenLogin)
+            }
+            is ExportComponent.Result.Logout -> {
+                dismissDialog()
+                onResult(TranslateComponent.Result.Logout)
+            }
+            is ExportComponent.Result.MergeConflict -> {
+                dismissDialog()
+                _state.update {
+                    it.copy(viewMode = TranslationViewMode.REVIEW, mergeFilterOn = true) // TODO Revise navigation for merge conflict
+                }
+            }
+        }
     }
 
     private inner class CommitOnDestroyInstance : InstanceKeeper.Instance {

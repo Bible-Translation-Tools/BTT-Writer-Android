@@ -35,28 +35,22 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
-import com.door43.translationstudio.core.TargetTranslation
-import com.door43.translationstudio.ui.dialogs.OverlayDialog
 import com.door43.translationstudio.ui.dialogs.ConfirmDialog
+import com.door43.translationstudio.ui.dialogs.OverlayDialog
 import com.door43.translationstudio.ui.dialogs.ProgressDialog
+import com.door43.translationstudio.ui.translate.RCItem
+import com.door43.translationstudio.ui.translate.SelectSourcesComponent
 import com.door43.translationstudio.ui.translate.components.SourceHeaderRow
 import com.door43.translationstudio.ui.translate.components.SourceItemRow
-import org.koin.androidx.compose.koinViewModel
-import org.koin.core.parameter.parametersOf
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SourceSelectionDialog(
-    targetTranslation: TargetTranslation,
-    onDismissRequest: () -> Unit,
-    onConfirm: (List<RCItem>) -> Unit,
-    onUpdateSources: () -> Unit
+    component: SelectSourcesComponent,
+    onDismiss: () -> Unit
 ) {
-    val viewModel: SourceSelectionViewModel = koinViewModel {
-        parametersOf(targetTranslation)
-    }
-    val state by viewModel.state.collectAsStateWithLifecycle()
-    val progress by viewModel.progress.collectAsStateWithLifecycle()
+    val state by component.state.collectAsStateWithLifecycle()
+    val progress by component.progress.collectAsStateWithLifecycle()
 
     val snackbarHostState = remember { SnackbarHostState() }
     var searchQuery by rememberSaveable { mutableStateOf("") }
@@ -67,6 +61,7 @@ fun SourceSelectionDialog(
 
     var sourceToDownload by rememberSaveable { mutableStateOf<RCItem?>(null) }
     var sourceToDelete by rememberSaveable { mutableStateOf<RCItem?>(null) }
+    var showUpdateSourcesDialog by rememberSaveable { mutableStateOf(false) }
 
     val uiState by remember(state.sources, searchQuery) {
         derivedStateOf {
@@ -81,20 +76,22 @@ fun SourceSelectionDialog(
     }
 
     LaunchedEffect(Unit) {
-        viewModel.onAction(SourceAction.LoadSources)
+        component.onAction(SelectSourcesComponent.Action.LoadSources)
     }
 
-    LaunchedEffect(viewModel) {
-        viewModel.event.collect {
+    LaunchedEffect(component) {
+        component.event.collect {
             when (it) {
-                is SourceEvent.SnackbarMessage -> snackbarHostState.showSnackbar(it.message)
+                is SelectSourcesComponent.Event.SnackbarMessage -> {
+                    snackbarHostState.showSnackbar(it.message)
+                }
             }
         }
     }
 
     OverlayDialog(
         snackbarHostState = snackbarHostState,
-        onDismiss = onDismissRequest
+        onDismiss = onDismiss
     ) { dismissWithKeyboard ->
         OutlinedTextField(
             value = searchQuery,
@@ -140,7 +137,7 @@ fun SourceSelectionDialog(
                     SourceItemRow(
                         item = item,
                         onTriggerSelected = {
-                            viewModel.onAction(SourceAction.ToggleSelection(it))
+                            component.onAction(SelectSourcesComponent.Action.ToggleSelection(it))
                         },
                         onTriggerDownload = { sourceToDownload = it },
                         onTriggerDelete = {
@@ -160,7 +157,7 @@ fun SourceSelectionDialog(
             verticalAlignment = Alignment.CenterVertically
         ) {
             TextButton(
-                onClick = { dismissWithKeyboard(onUpdateSources) },
+                onClick = { dismissWithKeyboard(component::onUpdateSources) },
                 modifier = Modifier.weight(1f)
             ) {
                 Text(
@@ -172,7 +169,7 @@ fun SourceSelectionDialog(
                     color = MaterialTheme.colorScheme.primary
                 )
             }
-            TextButton(onClick = { dismissWithKeyboard(onDismissRequest) }) {
+            TextButton(onClick = { dismissWithKeyboard(onDismiss) }) {
                 Text(
                     stringResource(R.string.title_cancel),
                     color = MaterialTheme.colorScheme.primary
@@ -180,9 +177,7 @@ fun SourceSelectionDialog(
             }
             TextButton(
                 onClick = {
-                    dismissWithKeyboard {
-                        onConfirm(state.sources.filter { it.selected })
-                    }
+                    dismissWithKeyboard(component::onConfirmSources)
                 }
             ) {
                 Text(
@@ -193,10 +188,12 @@ fun SourceSelectionDialog(
         }
     }
 
-    progress?.let {
-        ProgressDialog(
-            message = it.message,
-            progress = it.value
+    if (showUpdateSourcesDialog) {
+        ConfirmDialog(
+            title = stringResource(R.string.warning_title),
+            message = stringResource(R.string.update_warning),
+            onConfirm = component::onUpdateSources,
+            onDismiss = { showUpdateSourcesDialog = false }
         )
     }
 
@@ -206,7 +203,7 @@ fun SourceSelectionDialog(
             message = stringResource(R.string.download_source_language, source.title),
             onConfirm = {
                 sourceToDownload = null
-                viewModel.onAction(SourceAction.DownloadSource(source))
+                component.onAction(SelectSourcesComponent.Action.DownloadSource(source))
             },
             onDismiss = { sourceToDownload = null }
         )
@@ -218,9 +215,16 @@ fun SourceSelectionDialog(
             message = stringResource(R.string.confirm_delete_project),
             onConfirm = {
                 sourceToDelete = null
-                viewModel.onAction(SourceAction.DeleteSource(source))
+                component.onAction(SelectSourcesComponent.Action.DeleteSource(source))
             },
             onDismiss = { sourceToDelete = null }
+        )
+    }
+
+    progress?.let {
+        ProgressDialog(
+            message = it.message,
+            progress = it.value
         )
     }
 }

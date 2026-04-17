@@ -20,8 +20,8 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.ui.translate.ReviewItem
+import com.door43.translationstudio.ui.translate.SourceTabItem
 import com.door43.translationstudio.ui.translate.chunk.ChunkSourceCard
-import com.door43.translationstudio.ui.translate.dialogs.SourceTabItem
 
 @Composable
 fun ReviewCard(

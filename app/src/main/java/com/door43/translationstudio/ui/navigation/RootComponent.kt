@@ -53,7 +53,7 @@ interface RootComponent {
         @Serializable
         data class Translate(
             val translationId: String,
-            val startWithMergeFilter: Boolean = false,
+            val mergeFilterOn: Boolean = false,
         ) : Config
 
         @Serializable

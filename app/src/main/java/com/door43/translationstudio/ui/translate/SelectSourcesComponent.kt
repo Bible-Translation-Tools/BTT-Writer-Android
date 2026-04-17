@@ -1,21 +1,28 @@
-package com.door43.translationstudio.ui.translate.dialogs
+package com.door43.translationstudio.ui.translate
 
 import android.app.Application
 import android.util.Log
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
+import com.arkivanov.decompose.ComponentContext
+import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.door43.data.IPreferenceRepository
 import com.door43.translationstudio.App
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.ContainerCache
+import com.door43.translationstudio.core.Progress
 import com.door43.translationstudio.core.ProgressManager
 import com.door43.translationstudio.core.ProgressOwner
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.TaskHandle
+import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.ui.launchWithProgress
+import com.door43.translationstudio.ui.navigation.ComponentScope
 import com.door43.usecases.DownloadResourceContainers
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -48,49 +55,102 @@ data class RCItem(
     val containerSlug: String? = sourceTranslation?.resourceContainerSlug
 }
 
-data class SourceState(
-    val sources: List<RCItem> = emptyList()
-)
+interface SelectSourcesComponent {
 
-sealed interface SourceEvent {
-    data class SnackbarMessage(val message: String) : SourceEvent
+    val state: StateFlow<State>
+    val event: Flow<Event>
+    val progress: StateFlow<Progress?>
+
+    val targetTranslation: TargetTranslation
+
+    fun onUpdateSources()
+    fun onConfirmSources()
+    fun onAction(action: Action)
+
+    data class State(
+        val sources: List<RCItem> = emptyList()
+    )
+
+    sealed interface Event {
+        data class SnackbarMessage(val message: String) : Event
+    }
+
+    sealed interface Action {
+        data object LoadSources : Action
+        data class ToggleSelection(val source: RCItem) : Action
+        data class DownloadSource(val source: RCItem) : Action
+        data class DeleteSource(val source: RCItem) : Action
+    }
+
+    sealed interface Result {
+        data class Error(val text: String) : Result
+        data class ConfirmedSources(val sources: Set<String>) : Result
+        data object UpdateSources : Result
+    }
 }
 
-sealed interface SourceAction {
-    data object LoadSources : SourceAction
-    data class ToggleSelection(val source: RCItem) : SourceAction
-    data class DownloadSource(val source: RCItem) : SourceAction
-    data class DeleteSource(val source: RCItem) : SourceAction
-}
-
-class SourceSelectionViewModel(
-    private val library: Door43Client,
-    private val prefRepository: IPreferenceRepository,
-    private val downloadResourceContainers: DownloadResourceContainers,
-    private val targetTranslation: TargetTranslation
-) : ViewModel(), KoinComponent, ProgressOwner {
+class DefaultSelectSourcesComponent(
+    componentContext: ComponentContext,
+    translationId: String,
+    private val onResult: (SelectSourcesComponent.Result) -> Unit
+) : SelectSourcesComponent,
+    ComponentContext by componentContext,
+    KoinComponent, ComponentScope, ProgressOwner {
 
     private val application: Application by inject()
+    private val library: Door43Client by inject()
+    private val prefRepository: IPreferenceRepository by inject()
+    private val downloadResourceContainers: DownloadResourceContainers by inject()
+    private val translator: Translator by inject()
 
-    private val progressManager = ProgressManager(viewModelScope)
+    override val coroutineScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
+
+    private val progressManager = ProgressManager(coroutineScope)
     override val progress get() = progressManager.progress
 
-    private val _state = MutableStateFlow(SourceState())
-    val state: StateFlow<SourceState> = _state.asStateFlow()
+    private val _state = MutableStateFlow(SelectSourcesComponent.State())
+    override val state: StateFlow<SelectSourcesComponent.State> = _state.asStateFlow()
 
-    private val _event = Channel<SourceEvent>(Channel.BUFFERED)
-    val event = _event.receiveAsFlow()
+    private val _event = Channel<SelectSourcesComponent.Event>(Channel.BUFFERED)
+    override val event = _event.receiveAsFlow()
+
+    override lateinit var targetTranslation: TargetTranslation
 
     override suspend fun runTask(message: String?, block: suspend (TaskHandle) -> Unit) {
         progressManager.runTask(message, block)
     }
 
-    fun onAction(action: SourceAction) {
+    init {
+        translator.getTargetTranslation(translationId)?.let { translation ->
+            targetTranslation = translation
+        } ?: run {
+            val error = application.getString(R.string.target_translation_not_found)
+            onResult(SelectSourcesComponent.Result.Error(error))
+        }
+
+        lifecycle.doOnDestroy {
+            coroutineScope.cancel()
+        }
+    }
+
+    override fun onConfirmSources() {
+        val sourceIds = _state.value.sources
+            .filter { it.selected }
+            .mapNotNull { it.containerSlug }
+            .toSet()
+        onResult(SelectSourcesComponent.Result.ConfirmedSources(sourceIds))
+    }
+
+    override fun onUpdateSources() {
+        onResult(SelectSourcesComponent.Result.UpdateSources)
+    }
+
+    override fun onAction(action: SelectSourcesComponent.Action) {
         when (action) {
-            is SourceAction.LoadSources -> loadAvailableSources()
-            is SourceAction.ToggleSelection -> toggleSourceSelection(action.source)
-            is SourceAction.DownloadSource -> downloadSource(action.source)
-            is SourceAction.DeleteSource -> deleteSource(action.source)
+            is SelectSourcesComponent.Action.LoadSources -> loadAvailableSources()
+            is SelectSourcesComponent.Action.ToggleSelection -> toggleSourceSelection(action.source)
+            is SelectSourcesComponent.Action.DownloadSource -> downloadSource(action.source)
+            is SelectSourcesComponent.Action.DeleteSource -> deleteSource(action.source)
         }
     }
 
@@ -174,14 +234,14 @@ class SourceSelectionViewModel(
                 application.getString(R.string.download_failed)
             }
 
-            _event.trySend(SourceEvent.SnackbarMessage(message))
+            _event.trySend(SelectSourcesComponent.Event.SnackbarMessage(message))
 
             loadAvailableSources()
         }
     }
 
     private fun deleteSource(source: RCItem) {
-        viewModelScope.launch {
+        coroutineScope.launch {
             source.containerSlug?.let {
                 library.delete(it)
                 loadAvailableSources()

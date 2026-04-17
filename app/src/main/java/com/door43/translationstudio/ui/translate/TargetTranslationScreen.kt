@@ -20,11 +20,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.TranslationViewMode
 import com.door43.translationstudio.ui.components.LocalSnackbarHostState
 import com.door43.translationstudio.ui.components.rememberTranslateMenuItems
-import com.door43.translationstudio.ui.dialogs.ConfirmDialog
 import com.door43.translationstudio.ui.dialogs.ExportDialog
 import com.door43.translationstudio.ui.dialogs.FeedbackDialog
 import com.door43.translationstudio.ui.dialogs.ProgressDialog
@@ -42,17 +42,14 @@ fun TargetTranslationScreen(
     val sharedState by component.sharedState.collectAsStateWithLifecycle()
     val progress by component.progress.collectAsStateWithLifecycle()
 
+    val dialogSlot by component.dialogSlot.subscribeAsState()
+
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
 
-    var showUpdateSourcesDialog by rememberSaveable { mutableStateOf(false) }
-    var showSelectSourceDialog by rememberSaveable { mutableStateOf(false) }
     var searchRequested by remember { mutableStateOf(false) }
     var mergeConflictFilterOn by rememberSaveable { mutableStateOf(startWithMergeFilter) }
     var chunksDoneRequested by rememberSaveable { mutableStateOf(false) }
-    var showExportDialog by rememberSaveable { mutableStateOf(false) }
-    var showPrintDialog by rememberSaveable { mutableStateOf(false) }
-    var showFeedbackDialog by rememberSaveable { mutableStateOf(false) }
 
     var hasMergeConflicts by remember { mutableStateOf(false) }
 
@@ -66,19 +63,18 @@ fun TargetTranslationScreen(
     val menuItems = rememberTranslateMenuItems(
         viewMode = state.viewMode,
         draftAvailable = state.draftAvailable,
-        onHomeClick = { component.openHome(false) },
+        onHomeClick = { component.openHome() },
         onNavigateToDraft = {
             component.openDraft(component.targetTranslation.id)
         },
         onProjectPreview = {
             component.openPublishProject(component.targetTranslation.id)
         },
-        onUploadExport = { showExportDialog = true },
+        onUploadExport = component::showExportDialog,
         onPrint = {
-            showExportDialog = true
-            showPrintDialog = true
+            component.showExportDialog(true)
         },
-        onFeedback = { showFeedbackDialog = true },
+        onFeedback = component::showFeedbackDialog,
         onChunksDone = { chunksDoneRequested = true },
         onSettings = component::openSettings,
         onSearchRequested = { searchRequested = true }
@@ -171,13 +167,13 @@ fun TargetTranslationScreen(
                     if (sharedState.resourceContainer == null) {
                         NoSourceScreen(
                             projectTitle = state.projectTitle ?: "",
-                            onAddSourceClick = { showSelectSourceDialog = true }
+                            onAddSourceClick = component::showSelectSourcesDialog
                         )
                     } else {
                         TranslateRouter(
                             component = component,
                             scrollCoordinator = scrollCoordinator,
-                            onSourceDialogOpen = { showSelectSourceDialog = true },
+                            onSourceDialogOpen = component::showSelectSourcesDialog,
                             onHasMergeConflicts = { hasMergeConflicts = it },
                             searchRequested = searchRequested,
                             onSearchConsumed = { searchRequested = false },
@@ -191,61 +187,27 @@ fun TargetTranslationScreen(
             }
         }
 
-        // Dialogs
-        if (showSelectSourceDialog) {
-            SourceSelectionDialog(
-                targetTranslation = component.targetTranslation,
-                onDismissRequest = { showSelectSourceDialog = false },
-                onConfirm = {
-                    showSelectSourceDialog = false
-                    component.onAction(TranslateComponent.Action.ConfirmSelectedSources(it))
-                },
-                onUpdateSources = { showUpdateSourcesDialog = true }
-            )
-        }
-
-        if (showUpdateSourcesDialog) {
-            ConfirmDialog(
-                title = stringResource(R.string.warning_title),
-                message = stringResource(R.string.update_warning),
-                onConfirm = {
-                    showUpdateSourcesDialog = false
-                    component.openHome(true)
-                },
-                onDismiss = { showUpdateSourcesDialog = false }
-            )
-        }
-
-        if (showExportDialog) {
-            ExportDialog(
-                targetTranslation = component.targetTranslation,
-                openPrint = showPrintDialog,
-                onExportToApp = component::exportToApp,
-                onLogin = {
-                    showExportDialog = false
-                    component.openLogin()
-                },
-                onLogout = {
-                    showExportDialog = false
-                    component.logout()
-                },
-                onMergeConflict = {
-                    mergeConflictFilterOn = true
-                    component.onAction(TranslateComponent.Action.SaveLastViewMode(
-                        TranslationViewMode.REVIEW
-                    ))
-                },
-                onDismiss = {
-                    showExportDialog = false
-                    showPrintDialog = false
+        dialogSlot.child?.instance?.let { child ->
+            when (child) {
+                is TranslateComponent.DialogChild.Feedback -> {
+                    FeedbackDialog(
+                        component = child.component,
+                        onDismiss = component::dismissDialog
+                    )
                 }
-            )
-        }
-
-        if (showFeedbackDialog) {
-            FeedbackDialog(
-                onDismiss = { showFeedbackDialog = false }
-            )
+                is TranslateComponent.DialogChild.SelectSources -> {
+                    SourceSelectionDialog(
+                        component = child.component,
+                        onDismiss = component::dismissDialog
+                    )
+                }
+                is TranslateComponent.DialogChild.Export -> {
+                    ExportDialog(
+                        component = child.component,
+                        onDismiss = component::dismissDialog
+                    )
+                }
+            }
         }
 
         progress?.let {

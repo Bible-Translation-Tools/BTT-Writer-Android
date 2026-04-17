@@ -221,30 +221,30 @@ fun ProjectDetailsDialog(
     }
 
     if (showExportDialog) {
-        ExportDialog(
-            targetTranslation = project.translation,
-            openPrint = showPrintDialog,
-            onExportToApp = onExportToApp,
-            onLogin = {
-                showExportDialog = false
-                onDismiss()
-                onLogin()
-            },
-            onLogout = {
-                showExportDialog = false
-                onDismiss()
-                onLogout()
-            },
-            onMergeConflict = {
-                showExportDialog = false
-                onDismiss()
-                onMergeConflict()
-            },
-            onDismiss = {
-                showExportDialog = false
-                showPrintDialog = false
-            }
-        )
+//        ExportDialog(
+//            targetTranslation = project.translation,
+//            openPrint = showPrintDialog,
+//            onExportToApp = onExportToApp,
+//            onLogin = {
+//                showExportDialog = false
+//                onDismiss()
+//                onLogin()
+//            },
+//            onLogout = {
+//                showExportDialog = false
+//                onDismiss()
+//                onLogout()
+//            },
+//            onMergeConflict = {
+//                showExportDialog = false
+//                onDismiss()
+//                onMergeConflict()
+//            },
+//            onDismiss = {
+//                showExportDialog = false
+//                showPrintDialog = false
+//            }
+//        )
     }
 
     if (showDeleteDialog) {

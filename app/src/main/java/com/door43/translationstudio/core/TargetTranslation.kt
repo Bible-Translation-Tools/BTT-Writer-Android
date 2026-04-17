@@ -123,7 +123,7 @@ class TargetTranslation private constructor(
         get() = Repo(path.absolutePath)
 
     val isObsProject: Boolean
-        get() = Companion.isObsProject(projectId)
+        get() = isObsProject(projectId)
 
     private fun readTranslationFormat(): TranslationFormat {
         val parsedFormat = fetchTranslationFormat(manifest)

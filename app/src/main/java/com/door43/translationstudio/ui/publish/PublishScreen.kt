@@ -183,24 +183,24 @@ fun PublishScreen(
         }
 
         if (showExportDialog) {
-            ExportDialog(
-                targetTranslation = component.targetTranslation,
-                openPrint = false,
-                onExportToApp = component::exportToApp,
-                onLogin = {
-                    showExportDialog = false
-                    component.onLogin()
-                },
-                onLogout = {
-                    showExportDialog = false
-                    component.onLogout()
-                },
-                onMergeConflict = {
-                    showExportDialog = false
-                    component.onMergeConflict(component.targetTranslation.id)
-                },
-                onDismiss = { showExportDialog = false }
-            )
+//            ExportDialog(
+//                targetTranslation = component.targetTranslation,
+//                openPrint = false,
+//                onExportToApp = component::exportToApp,
+//                onLogin = {
+//                    showExportDialog = false
+//                    component.onLogin()
+//                },
+//                onLogout = {
+//                    showExportDialog = false
+//                    component.onLogout()
+//                },
+//                onMergeConflict = {
+//                    showExportDialog = false
+//                    component.onMergeConflict(component.targetTranslation.id)
+//                },
+//                onDismiss = { showExportDialog = false }
+//            )
         }
     }
 }

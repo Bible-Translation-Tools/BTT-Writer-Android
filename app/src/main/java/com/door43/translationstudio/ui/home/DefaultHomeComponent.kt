@@ -496,6 +496,7 @@ class DefaultHomeComponent(
                 openProject(result.translationId, true)
             }
             is ImportComponent.Result.ProjectsImported -> {
+                dismissDialog()
                 loadWithProgress(result.translationIds)
             }
             is ImportComponent.Result.OpenUsfmImport -> {
@@ -517,6 +518,7 @@ class DefaultHomeComponent(
     private fun onImportUsfmResult(result: ImportUsfmComponent.Result) {
         when (result) {
             is ImportUsfmComponent.Result.ProjectsImported -> {
+                dismissDialog()
                 loadWithProgress(result.translationIds)
             }
             is ImportUsfmComponent.Result.MergeConflict -> {
