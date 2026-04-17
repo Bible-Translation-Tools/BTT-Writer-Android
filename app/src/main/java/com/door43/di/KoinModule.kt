@@ -22,7 +22,6 @@ import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.rendering.RenderingProvider
 import com.door43.translationstudio.ui.dialogs.ExportViewModel
 import com.door43.translationstudio.ui.dialogs.FeedbackViewModel
-import com.door43.translationstudio.ui.home.DownloadSourcesViewModel
 import com.door43.translationstudio.ui.translate.dialogs.SourceSelectionViewModel
 import com.door43.usecases.AdvancedGogsRepoSearch
 import com.door43.usecases.BackupRC
@@ -126,7 +125,6 @@ val appModule = module {
 
     viewModelOf(::FeedbackViewModel)
     viewModelOf(::ExportViewModel)
-    viewModelOf(::DownloadSourcesViewModel)
     viewModelOf(::SourceSelectionViewModel)
 }
 

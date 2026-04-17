@@ -26,7 +26,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -39,27 +38,18 @@ import com.door43.translationstudio.R
 import com.door43.translationstudio.ui.components.SearchBar
 import com.door43.translationstudio.ui.dialogs.OverlayDialog
 import com.door43.translationstudio.ui.dialogs.ProgressDialog
-import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun DownloadSourcesDialog(
+    component: DownloadSourcesComponent,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val viewModel: DownloadSourcesViewModel = koinViewModel()
-
-    LaunchedEffect(Unit) {
-        viewModel.onAction(DownloadAction.Initialize)
-    }
-
-    val state by viewModel.state.collectAsStateWithLifecycle()
-    val progress by viewModel.progress.collectAsStateWithLifecycle()
+    val state by component.state.collectAsStateWithLifecycle()
+    val progress by component.progress.collectAsStateWithLifecycle()
 
     OverlayDialog(
-        onDismiss = {
-            viewModel.onAction(DownloadAction.ClearState)
-            onDismiss()
-        },
+        onDismiss = onDismiss,
         maxWidth = 1000.dp,
         maxHeight = 1000.dp
     ) {
@@ -75,7 +65,7 @@ fun DownloadSourcesDialog(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.clickable {
-                        viewModel.onAction(DownloadAction.FilterModeChanged(FilterMode.ByLanguage))
+                        component.onFilterModeChanged(FilterMode.ByLanguage)
                     }
                 ) {
                     RadioButton(
@@ -91,7 +81,7 @@ fun DownloadSourcesDialog(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.clickable {
-                        viewModel.onAction(DownloadAction.FilterModeChanged(FilterMode.ByBook))
+                        component.onFilterModeChanged(FilterMode.ByBook)
                     }
                 ) {
                     RadioButton(
@@ -108,19 +98,16 @@ fun DownloadSourcesDialog(
                 breadcrumbs = state.navigationStack.mapNotNull { it.label },
                 query = state.searchQuery,
                 enableSearch = state.navigationStack.lastOrNull()?.selection == SelectionType.LANGUAGE,
-                onQueryChanged = {
-                    viewModel.onAction(DownloadAction.Search(it))
-                },
+                onQueryChanged = component::search,
                 onBackClicked = {
                     if (state.navigationStack.size == 1) {
-                        viewModel.onAction(DownloadAction.ClearState)
                         onDismiss()
                     } else {
-                        viewModel.onAction(DownloadAction.NavigateBack)
+                        component.navigateBack()
                     }
                 },
                 onBreadcrumbClicked = {
-                    viewModel.onAction(DownloadAction.NavigateStep(it))
+                    component.navigateStep(it)
                 }
             )
 
@@ -139,14 +126,14 @@ fun DownloadSourcesDialog(
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.clickable {
-                            viewModel.onAction(DownloadAction.SelectAll(true))
+                            component.selectAll(true)
                         }
                     ) {
                         Checkbox(
                             checked = state.selectAllChecked,
                             onCheckedChange = { checked ->
                                 if (checked) {
-                                    viewModel.onAction(DownloadAction.SelectAll(true))
+                                    component.selectAll(true)
                                 }
                             }
                         )
@@ -156,7 +143,7 @@ fun DownloadSourcesDialog(
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.clickable {
-                            viewModel.onAction(DownloadAction.SelectAll(false))
+                            component.selectAll(false)
                         }
                     ) {
                         Checkbox(
@@ -165,7 +152,7 @@ fun DownloadSourcesDialog(
                             },
                             onCheckedChange = { checked ->
                                 if (checked) {
-                                    viewModel.onAction(DownloadAction.SelectAll(false))
+                                    component.selectAll(false)
                                 }
                             }
                         )
@@ -173,9 +160,7 @@ fun DownloadSourcesDialog(
                     }
 
                     Button(
-                        onClick = {
-                            viewModel.onAction(DownloadAction.DownloadSources)
-                        },
+                        onClick = component::downloadSources,
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.primary
                         ),
@@ -199,16 +184,14 @@ fun DownloadSourcesDialog(
                             FilterCategoryItemView(
                                 item = item,
                                 onClick = {
-                                    viewModel.onAction(DownloadAction.NavigateForward(item))
+                                    component.navigateForward(item)
                                 }
                             )
                         }
                         is DownloadListItem.SourceSelection -> {
                             SourceSelectionItemView(
                                 item = item,
-                                onClick = {
-                                    viewModel.onAction(DownloadAction.ToggleSelection(item.id))
-                                }
+                                onClick = { component.toggleSelection(item.id) }
                             )
                         }
                     }

@@ -105,6 +105,9 @@ interface HomeComponent {
 
         @Serializable
         data class ImportUsfm(val fileUri: String) : DialogConfig
+
+        @Serializable
+        data object DownloadSources : DialogConfig
     }
 
     sealed interface DialogChild {
@@ -112,6 +115,7 @@ interface HomeComponent {
         data class Import(val component: ImportComponent) : DialogChild
         data class UpdateLibrary(val component: UpdateLibraryComponent) : DialogChild
         data class ImportUsfm(val component: ImportUsfmComponent) : DialogChild
+        data class DownloadSources(val component: DownloadSourcesComponent) : DialogChild
     }
 
     sealed interface Result {

@@ -237,6 +237,12 @@ fun HomeScreen(
                     onDismiss = component::dismissDialog
                 )
             }
+            is HomeComponent.DialogChild.DownloadSources -> {
+                DownloadSourcesDialog(
+                    component = child.component,
+                    onDismiss = component::dismissDialog
+                )
+            }
         }
     }
 

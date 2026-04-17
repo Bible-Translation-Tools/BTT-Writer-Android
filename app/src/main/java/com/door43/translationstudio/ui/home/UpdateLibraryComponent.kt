@@ -12,7 +12,16 @@ interface UpdateLibraryComponent {
     val progress: StateFlow<Progress?>
     val event: Flow<Event>
 
-    fun onAction(action: Action)
+    fun openDownloadSources()
+    fun updateSources()
+    fun importIndex(uri: Uri)
+    fun downloadIndex()
+    fun updateLanguages()
+    fun checkAppUpdate()
+    fun downloadLatestRelease(release: CheckForLatestRelease.Release)
+    fun clearResult()
+    fun clearLatestRelease()
+    fun clearUpdateSourceResult()
 
     data class State(
         val resultMessage: Pair<String, String>? = null,
@@ -20,19 +29,11 @@ interface UpdateLibraryComponent {
         val updateSourceResult: UpdateSource.Result? = null
     )
 
-    sealed interface Action {
-        data object UpdateSource : Action
-        data class ImportIndex(val uri: Uri) : Action
-        data object DownloadIndex : Action
-        data object UpdateLanguages : Action
-        data object CheckAppUpdate : Action
-        data class DownloadLatestRelease(val release: CheckForLatestRelease.Release) : Action
-        data object ClearResult : Action
-        data object ClearLatestRelease : Action
-        data object ClearUpdateSourceResult : Action
-    }
-
     sealed interface Event {
         data object IndexUpdated : Event
+    }
+
+    sealed interface Result {
+        data object OpenDownloadSources : Result
     }
 }

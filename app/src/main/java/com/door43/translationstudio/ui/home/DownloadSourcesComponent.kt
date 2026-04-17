@@ -5,24 +5,29 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.LibraryBooks
 import androidx.compose.material.icons.filled.LocalLibrary
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
+import com.arkivanov.decompose.ComponentContext
+import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.BibleCodes
+import com.door43.translationstudio.core.Progress
 import com.door43.translationstudio.core.ProgressManager
 import com.door43.translationstudio.core.ProgressOwner
 import com.door43.translationstudio.core.TaskHandle
 import com.door43.translationstudio.ui.launchWithProgress
+import com.door43.translationstudio.ui.navigation.ComponentScope
 import com.door43.usecases.DownloadResourceContainers
 import com.door43.usecases.GetAvailableSources
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import kotlin.collections.get
 
 enum class FilterMode { ByLanguage, ByBook }
 
@@ -68,61 +73,200 @@ sealed class DownloadListItem {
     ) : DownloadListItem()
 }
 
-data class DownloadSourcesState(
-    val filterMode: FilterMode = FilterMode.ByLanguage,
-    val navigationStack: List<FilterStep> = emptyList(),
-    val searchQuery: String = "",
-    val listItems: List<DownloadListItem> = emptyList(),
-    val selectedSources: Set<String> = emptySet(),
-    val downloadedSources: Set<String> = emptySet(),
-    val selectAllChecked: Boolean = false
-)
+interface DownloadSourcesComponent {
 
-sealed interface DownloadAction {
-    data class FilterModeChanged(val mode: FilterMode) : DownloadAction
-    data class Search(val query: String) : DownloadAction
-    data class NavigateForward(val item: DownloadListItem.FilterCategory) : DownloadAction
-    data class NavigateStep(val index: Int) : DownloadAction
-    data class SelectAll(val shouldSelectAll: Boolean) : DownloadAction
-    data class ToggleSelection(val id: String) : DownloadAction
-    data object DownloadSources : DownloadAction
-    data object NavigateBack : DownloadAction
-    data object ClearState : DownloadAction
-    data object Initialize : DownloadAction
+    val state: StateFlow<State>
+    val progress: StateFlow<Progress?>
+
+    fun onFilterModeChanged(mode: FilterMode)
+    fun search(query: String)
+    fun navigateForward(item: DownloadListItem.FilterCategory)
+    fun navigateBack()
+    fun navigateStep(index: Int)
+    fun selectAll(shouldSelectAll: Boolean)
+    fun toggleSelection(id: String)
+    fun downloadSources()
+
+    data class State(
+        val filterMode: FilterMode = FilterMode.ByLanguage,
+        val navigationStack: List<FilterStep> = emptyList(),
+        val searchQuery: String = "",
+        val listItems: List<DownloadListItem> = emptyList(),
+        val selectedSources: Set<String> = emptySet(),
+        val downloadedSources: Set<String> = emptySet(),
+        val selectAllChecked: Boolean = false
+    )
 }
 
-class DownloadSourcesViewModel(
-    private val getAvailableSources: GetAvailableSources,
-    private val downloadResourceContainers: DownloadResourceContainers
-) : ViewModel(), KoinComponent, ProgressOwner {
+class DefaultDownloadSourcesComponent(
+    componentContext: ComponentContext
+): DownloadSourcesComponent,
+    ComponentContext by componentContext,
+    KoinComponent, ComponentScope, ProgressOwner {
 
     private val application: Application by inject()
+    private val getAvailableSources: GetAvailableSources by inject()
+    private val downloadResourceContainers: DownloadResourceContainers by inject()
 
-    private val progressManager = ProgressManager(viewModelScope)
+    override val coroutineScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
+
+    private val progressManager = ProgressManager(coroutineScope)
     override val progress get() = progressManager.progress
 
-    private val _state = MutableStateFlow(DownloadSourcesState())
-    val state = _state.asStateFlow()
+    private val _state = MutableStateFlow(DownloadSourcesComponent.State())
+    override val state = _state.asStateFlow()
 
     private var availableSources: GetAvailableSources.Result? = null
-    private var initialized = false
     private val downloadErrors = mutableMapOf<String, String?>()
 
-    fun onAction(action: DownloadAction) {
-        when (action) {
-            DownloadAction.Initialize -> initialize()
-            is DownloadAction.FilterModeChanged -> setFilterMode(action.mode)
-            is DownloadAction.Search -> {
-                _state.update { it.copy(searchQuery = action.query) }
-                updateList()
+    init {
+        setFilterMode(FilterMode.ByLanguage)
+        loadAvailableSources()
+
+        lifecycle.doOnDestroy {
+            coroutineScope.cancel()
+        }
+    }
+
+    override suspend fun runTask(message: String?, block: suspend (TaskHandle) -> Unit) {
+        progressManager.runTask(message, block)
+    }
+
+    override fun onFilterModeChanged(mode: FilterMode) {
+        setFilterMode(mode)
+    }
+
+    override fun search(query: String) {
+        _state.update { it.copy(searchQuery = query) }
+        updateList()
+    }
+
+    override fun navigateForward(item: DownloadListItem.FilterCategory) {
+        val currentStack = _state.value.navigationStack.toMutableList()
+        if (currentStack.isEmpty()) return
+
+        val lastIndex = currentStack.lastIndex
+        val resolvedStep = currentStack[lastIndex].copy(
+            filter = item.id,
+            label = item.title,
+        )
+
+        val nextSelectionType = getNextSelectionType(resolvedStep)
+        val nextPrompt = getPromptForSelectionType(nextSelectionType)
+
+        currentStack[lastIndex] = resolvedStep
+        currentStack.add(FilterStep(
+            selection = nextSelectionType,
+            label = nextPrompt,
+            promptLabel = nextPrompt
+        ))
+
+        _state.update { it.copy(navigationStack = currentStack) }
+        updateList()
+    }
+
+    override fun navigateBack() {
+        val currentStack = _state.value.navigationStack.toMutableList()
+        if (currentStack.size > 1) {
+            currentStack.removeAt(currentStack.lastIndex)
+
+            val lastIndex = currentStack.lastIndex
+            val lastStep = currentStack[lastIndex]
+            currentStack[lastIndex] = lastStep.copy(
+                filter = null,
+                label = lastStep.promptLabel
+            )
+
+            _state.update { it.copy(navigationStack = currentStack) }
+            updateList()
+        }
+    }
+
+    override fun navigateStep(index: Int) {
+        val currentStack = _state.value.navigationStack
+
+        if (index >= currentStack.size - 1) return
+
+        val newStack = currentStack.take(index + 1).toMutableList()
+
+        val targetIndex = newStack.lastIndex
+        val targetStep = newStack[targetIndex]
+        newStack[targetIndex] = targetStep.copy(
+            filter = null,
+            label = targetStep.promptLabel
+        )
+
+        _state.update {
+            it.copy(
+                navigationStack = newStack,
+                searchQuery = ""
+            )
+        }
+
+        updateList()
+    }
+
+    override fun selectAll(shouldSelectAll: Boolean) {
+        val currentItems = _state.value.listItems
+        val newSelection = _state.value.selectedSources.toMutableSet()
+
+        currentItems.filterIsInstance<DownloadListItem.SourceSelection>().forEach {
+            if (shouldSelectAll && !it.isDownloaded) {
+                newSelection.add(it.id)
+            } else {
+                newSelection.remove(it.id)
             }
-            is DownloadAction.ToggleSelection -> toggleSelection(action.id)
-            is DownloadAction.NavigateForward -> onNavigateForward(action.item)
-            is DownloadAction.NavigateStep -> onNavigateStep(action.index)
-            is DownloadAction.SelectAll -> setSelectAll(action.shouldSelectAll)
-            is DownloadAction.NavigateBack -> onNavigateBack()
-            is DownloadAction.DownloadSources -> downloadSources()
-            is DownloadAction.ClearState -> resetState()
+        }
+
+        _state.update {
+            it.copy(
+                selectedSources = newSelection,
+                selectAllChecked = shouldSelectAll
+            )
+        }
+        updateList()
+    }
+
+    override fun toggleSelection(id: String) {
+        val newSelection = _state.value.selectedSources.toMutableSet()
+        if (newSelection.contains(id)) newSelection.remove(id) else newSelection.add(id)
+
+        val allVisibleSelected = _state.value.listItems
+            .filterIsInstance<DownloadListItem.SourceSelection>()
+            .all { it.isDownloaded || newSelection.contains(it.id) }
+
+        _state.update {
+            it.copy(
+                selectedSources = newSelection,
+                selectAllChecked = allVisibleSelected
+            )
+        }
+        updateList()
+    }
+
+    override fun downloadSources() {
+        val toDownload = _state.value.selectedSources.toList()
+        if (toDownload.isEmpty()) return
+
+        launchWithProgress { handle ->
+            val result = withContext(Dispatchers.IO) {
+                downloadResourceContainers.download(toDownload) { progress, message ->
+                    handle.update(progress, message)
+                }
+            }
+            val newlyDownloaded = result.downloadedTranslations
+
+            result.failedSourceDownloads.forEach { slug ->
+                downloadErrors[slug] = result.failureMessages[slug]
+            }
+
+            _state.update { state ->
+                state.copy(
+                    downloadedSources = state.downloadedSources + newlyDownloaded,
+                    selectedSources = state.selectedSources - newlyDownloaded.toSet()
+                )
+            }
+            updateList()
         }
     }
 
@@ -150,54 +294,6 @@ class DownloadSourcesViewModel(
                 searchQuery = ""
             )
         }
-        updateList()
-    }
-
-    private fun onNavigateForward(item: DownloadListItem.FilterCategory) {
-        val currentStack = _state.value.navigationStack.toMutableList()
-        if (currentStack.isEmpty()) return
-
-        val lastIndex = currentStack.lastIndex
-        val resolvedStep = currentStack[lastIndex].copy(
-            filter = item.id,
-            label = item.title,
-        )
-
-        val nextSelectionType = getNextSelectionType(resolvedStep)
-        val nextPrompt = getPromptForSelectionType(nextSelectionType)
-
-        currentStack[lastIndex] = resolvedStep
-        currentStack.add(FilterStep(
-            selection = nextSelectionType,
-            label = nextPrompt,
-            promptLabel = nextPrompt
-        ))
-
-        _state.update { it.copy(navigationStack = currentStack) }
-        updateList()
-    }
-
-    private fun onNavigateStep(index: Int) {
-        val currentStack = _state.value.navigationStack
-
-        if (index >= currentStack.size - 1) return
-
-        val newStack = currentStack.take(index + 1).toMutableList()
-
-        val targetIndex = newStack.lastIndex
-        val targetStep = newStack[targetIndex]
-        newStack[targetIndex] = targetStep.copy(
-            filter = null,
-            label = targetStep.promptLabel
-        )
-
-        _state.update {
-            it.copy(
-                navigationStack = newStack,
-                searchQuery = ""
-            )
-        }
-
         updateList()
     }
 
@@ -268,27 +364,6 @@ class DownloadSourcesViewModel(
         return books.withIndex().associate { (i, slug) -> slug to i }
     }
 
-    private fun onNavigateBack() {
-        val currentStack = _state.value.navigationStack.toMutableList()
-        if (currentStack.size > 1) {
-            currentStack.removeAt(currentStack.lastIndex)
-
-            val lastIndex = currentStack.lastIndex
-            val lastStep = currentStack[lastIndex]
-            currentStack[lastIndex] = lastStep.copy(
-                filter = null,
-                label = lastStep.promptLabel
-            )
-
-            _state.update { it.copy(navigationStack = currentStack) }
-            updateList()
-        }
-    }
-
-    override suspend fun runTask(message: String?, block: suspend (TaskHandle) -> Unit) {
-        progressManager.runTask(message, block)
-    }
-
     private fun loadAvailableSources() {
         launchWithProgress(
             application.getString(R.string.loading_sources)
@@ -297,32 +372,6 @@ class DownloadSourcesViewModel(
                 getAvailableSources.execute { progress, details ->
                     handle.update(progress, handle.initialMessage, details)
                 }
-            }
-            updateList()
-        }
-    }
-
-    private fun downloadSources() {
-        val toDownload = _state.value.selectedSources.toList()
-        if (toDownload.isEmpty()) return
-
-        launchWithProgress { handle ->
-            val result = withContext(Dispatchers.IO) {
-                downloadResourceContainers.download(toDownload) { progress, message ->
-                    handle.update(progress, message)
-                }
-            }
-            val newlyDownloaded = result.downloadedTranslations
-
-            result.failedSourceDownloads.forEach { slug ->
-                downloadErrors[slug] = result.failureMessages[slug]
-            }
-
-            _state.update { state ->
-                state.copy(
-                    downloadedSources = state.downloadedSources + newlyDownloaded,
-                    selectedSources = state.selectedSources - newlyDownloaded.toSet()
-                )
             }
             updateList()
         }
@@ -479,44 +528,6 @@ class DownloadSourcesViewModel(
         }
     }
 
-    private fun toggleSelection(id: String) {
-        val newSelection = _state.value.selectedSources.toMutableSet()
-        if (newSelection.contains(id)) newSelection.remove(id) else newSelection.add(id)
-
-        val allVisibleSelected = _state.value.listItems
-            .filterIsInstance<DownloadListItem.SourceSelection>()
-            .all { it.isDownloaded || newSelection.contains(it.id) }
-
-        _state.update {
-            it.copy(
-                selectedSources = newSelection,
-                selectAllChecked = allVisibleSelected
-            )
-        }
-        updateList()
-    }
-
-    private fun setSelectAll(shouldSelectAll: Boolean) {
-        val currentItems = _state.value.listItems
-        val newSelection = _state.value.selectedSources.toMutableSet()
-
-        currentItems.filterIsInstance<DownloadListItem.SourceSelection>().forEach {
-            if (shouldSelectAll && !it.isDownloaded) {
-                newSelection.add(it.id)
-            } else {
-                newSelection.remove(it.id)
-            }
-        }
-
-        _state.update {
-            it.copy(
-                selectedSources = newSelection,
-                selectAllChecked = shouldSelectAll
-            )
-        }
-        updateList()
-    }
-
     private fun isLanguageInCategory(
         categoryResId: Int,
         result: GetAvailableSources.Result
@@ -532,19 +543,5 @@ class DownloadSourcesViewModel(
             val source = result.sources.getOrNull(index)
             categoryBooks.containsKey(source?.project?.slug)
         }
-    }
-
-    private fun initialize() {
-        if (initialized) return
-        initialized = true
-        setFilterMode(FilterMode.ByLanguage)
-        loadAvailableSources()
-    }
-
-    private fun resetState() {
-        availableSources = null
-        initialized = false
-        downloadErrors.clear()
-        _state.value = DownloadSourcesState()
     }
 }

@@ -471,7 +471,8 @@ class DefaultHomeComponent(
         is HomeComponent.DialogConfig.UpdateLibrary -> HomeComponent.DialogChild.UpdateLibrary(
             component = DefaultUpdateLibraryComponent(
                 componentContext = componentContext,
-                triggerUpdate = config.triggerUpdate
+                triggerUpdate = config.triggerUpdate,
+                onResult = ::onUpdateLibraryResult
             )
         )
         is HomeComponent.DialogConfig.ImportUsfm -> HomeComponent.DialogChild.ImportUsfm(
@@ -479,6 +480,11 @@ class DefaultHomeComponent(
                 componentContext = componentContext,
                 fileUri = config.fileUri,
                 onResult = ::onImportUsfmResult
+            )
+        )
+        is HomeComponent.DialogConfig.DownloadSources -> HomeComponent.DialogChild.DownloadSources(
+            DefaultDownloadSourcesComponent(
+                componentContext = componentContext
             )
         )
     }
@@ -496,6 +502,14 @@ class DefaultHomeComponent(
                 dialogNavigation.activate(
                     HomeComponent.DialogConfig.ImportUsfm(result.fileUri)
                 )
+            }
+        }
+    }
+
+    private fun onUpdateLibraryResult(result: UpdateLibraryComponent.Result) {
+        when (result) {
+            is UpdateLibraryComponent.Result.OpenDownloadSources -> {
+                dialogNavigation.activate(HomeComponent.DialogConfig.DownloadSources)
             }
         }
     }

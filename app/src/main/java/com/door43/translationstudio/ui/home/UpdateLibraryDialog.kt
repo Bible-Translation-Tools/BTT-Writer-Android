@@ -65,13 +65,10 @@ fun UpdateLibraryDialog(
     val openIndexLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri ->
-        uri?.let {
-            component.onAction(UpdateLibraryComponent.Action.ImportIndex(it))
-        }
+        uri?.let(component::importIndex)
     }
 
     var showIndexUpdatedDialog by rememberSaveable { mutableStateOf(false) }
-    var showDownloadSourcesDialog by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(component) {
         component.event.collect { event ->
@@ -146,7 +143,7 @@ fun UpdateLibraryDialog(
                         UpdateOptionItem(
                             stringResource(R.string.update_source)
                         ) {
-                            component.onAction(UpdateLibraryComponent.Action.UpdateSource)
+                            component.updateSources()
                         }
                         UpdateOptionItem(
                             stringResource(R.string.import_index)
@@ -156,23 +153,23 @@ fun UpdateLibraryDialog(
                         UpdateOptionItem(
                             stringResource(R.string.download_index)
                         ) {
-                            component.onAction(UpdateLibraryComponent.Action.DownloadIndex)
+                            component.downloadIndex()
                         }
                         UpdateOptionItem(
                             stringResource(R.string.download_sources)
                         ) {
-                            showDownloadSourcesDialog = true
+                            component.openDownloadSources()
                         }
                         UpdateOptionItem(
                             stringResource(R.string.update_languages)
                         ) {
-                            component.onAction(UpdateLibraryComponent.Action.UpdateLanguages)
+                            component.updateLanguages()
                         }
                         UpdateOptionItem(
                             text = stringResource(R.string.check_app_update),
                             textColor = MaterialTheme.colorScheme.tertiary
                         ) {
-                            component.onAction(UpdateLibraryComponent.Action.CheckAppUpdate)
+                            component.checkAppUpdate()
                         }
                     }
                 }
@@ -203,17 +200,11 @@ fun UpdateLibraryDialog(
         )
     }
 
-    if (showDownloadSourcesDialog) {
-        DownloadSourcesDialog(
-            onDismiss = { showDownloadSourcesDialog = false }
-        )
-    }
-
     state.resultMessage?.let { (title, message) ->
         ActionDialog(
             title = title,
             message = message,
-            onDismiss = { component.onAction(UpdateLibraryComponent.Action.ClearResult) }
+            onDismiss = component::clearResult
         ) { onInfoDismiss ->
             TextButton(
                 onClick = onInfoDismiss
@@ -227,11 +218,9 @@ fun UpdateLibraryDialog(
         ConfirmDialog(
             title = stringResource(R.string.apk_update_available),
             message = stringResource(R.string.download_latest_apk),
-            onDismiss = {
-                component.onAction(UpdateLibraryComponent.Action.ClearLatestRelease)
-            },
+            onDismiss = component::clearLatestRelease,
             onConfirm = {
-                component.onAction(UpdateLibraryComponent.Action.DownloadLatestRelease(release))
+                component.downloadLatestRelease(release)
             }
         )
     }
@@ -244,13 +233,8 @@ fun UpdateLibraryDialog(
                 result.addedCount,
                 result.updatedCount
             ),
-            onDismiss = {
-                component.onAction(UpdateLibraryComponent.Action.ClearUpdateSourceResult)
-            },
-            onConfirm = {
-                showDownloadSourcesDialog = true
-                component.onAction(UpdateLibraryComponent.Action.ClearUpdateSourceResult)
-            }
+            onDismiss = component::clearUpdateSourceResult,
+            onConfirm = component::openDownloadSources
         )
     }
 

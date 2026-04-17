@@ -62,8 +62,7 @@ class UpdateSource(
             val rootApiUrl = server + prefRepository.getRootCatalogApi()
             library.updateSources(rootApiUrl) { tag, max, complete ->
                 val progress = complete / max.toFloat()
-                val details = tag
-                progressListener?.onProgress(progress, details)
+                progressListener?.onProgress(progress, tag)
                 true
             }
             success = true

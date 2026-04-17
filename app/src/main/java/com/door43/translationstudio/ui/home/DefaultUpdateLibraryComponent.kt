@@ -32,6 +32,7 @@ import org.koin.core.component.inject
 class DefaultUpdateLibraryComponent(
     componentContext: ComponentContext,
     triggerUpdate: Boolean = false,
+    private val onResult: (UpdateLibraryComponent.Result) -> Unit
 ) : UpdateLibraryComponent,
     ComponentContext by componentContext,
     ComponentScope, ProgressOwner, KoinComponent {
@@ -56,7 +57,7 @@ class DefaultUpdateLibraryComponent(
 
     init {
         if (triggerUpdate) {
-            updateSource()
+            updateSources()
         }
 
         lifecycle.doOnDestroy {
@@ -68,23 +69,11 @@ class DefaultUpdateLibraryComponent(
         progressManager.runTask(message, block)
     }
 
-    override fun onAction(action: UpdateLibraryComponent.Action) {
-        when (action) {
-            is UpdateLibraryComponent.Action.ImportIndex -> importIndex(action.uri)
-            is UpdateLibraryComponent.Action.DownloadLatestRelease -> downloadLatestRelease(action.release)
-            is UpdateLibraryComponent.Action.UpdateSource -> updateSource()
-            is UpdateLibraryComponent.Action.DownloadIndex -> downloadIndex()
-            is UpdateLibraryComponent.Action.UpdateLanguages -> updateLanguages()
-            is UpdateLibraryComponent.Action.CheckAppUpdate -> checkAppUpdate()
-            is UpdateLibraryComponent.Action.ClearResult -> _state.update { it.copy(resultMessage = null) }
-            is UpdateLibraryComponent.Action.ClearLatestRelease -> _state.update { it.copy(latestRelease = null) }
-            is UpdateLibraryComponent.Action.ClearUpdateSourceResult -> _state.update {
-                it.copy(updateSourceResult = null)
-            }
-        }
+    override fun openDownloadSources() {
+        onResult(UpdateLibraryComponent.Result.OpenDownloadSources)
     }
 
-    private fun updateSource() {
+    override fun updateSources() {
         launchWithProgress(
             application.getString(R.string.updating_sources)
         ) { handle ->
@@ -105,7 +94,7 @@ class DefaultUpdateLibraryComponent(
         }
     }
 
-    private fun importIndex(uri: Uri) {
+    override fun importIndex(uri: Uri) {
         val filename = FileUtilities.getFileName(application, uri)
         val isSqlite = filename.contains(".sqlite", ignoreCase = true)
 
@@ -133,7 +122,7 @@ class DefaultUpdateLibraryComponent(
         }
     }
 
-    private fun downloadIndex() {
+    override fun downloadIndex() {
         launchWithProgress(
             application.getString(R.string.importing_index)
         ) { handle ->
@@ -153,7 +142,7 @@ class DefaultUpdateLibraryComponent(
         }
     }
 
-    private fun updateLanguages() {
+    override fun updateLanguages() {
         launchWithProgress(
             application.getString(R.string.updating_languages)
         ) { handle ->
@@ -179,7 +168,7 @@ class DefaultUpdateLibraryComponent(
         }
     }
 
-    private fun checkAppUpdate() {
+    override fun checkAppUpdate() {
         launchWithProgress(
             application.getString(R.string.checking_for_updates)
         ) {
@@ -198,13 +187,25 @@ class DefaultUpdateLibraryComponent(
         }
     }
 
-    private fun downloadLatestRelease(release: CheckForLatestRelease.Release) {
+    override fun downloadLatestRelease(release: CheckForLatestRelease.Release) {
         launchWithProgress {
             _state.update { it.copy(latestRelease = null) }
             withContext(Dispatchers.IO) {
                 downloadLatestRelease.execute(release)
             }
         }
+    }
+
+    override fun clearResult() {
+        _state.update { it.copy(resultMessage = null) }
+    }
+
+    override fun clearLatestRelease() {
+        _state.update { it.copy(latestRelease = null) }
+    }
+
+    override fun clearUpdateSourceResult() {
+        _state.update { it.copy(updateSourceResult = null) }
     }
 
     private fun updateResultMessage(title: String, message: String) {
