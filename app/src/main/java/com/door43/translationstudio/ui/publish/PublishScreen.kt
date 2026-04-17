@@ -39,12 +39,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.ui.PrimaryDarkBlue
 import com.door43.translationstudio.ui.components.CardsSkeletonList
 import com.door43.translationstudio.ui.components.LocalSnackbarHostState
 import com.door43.translationstudio.ui.dialogs.ExportDialog
+import com.door43.translationstudio.ui.dialogs.FeedbackDialog
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
@@ -61,12 +63,10 @@ fun PublishScreen(
     val typography: Typography = koinInject()
 
     val state by component.state.collectAsStateWithLifecycle()
+    val dialogSlot by component.dialogSlot.subscribeAsState()
 
     var publishSection by rememberSaveable {
         mutableStateOf(PublishSection.VALIDATION)
-    }
-    var showExportDialog by rememberSaveable {
-        mutableStateOf(false)
     }
 
     val snackbarHostState = remember { SnackbarHostState() }
@@ -140,7 +140,7 @@ fun PublishScreen(
                             text = stringResource(id = R.string.menu_upload_export),
                             selected = false,
                             modifier = buttonModifier,
-                            onClick = { showExportDialog = true }
+                            onClick = component::showExportDialog
                         )
                     }
                 }
@@ -165,7 +165,7 @@ fun PublishScreen(
                                 targetTranslation = component.targetTranslation,
                                 onNextClick = {
                                     if (state.translators.isNotEmpty()) {
-                                        showExportDialog = true
+                                        component.showExportDialog()
                                     } else {
                                         coroutineScope.launch {
                                             snackbarHostState.showSnackbar(
@@ -182,25 +182,17 @@ fun PublishScreen(
             }
         }
 
-        if (showExportDialog) {
-//            ExportDialog(
-//                targetTranslation = component.targetTranslation,
-//                openPrint = false,
-//                onExportToApp = component::exportToApp,
-//                onLogin = {
-//                    showExportDialog = false
-//                    component.onLogin()
-//                },
-//                onLogout = {
-//                    showExportDialog = false
-//                    component.onLogout()
-//                },
-//                onMergeConflict = {
-//                    showExportDialog = false
-//                    component.onMergeConflict(component.targetTranslation.id)
-//                },
-//                onDismiss = { showExportDialog = false }
-//            )
+        dialogSlot.child?.instance?.let { child ->
+            when (child) {
+                is PublishComponent.DialogChild.Export -> ExportDialog(
+                    component = child.component,
+                    onDismiss = component::dismissDialog
+                )
+                is PublishComponent.DialogChild.Feedback -> FeedbackDialog(
+                    component = child.component,
+                    onDismiss = component::dismissDialog
+                )
+            }
         }
     }
 }

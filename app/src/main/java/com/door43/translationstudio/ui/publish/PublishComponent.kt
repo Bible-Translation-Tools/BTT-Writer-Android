@@ -3,6 +3,12 @@ package com.door43.translationstudio.ui.publish
 import android.app.Application
 import androidx.compose.ui.text.AnnotatedString
 import com.arkivanov.decompose.ComponentContext
+import com.arkivanov.decompose.router.slot.ChildSlot
+import com.arkivanov.decompose.router.slot.SlotNavigation
+import com.arkivanov.decompose.router.slot.activate
+import com.arkivanov.decompose.router.slot.childSlot
+import com.arkivanov.decompose.router.slot.dismiss
+import com.arkivanov.decompose.value.Value
 import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.door43.translationstudio.App.Companion.deviceLanguageCode
 import com.door43.translationstudio.R
@@ -15,6 +21,10 @@ import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.core.Validation
 import com.door43.translationstudio.rendering.RenderingGroup
 import com.door43.translationstudio.rendering.RenderingProvider
+import com.door43.translationstudio.ui.dialogs.DefaultExportComponent
+import com.door43.translationstudio.ui.dialogs.DefaultFeedbackComponent
+import com.door43.translationstudio.ui.dialogs.ExportComponent
+import com.door43.translationstudio.ui.dialogs.FeedbackComponent
 import com.door43.translationstudio.ui.navigation.ComponentScope
 import com.door43.translationstudio.ui.textadapters.ComposeTextAdapter
 import com.door43.usecases.ValidateProject
@@ -30,6 +40,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.Serializable
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.unfoldingword.door43client.Door43Client
@@ -44,6 +55,7 @@ data class ValidationItem(
 interface PublishComponent {
 
     val state: StateFlow<State>
+    val dialogSlot: Value<ChildSlot<*, DialogChild>>
 
     val targetTranslation: TargetTranslation
 
@@ -56,11 +68,24 @@ interface PublishComponent {
     fun openReview(item: Validation.InvalidFrame)
     fun refreshContributors()
 
-    fun exportToApp(file: File)
-    fun onLogin()
-    fun onLogout()
-    fun onMergeConflict(translationId: String)
+    fun showExportDialog()
+    fun dismissDialog()
+
     fun navigateBack()
+
+    @Serializable
+    sealed interface DialogConfig {
+        @Serializable
+        data object Export : DialogConfig
+
+        @Serializable
+        data class Feedback(val message: String = "") : DialogConfig
+    }
+
+    sealed interface DialogChild {
+        data class Export(val component: ExportComponent) : DialogChild
+        data class Feedback(val component: FeedbackComponent) : DialogChild
+    }
 
     sealed interface Result {
         data class Error(val message: String) : Result
@@ -96,6 +121,15 @@ class DefaultPublishComponent(
 
     private val _state = MutableStateFlow(PublishComponent.State())
     override val state: StateFlow<PublishComponent.State> = _state.asStateFlow()
+
+    private val dialogNavigation = SlotNavigation<PublishComponent.DialogConfig>()
+
+    override val dialogSlot = childSlot(
+        source = dialogNavigation,
+        serializer = PublishComponent.DialogConfig.serializer(),
+        handleBackButton = true,
+        childFactory = ::createDialogChild
+    )
 
     init {
         translator.getTargetTranslation(translationId)?.let { translation ->
@@ -145,24 +179,63 @@ class DefaultPublishComponent(
         }
     }
 
-    override fun exportToApp(file: File) {
-        onResult(PublishComponent.Result.ExportToApp(file))
+    override fun showExportDialog() {
+        dialogNavigation.activate(PublishComponent.DialogConfig.Export)
     }
 
-    override fun onLogin() {
-        onResult(PublishComponent.Result.Login)
-    }
-
-    override fun onLogout() {
-        onResult(PublishComponent.Result.Logout)
-    }
-
-    override fun onMergeConflict(translationId: String) {
-        onResult(PublishComponent.Result.MergeConflict(translationId))
+    override fun dismissDialog() {
+        dialogNavigation.dismiss()
     }
 
     override fun navigateBack() {
         onResult(PublishComponent.Result.NavigateBack)
+    }
+
+    private fun createDialogChild(
+        config: PublishComponent.DialogConfig,
+        componentContext: ComponentContext
+    ): PublishComponent.DialogChild = when (config) {
+        is PublishComponent.DialogConfig.Export -> PublishComponent.DialogChild.Export(
+            DefaultExportComponent(
+                componentContext = componentContext,
+                translationId = targetTranslation.id,
+                showPrint = false,
+                onResult = ::onExportResult
+            )
+        )
+        is PublishComponent.DialogConfig.Feedback -> PublishComponent.DialogChild.Feedback(
+            DefaultFeedbackComponent(
+                componentContext = componentContext,
+                initialMessage = config.message
+            )
+        )
+    }
+
+    private fun onExportResult(result: ExportComponent.Result) {
+        when (result) {
+            is ExportComponent.Result.Error -> {}
+            is ExportComponent.Result.ExportToApp -> {
+                dismissDialog()
+                onResult(PublishComponent.Result.ExportToApp(result.file))
+            }
+            is ExportComponent.Result.OpenLogin -> {
+                dismissDialog()
+                onResult(PublishComponent.Result.Login)
+            }
+            is ExportComponent.Result.Logout -> {
+                dismissDialog()
+                onResult(PublishComponent.Result.Logout)
+            }
+            is ExportComponent.Result.MergeConflict -> {
+                dismissDialog()
+                onResult(PublishComponent.Result.MergeConflict(result.translationId))
+            }
+            is ExportComponent.Result.OpenFeedback -> {
+                dialogNavigation.activate(
+                    PublishComponent.DialogConfig.Feedback(result.message)
+                )
+            }
+        }
     }
 
     private suspend fun validateProject(sourceTranslationId: String) {
