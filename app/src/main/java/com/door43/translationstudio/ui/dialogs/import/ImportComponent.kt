@@ -1,8 +1,9 @@
-package com.door43.translationstudio.ui.home
+package com.door43.translationstudio.ui.dialogs.import
 
 import android.net.Uri
 import com.door43.translationstudio.core.Progress
 import com.door43.translationstudio.core.TargetTranslation
+import com.door43.translationstudio.ui.home.RepositoryItem
 import com.door43.usecases.ImportProjects
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow

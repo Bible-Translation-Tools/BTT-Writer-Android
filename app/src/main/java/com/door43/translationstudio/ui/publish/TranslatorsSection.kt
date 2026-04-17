@@ -34,7 +34,7 @@ import com.door43.translationstudio.R
 import com.door43.translationstudio.core.NativeSpeaker
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.ui.dialogs.ContributorDialog
-import com.door43.translationstudio.ui.profile.PrivacyNoticeDialog
+import com.door43.translationstudio.ui.dialogs.PrivacyNoticeDialog
 
 @Composable
 fun TranslatorsSection(

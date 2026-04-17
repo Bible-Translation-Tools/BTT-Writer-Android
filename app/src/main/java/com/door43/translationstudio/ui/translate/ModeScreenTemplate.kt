@@ -20,7 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.ui.components.CardsSkeletonList
-import com.door43.translationstudio.ui.translate.dialogs.FootnoteDialog
+import com.door43.translationstudio.ui.dialogs.FootnoteDialog
 
 @Composable
 fun <ITEM : TranslateItem> ModeScreenTemplate(

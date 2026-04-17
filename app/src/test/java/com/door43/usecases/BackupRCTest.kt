@@ -1,5 +1,6 @@
 package com.door43.usecases
 
+import android.app.Application
 import android.content.Context
 import com.door43.TestUtils
 import com.door43.data.IDirectoryProvider
@@ -33,7 +34,7 @@ import java.io.File
 
 class BackupRCTest {
 
-    @MockK private lateinit var context: Context
+    @MockK private lateinit var context: Application
     @MockK private lateinit var directoryProvider: IDirectoryProvider
     @MockK private lateinit var migrator: TargetTranslationMigrator
     @MockK private lateinit var exportProjects: ExportProjects

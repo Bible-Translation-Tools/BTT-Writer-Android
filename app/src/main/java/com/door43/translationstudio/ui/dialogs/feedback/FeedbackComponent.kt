@@ -1,4 +1,4 @@
-package com.door43.translationstudio.ui.dialogs
+package com.door43.translationstudio.ui.dialogs.feedback
 
 import android.app.Application
 import com.arkivanov.decompose.ComponentContext

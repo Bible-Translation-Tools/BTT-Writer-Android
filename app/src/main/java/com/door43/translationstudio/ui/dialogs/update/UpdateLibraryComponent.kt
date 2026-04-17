@@ -1,4 +1,4 @@
-package com.door43.translationstudio.ui.home
+package com.door43.translationstudio.ui.dialogs.update
 
 import android.net.Uri
 import com.door43.translationstudio.core.Progress

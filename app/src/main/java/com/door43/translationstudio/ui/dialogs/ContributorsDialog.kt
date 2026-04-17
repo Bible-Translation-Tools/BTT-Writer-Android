@@ -1,4 +1,4 @@
-package com.door43.translationstudio.ui.home
+package com.door43.translationstudio.ui.dialogs
 
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding

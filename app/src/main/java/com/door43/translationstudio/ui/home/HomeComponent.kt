@@ -5,8 +5,12 @@ import com.arkivanov.decompose.router.slot.ChildSlot
 import com.arkivanov.decompose.value.Value
 import com.door43.translationstudio.core.Progress
 import com.door43.translationstudio.core.TargetTranslation
-import com.door43.translationstudio.ui.dialogs.ExportComponent
-import com.door43.translationstudio.ui.dialogs.FeedbackComponent
+import com.door43.translationstudio.ui.dialogs.download.DownloadSourcesComponent
+import com.door43.translationstudio.ui.dialogs.export.ExportComponent
+import com.door43.translationstudio.ui.dialogs.feedback.FeedbackComponent
+import com.door43.translationstudio.ui.dialogs.import.ImportComponent
+import com.door43.translationstudio.ui.dialogs.import.ImportUsfmComponent
+import com.door43.translationstudio.ui.dialogs.update.UpdateLibraryComponent
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.serialization.Serializable

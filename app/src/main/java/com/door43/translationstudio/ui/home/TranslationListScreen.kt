@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Typography
+import com.door43.translationstudio.ui.dialogs.project.ProjectDetailsDialog
 import org.koin.compose.koinInject
 
 @Composable

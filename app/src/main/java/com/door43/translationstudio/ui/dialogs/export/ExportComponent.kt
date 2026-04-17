@@ -1,4 +1,4 @@
-package com.door43.translationstudio.ui.dialogs
+package com.door43.translationstudio.ui.dialogs.export
 
 import android.app.Application
 import android.net.Uri

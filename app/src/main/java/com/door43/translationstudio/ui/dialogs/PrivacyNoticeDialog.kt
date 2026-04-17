@@ -1,4 +1,4 @@
-package com.door43.translationstudio.ui.profile
+package com.door43.translationstudio.ui.dialogs
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row

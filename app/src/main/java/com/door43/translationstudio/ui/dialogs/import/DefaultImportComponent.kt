@@ -1,4 +1,4 @@
-package com.door43.translationstudio.ui.home
+package com.door43.translationstudio.ui.dialogs.import
 
 import android.app.Application
 import android.net.Uri
@@ -13,6 +13,7 @@ import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.TargetTranslationMigrator
 import com.door43.translationstudio.core.TaskHandle
 import com.door43.translationstudio.core.Translator
+import com.door43.translationstudio.ui.home.RepositoryItem
 import com.door43.translationstudio.ui.launchWithProgress
 import com.door43.translationstudio.ui.navigation.ComponentScope
 import com.door43.usecases.AdvancedGogsRepoSearch

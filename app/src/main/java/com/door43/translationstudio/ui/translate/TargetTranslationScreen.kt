@@ -25,12 +25,12 @@ import com.door43.translationstudio.R
 import com.door43.translationstudio.core.TranslationViewMode
 import com.door43.translationstudio.ui.components.LocalSnackbarHostState
 import com.door43.translationstudio.ui.components.rememberTranslateMenuItems
-import com.door43.translationstudio.ui.dialogs.ExportDialog
-import com.door43.translationstudio.ui.dialogs.FeedbackDialog
 import com.door43.translationstudio.ui.dialogs.ProgressDialog
+import com.door43.translationstudio.ui.dialogs.export.ExportDialog
+import com.door43.translationstudio.ui.dialogs.feedback.FeedbackDialog
 import com.door43.translationstudio.ui.translate.components.NoSourceScreen
 import com.door43.translationstudio.ui.translate.components.TranslateSidebar
-import com.door43.translationstudio.ui.translate.dialogs.SourceSelectionDialog
+import com.door43.translationstudio.ui.dialogs.source.SourceSelectionDialog
 import kotlinx.coroutines.launch
 
 @Composable

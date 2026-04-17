@@ -1,4 +1,4 @@
-package com.door43.translationstudio.ui.home
+package com.door43.translationstudio.ui.dialogs.import
 
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult

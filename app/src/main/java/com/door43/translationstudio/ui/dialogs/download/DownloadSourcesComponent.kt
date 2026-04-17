@@ -1,4 +1,4 @@
-package com.door43.translationstudio.ui.home
+package com.door43.translationstudio.ui.dialogs.download
 
 import android.app.Application
 import androidx.compose.material.icons.Icons
@@ -28,6 +28,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import kotlin.collections.get
 
 enum class FilterMode { ByLanguage, ByBook }
 
