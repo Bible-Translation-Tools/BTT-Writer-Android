@@ -2,6 +2,7 @@ package com.door43.translationstudio.ui.crash
 
 import android.app.Application
 import com.arkivanov.decompose.ComponentContext
+import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.door43.translationstudio.App
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Progress
@@ -16,6 +17,7 @@ import com.door43.usecases.UploadCrashReport
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -82,6 +84,12 @@ class DefaultCrashComponent(
 
     private var release: CheckForLatestRelease.Release? = null
     override val isNetworkAvailable: Boolean get() = App.isNetworkAvailable
+
+    init {
+        lifecycle.doOnDestroy {
+            coroutineScope.cancel()
+        }
+    }
 
     override suspend fun runTask(message: String?, block: suspend (TaskHandle) -> Unit) {
         progressManager.runTask(message, block)

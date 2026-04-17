@@ -2,6 +2,7 @@ package com.door43.translationstudio.ui.profile
 
 import android.app.Application
 import com.arkivanov.decompose.ComponentContext
+import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.Progress
@@ -14,6 +15,7 @@ import com.door43.usecases.GogsLogout
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.withContext
 import org.koin.core.component.KoinComponent
@@ -47,6 +49,12 @@ class DefaultTermsOfUseComponent(
 
     private val progressManager = ProgressManager(coroutineScope)
     override val progress get() = progressManager.progress
+
+    init {
+        lifecycle.doOnDestroy {
+            coroutineScope.cancel()
+        }
+    }
 
     override suspend fun runTask(message: String?, block: suspend (TaskHandle) -> Unit) {
         progressManager.runTask(message, block)

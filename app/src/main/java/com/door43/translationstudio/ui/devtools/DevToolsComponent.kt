@@ -7,6 +7,7 @@ import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.Security
 import androidx.compose.material.icons.outlined.Warning
 import com.arkivanov.decompose.ComponentContext
+import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.App
 import com.door43.translationstudio.BuildConfig
@@ -21,6 +22,7 @@ import com.door43.translationstudio.ui.navigation.ComponentScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -98,6 +100,12 @@ class DefaultDevToolsComponent(
     override val versionName = BuildConfig.VERSION_NAME
     override val versionCode = BuildConfig.VERSION_CODE
     override val udid: String get() = App.udid()
+
+    init {
+        lifecycle.doOnDestroy {
+            coroutineScope.cancel()
+        }
+    }
 
     override suspend fun runTask(message: String?, block: suspend (TaskHandle) -> Unit) {
         progressManager.runTask(message, block)

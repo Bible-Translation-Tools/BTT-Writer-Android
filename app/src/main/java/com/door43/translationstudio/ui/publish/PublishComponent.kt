@@ -3,6 +3,7 @@ package com.door43.translationstudio.ui.publish
 import android.app.Application
 import androidx.compose.ui.text.AnnotatedString
 import com.arkivanov.decompose.ComponentContext
+import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.door43.translationstudio.App.Companion.deviceLanguageCode
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.NativeSpeaker
@@ -22,6 +23,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -113,6 +115,10 @@ class DefaultPublishComponent(
         } ?: run {
             val error = application.getString(R.string.target_translation_not_found, translationId)
             onResult(PublishComponent.Result.Error(error))
+        }
+
+        lifecycle.doOnDestroy {
+            coroutineScope.cancel()
         }
     }
 

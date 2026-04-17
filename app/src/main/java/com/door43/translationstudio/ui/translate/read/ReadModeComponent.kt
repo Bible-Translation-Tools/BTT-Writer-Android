@@ -3,6 +3,7 @@ package com.door43.translationstudio.ui.translate.read
 import android.app.Application
 import androidx.compose.ui.text.AnnotatedString
 import com.arkivanov.decompose.ComponentContext
+import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Chunk
 import com.door43.translationstudio.core.ProgressManager
@@ -25,6 +26,7 @@ import com.door43.translationstudio.ui.translate.TranslateComponent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -74,6 +76,10 @@ class DefaultReadModeComponent(
             .distinctUntilChanged()
             .onEach { handleResourceChange() }
             .launchIn(coroutineScope)
+
+        lifecycle.doOnDestroy {
+            coroutineScope.cancel()
+        }
     }
 
     override suspend fun handleResourceChange() {

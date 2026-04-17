@@ -2,6 +2,7 @@ package com.door43.translationstudio.ui.settings
 
 import android.net.Uri
 import com.arkivanov.decompose.ComponentContext
+import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
@@ -26,6 +27,7 @@ import com.door43.util.TTFAnalyzer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -74,6 +76,10 @@ class DefaultSettingsComponent(
     init {
         loadInitialPreferences()
         loadTypefaces()
+
+        lifecycle.doOnDestroy {
+            coroutineScope.cancel()
+        }
     }
 
     override suspend fun runTask(message: String?, block: suspend (TaskHandle) -> Unit) {

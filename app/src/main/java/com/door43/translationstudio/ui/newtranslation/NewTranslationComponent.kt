@@ -2,6 +2,7 @@ package com.door43.translationstudio.ui.newtranslation
 
 import android.app.Application
 import com.arkivanov.decompose.ComponentContext
+import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.door43.data.IPreferenceRepository
 import com.door43.translationstudio.App
 import com.door43.translationstudio.R
@@ -21,6 +22,7 @@ import com.door43.usecases.MergeTargetTranslation
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -126,6 +128,10 @@ class DefaultNewTranslationComponent(
                 filteredLanguages = languages,
                 disabledLanguages = disabledLanguages
             )
+        }
+
+        lifecycle.doOnDestroy {
+            coroutineScope.cancel()
         }
     }
 

@@ -3,6 +3,7 @@ package com.door43.translationstudio.ui.translate.review
 import android.app.Application
 import androidx.compose.ui.text.AnnotatedString
 import com.arkivanov.decompose.ComponentContext
+import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
 import com.door43.data.setDefaultPref
@@ -43,6 +44,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -242,6 +244,10 @@ class DefaultReviewModeComponent(
             .distinctUntilChanged()
             .onEach { handleResourceChange() }
             .launchIn(coroutineScope)
+
+        lifecycle.doOnDestroy {
+            coroutineScope.cancel()
+        }
     }
 
     override suspend fun handleResourceChange() {

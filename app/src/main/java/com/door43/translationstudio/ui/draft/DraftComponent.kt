@@ -2,6 +2,7 @@ package com.door43.translationstudio.ui.draft
 
 import android.app.Application
 import com.arkivanov.decompose.ComponentContext
+import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Progress
 import com.door43.translationstudio.core.ProgressManager
@@ -21,6 +22,7 @@ import com.door43.util.sortNumerically
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -94,6 +96,10 @@ class DefaultDraftComponent(
 
     init {
         loadDraftTranslations(translationId)
+
+        lifecycle.doOnDestroy {
+            coroutineScope.cancel()
+        }
     }
 
     override fun getResourceContainer(rcSlug: String): ResourceContainer? {
