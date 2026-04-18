@@ -575,16 +575,17 @@ class DefaultHomeComponent(
 
     private suspend fun getProject(targetTranslation: TargetTranslation): Project? {
         return withContext(Dispatchers.IO) {
-            val existingSources = targetTranslation.sourceTranslations
-            if (existingSources.isNotEmpty()) {
-                val lastSource = existingSources[existingSources.size - 1]
-                library.index.getTranslation(lastSource)?.project
+            val selectedSourceId = getSelectedSourceTranslationId(targetTranslation.id)
+                ?: targetTranslation.sourceTranslations.firstOrNull()
+
+            selectedSourceId?.let {
+                library.index.getTranslation(it)?.project
                     ?: library.index.getProject(
                         targetTranslation.targetLanguageName,
                         targetTranslation.projectId,
                         true
                     )
-            } else {
+            } ?: run {
                 library.index.getProject(
                     targetTranslation.targetLanguageName,
                     targetTranslation.projectId,
@@ -592,6 +593,10 @@ class DefaultHomeComponent(
                 )
             }
         }
+    }
+
+    private fun getSelectedSourceTranslationId(translationId: String): String? {
+        return translator.getSelectedSourceTranslationId(translationId)
     }
 
     private suspend fun deleteProject(project: TranslationItem, orphaned: Boolean) {
