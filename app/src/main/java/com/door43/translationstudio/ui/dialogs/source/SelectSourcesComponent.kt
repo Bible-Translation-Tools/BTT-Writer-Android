@@ -7,6 +7,7 @@ import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.door43.data.IPreferenceRepository
 import com.door43.translationstudio.App
 import com.door43.translationstudio.R
+import com.door43.translationstudio.core.ComponentScope
 import com.door43.translationstudio.core.ContainerCache
 import com.door43.translationstudio.core.Progress
 import com.door43.translationstudio.core.ProgressManager
@@ -14,7 +15,6 @@ import com.door43.translationstudio.core.ProgressOwner
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.TaskHandle
 import com.door43.translationstudio.core.Translator
-import com.door43.translationstudio.core.ComponentScope
 import com.door43.translationstudio.core.launchWithProgress
 import com.door43.usecases.DownloadResourceContainers
 import kotlinx.coroutines.CoroutineScope
@@ -34,7 +34,6 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.door43client.models.Translation
-import java.lang.Exception
 
 const val MAX_SOURCE_ITEMS = 3
 
