@@ -11,6 +11,7 @@ import com.door43.data.getDefaultPref
 import com.door43.translationstudio.App
 import com.door43.translationstudio.App.Companion.deviceLanguageCode
 import com.door43.translationstudio.R
+import com.door43.translationstudio.core.ComponentScope
 import com.door43.translationstudio.core.DownloadImages
 import com.door43.translationstudio.core.MergeConflictsHandler
 import com.door43.translationstudio.core.Profile
@@ -20,8 +21,7 @@ import com.door43.translationstudio.core.ProgressOwner
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.TaskHandle
 import com.door43.translationstudio.core.Translator
-import com.door43.translationstudio.ui.launchWithProgress
-import com.door43.translationstudio.ui.navigation.ComponentScope
+import com.door43.translationstudio.core.launchWithProgress
 import com.door43.usecases.CreateRepository
 import com.door43.usecases.ExportProjects
 import com.door43.usecases.GogsLogout

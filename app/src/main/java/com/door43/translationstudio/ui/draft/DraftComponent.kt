@@ -15,8 +15,8 @@ import com.door43.translationstudio.rendering.RenderingGroup
 import com.door43.translationstudio.rendering.RenderingProvider
 import com.door43.translationstudio.rendering.VerseDisplay
 import com.door43.translationstudio.rendering.model.RenderNode
-import com.door43.translationstudio.ui.launchWithProgress
-import com.door43.translationstudio.ui.navigation.ComponentScope
+import com.door43.translationstudio.core.ComponentScope
+import com.door43.translationstudio.core.launchWithProgress
 import com.door43.usecases.ImportDraft
 import com.door43.util.sortNumerically
 import kotlinx.coroutines.CoroutineScope

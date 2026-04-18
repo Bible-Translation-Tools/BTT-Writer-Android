@@ -1,4 +1,4 @@
-package com.door43.translationstudio.ui.navigation
+package com.door43.translationstudio.core
 
 import kotlinx.coroutines.CoroutineScope
 

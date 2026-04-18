@@ -31,11 +31,8 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.door43.translationstudio.R
@@ -44,6 +41,7 @@ import com.door43.translationstudio.core.TranslationType
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.getComposeTextStyle
 import com.door43.translationstudio.ui.translate.ReviewItem
+import com.door43.translationstudio.ui.translate.components.withSearchHighlight
 
 @Composable
 fun MergeConflictCard(
@@ -140,29 +138,7 @@ fun MergeConflictCard(
                     } else bodyStyle.fontSize / 1.2
 
                     val displayText = remember(conflict, searchQuery) {
-                        if (searchQuery.isNullOrBlank()) {
-                            AnnotatedString(conflict.toString())
-                        } else {
-                            buildAnnotatedString {
-                                append(conflict.toString())
-                                val query = searchQuery.lowercase()
-                                val text = conflict.toString().lowercase()
-                                var startIndex = 0
-                                while (true) {
-                                    val index = text.indexOf(query, startIndex)
-                                    if (index == -1) break
-                                    addStyle(
-                                        SpanStyle(
-                                            background = Color.Yellow,
-                                            color = Color.Black
-                                        ),
-                                        index,
-                                        index + searchQuery.length
-                                    )
-                                    startIndex = index + 1
-                                }
-                            }
-                        }
+                        AnnotatedString(conflict.toString()).withSearchHighlight(searchQuery)
                     }
 
                     Text(

@@ -14,8 +14,8 @@ import com.door43.translationstudio.core.ProgressOwner
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.TaskHandle
 import com.door43.translationstudio.core.Translator
-import com.door43.translationstudio.ui.launchWithProgress
-import com.door43.translationstudio.ui.navigation.ComponentScope
+import com.door43.translationstudio.core.ComponentScope
+import com.door43.translationstudio.core.launchWithProgress
 import com.door43.usecases.DownloadResourceContainers
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

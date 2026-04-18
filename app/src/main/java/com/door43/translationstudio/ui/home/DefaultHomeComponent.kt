@@ -30,8 +30,8 @@ import com.door43.translationstudio.ui.dialogs.export.ExportComponent
 import com.door43.translationstudio.ui.dialogs.import.ImportComponent
 import com.door43.translationstudio.ui.dialogs.import.ImportUsfmComponent
 import com.door43.translationstudio.ui.dialogs.update.UpdateLibraryComponent
-import com.door43.translationstudio.ui.launchWithProgress
-import com.door43.translationstudio.ui.navigation.ComponentScope
+import com.door43.translationstudio.core.ComponentScope
+import com.door43.translationstudio.core.launchWithProgress
 import com.door43.translationstudio.ui.navigation.RootComponent
 import com.door43.usecases.BackupRC
 import com.door43.usecases.GogsLogout

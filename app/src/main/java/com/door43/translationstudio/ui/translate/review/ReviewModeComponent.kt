@@ -28,8 +28,8 @@ import com.door43.translationstudio.rendering.spannables.TranslationWordLinkSpan
 import com.door43.translationstudio.rendering.spannables.USFMNoteSpan
 import com.door43.translationstudio.rendering.spannables.USFMVerseSpan
 import com.door43.translationstudio.rendering.spannables.USXVerseSpan
-import com.door43.translationstudio.ui.launchWithProgress
-import com.door43.translationstudio.ui.navigation.ComponentScope
+import com.door43.translationstudio.core.ComponentScope
+import com.door43.translationstudio.core.launchWithProgress
 import com.door43.translationstudio.ui.textadapters.ComposeTextAdapter
 import com.door43.translationstudio.ui.translate.Footnote
 import com.door43.translationstudio.ui.translate.FootnoteAction
@@ -41,7 +41,6 @@ import com.door43.translationstudio.ui.translate.TranslationHelp
 import com.door43.usecases.RenderHelps
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.SendChannel
@@ -50,9 +49,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
@@ -215,20 +211,14 @@ class DefaultReviewModeComponent(
     private val _items = MutableStateFlow<List<ReviewItem>>(emptyList())
     override val items: StateFlow<List<ReviewItem>> = _items
 
-    private val searchConfig = _state.map {
-        Triple(it.conflictFilterOn, it.search?.query, it.search?.subject)
-    }.distinctUntilChanged()
+    private val conflictFilterOn = _state
+        .map { it.conflictFilterOn }
+        .distinctUntilChanged()
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     override val filteredItems: StateFlow<List<ReviewItem>> =
-        combine(items, searchConfig) { items, config ->
-            items to config
+        combine(items, conflictFilterOn) { items, filterOn ->
+            if (filterOn) items.filter { it.hasMergeConflict } else items
         }
-            .flatMapLatest { (items, config) ->
-                processSearchAndFilter(items, config)
-            }
-            .onEach(::updateSearchMetadata)
-            .flowOn(Dispatchers.Default)
             .stateIn(
                 scope = coroutineScope,
                 started = SharingStarted.WhileSubscribed(5000),
@@ -240,6 +230,13 @@ class DefaultReviewModeComponent(
             .map { it.resourceContainer }
             .distinctUntilChanged()
             .onEach { handleResourceChange(it) }
+            .launchIn(coroutineScope)
+
+        combine(
+            filteredItems,
+            _state.map { it.search }.distinctUntilChanged()
+        ) { items, _ -> items }
+            .onEach(::updateSearchMetadata)
             .launchIn(coroutineScope)
 
         lifecycle.doOnDestroy {
@@ -613,15 +610,11 @@ class DefaultReviewModeComponent(
         targetMode: TargetMode = TargetMode.MARKER,
         loadHistory: Boolean = false
     ): ReviewItem {
-        val searchQuery = _state.value.search?.query
-        val searchSource = _state.value.search?.subject == SearchSubject.SOURCE
-
         val chunkId = "${chunk.chapterSlug}-${chunk.chunkSlug}"
         val (pt, ct, ft) = prepareTranslations(chunk)
         val (sourceText, renderedSourceText) = prepareSource(
             chunkId = chunkId,
-            chunk = chunk,
-            searchQuery = if (searchSource) searchQuery else null
+            chunk = chunk
         )
 
         val item = ReviewItem(
@@ -642,8 +635,7 @@ class DefaultReviewModeComponent(
         val (targetText, renderedTargetText) = prepareTarget(
             chunkId = chunkId,
             chunk = chunk,
-            targetMode = realTargetMode,
-            searchQuery = if (!searchSource) searchQuery else null
+            targetMode = realTargetMode
         )
 
         val history = if (loadHistory) {
@@ -661,23 +653,20 @@ class DefaultReviewModeComponent(
 
     private fun prepareSource(
         chunkId: String,
-        chunk: Chunk,
-        searchQuery: String? = null
+        chunk: Chunk
     ): Pair<String, AnnotatedString> {
         val text = chunk.source.readChunk(chunk.chapterSlug, chunk.chunkSlug)
         return text to renderSourceText(
             chunkId = chunkId,
             translationFormat = chunk.sourceTranslationFormat,
-            sourceText = text,
-            searchQuery = searchQuery
+            sourceText = text
         )
     }
 
     private fun prepareTarget(
         chunkId: String,
         chunk: Chunk,
-        targetMode: TargetMode,
-        searchQuery: String? = null
+        targetMode: TargetMode
     ): Pair<String, AnnotatedString> {
         val text = fetchTargetText(chunk.target, chunk.chapterSlug, chunk.chunkSlug)
         val verseDisplay = when (targetMode) {
@@ -693,7 +682,6 @@ class DefaultReviewModeComponent(
             footnoteAction = if (targetMode != TargetMode.COMPLETE) {
                 FootnoteAction.ACTIONS
             } else FootnoteAction.VIEW,
-            searchQuery = searchQuery,
             onVerseClick = {
                 showSnackBar(application.getString(R.string.long_click_to_drag))
             }
@@ -751,61 +739,6 @@ class DefaultReviewModeComponent(
         prefRepository.setDefaultPref(
             SEARCH_SOURCE,
             subject.name.uppercase(Locale.getDefault())
-        )
-    }
-
-    private fun processSearchAndFilter(
-        items: List<ReviewItem>,
-        config: Triple<Boolean, String?, SearchSubject?>
-    ) = flow {
-        val (filterOn, query, subject) = config
-
-        val processed = withContext(Dispatchers.Default) {
-            val baseItems = if (filterOn) items.filter { it.hasMergeConflict } else items
-            baseItems.map { item ->
-                decorateItemWithSearch(item, query, subject)
-            }
-        }
-        emit(processed)
-    }
-
-    private fun decorateItemWithSearch(
-        item: ReviewItem,
-        query: String?,
-        subject: SearchSubject?
-    ): ReviewItem {
-        val searchSource = subject == SearchSubject.SOURCE
-
-        val renderedSource = renderSourceText(
-            chunkId = item.id,
-            translationFormat = item.chunk.sourceTranslationFormat,
-            sourceText = item.sourceText,
-            searchQuery = if (searchSource) query else null
-        )
-
-        val verseDisplay = when (item.targetMode) {
-            TargetMode.MARKER -> VerseDisplay.PIN
-            TargetMode.EDIT -> VerseDisplay.RAW
-            TargetMode.COMPLETE -> VerseDisplay.NUMBER
-        }
-
-        val renderedTarget = renderTargetText(
-            chunkId = item.id,
-            translationFormat = item.chunk.targetTranslationFormat,
-            targetText = item.targetText,
-            verseDisplay = verseDisplay,
-            footnoteAction = if (item.targetMode != TargetMode.COMPLETE) {
-                FootnoteAction.ACTIONS
-            } else FootnoteAction.VIEW,
-            searchQuery = if (!searchSource) query else null,
-            onVerseClick = {
-                showSnackBar(application.getString(R.string.long_click_to_drag))
-            }
-        )
-
-        return item.copy(
-            renderedSourceText = renderedSource,
-            renderedTargetText = renderedTarget
         )
     }
 

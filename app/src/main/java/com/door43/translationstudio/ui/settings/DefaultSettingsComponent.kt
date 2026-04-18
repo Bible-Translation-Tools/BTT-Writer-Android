@@ -17,8 +17,8 @@ import com.door43.translationstudio.core.ProgressManager
 import com.door43.translationstudio.core.ProgressOwner
 import com.door43.translationstudio.core.ResourceProvider
 import com.door43.translationstudio.core.TaskHandle
-import com.door43.translationstudio.ui.launchWithProgress
-import com.door43.translationstudio.ui.navigation.ComponentScope
+import com.door43.translationstudio.core.ComponentScope
+import com.door43.translationstudio.core.launchWithProgress
 import com.door43.usecases.CheckForLatestRelease
 import com.door43.usecases.DownloadLatestRelease
 import com.door43.usecases.GogsLogout

@@ -64,6 +64,7 @@ import com.door43.translationstudio.getComposeTextStyle
 import com.door43.translationstudio.ui.translate.ReviewItem
 import com.door43.translationstudio.ui.translate.components.UsfmEditText
 import com.door43.translationstudio.ui.translate.components.footnote.NOTE_CHAR
+import com.door43.translationstudio.ui.translate.components.withSearchHighlight
 
 @Composable
 fun ReviewTargetCard(
@@ -264,7 +265,8 @@ fun ReviewTargetCard(
                         val displayText = remember(
                             currentItem.renderedTargetText,
                             dragPinRange,
-                            highlightWordRange
+                            highlightWordRange,
+                            searchQuery
                         ) {
                             val base = dragPinRange?.let { range ->
                                 buildAnnotatedString {
@@ -281,7 +283,7 @@ fun ReviewTargetCard(
                                 }
                             } ?: currentItem.renderedTargetText
 
-                            highlightWordRange?.let { wordRange ->
+                            val withWord = highlightWordRange?.let { wordRange ->
                                 buildAnnotatedString {
                                     append(base)
                                     addStyle(
@@ -294,6 +296,8 @@ fun ReviewTargetCard(
                                     )
                                 }
                             } ?: base
+
+                            withWord.withSearchHighlight(searchQuery)
                         }
 
                         Text(

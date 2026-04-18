@@ -49,7 +49,8 @@ fun ReviewCard(
     ) -> Unit = { _, _, _, _ -> },
     onExpandedChange: (Boolean) -> Unit,
     onConflictSelected: (Int) -> Unit,
-    searchQuery: String? = null
+    sourceSearchQuery: String? = null,
+    targetSearchQuery: String? = null
 ) {
     val mainWeight by animateFloatAsState(
         targetValue = if (resourcesOpen) 0.333f else 0.49f,
@@ -94,6 +95,7 @@ fun ReviewCard(
             onSourceTabClick = onSourceTabClick,
             onAddNewSourceClick = onAddNewSourceClick,
             onRemoveSourceClick = onRemoveSourceClick,
+            searchQuery = sourceSearchQuery,
             modifier = Modifier.weight(mainWeight)
                 .fillMaxHeight()
         )
@@ -109,7 +111,7 @@ fun ReviewCard(
                 onRedoClick = onRedoClick,
                 onAddNoteClick = onAddNoteClick,
                 onDragDropVerse = onDragDropVerse,
-                searchQuery = searchQuery,
+                searchQuery = targetSearchQuery,
                 modifier = Modifier.weight(mainWeight)
                     .fillMaxHeight()
             )
@@ -117,7 +119,7 @@ fun ReviewCard(
             MergeConflictCard(
                 item = item,
                 typography = typography,
-                searchQuery = searchQuery,
+                searchQuery = targetSearchQuery,
                 onUndoClick = onUndoClick,
                 onRedoClick = onRedoClick,
                 onConfirmClick = onConflictSelected,

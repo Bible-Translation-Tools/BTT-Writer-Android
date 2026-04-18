@@ -16,6 +16,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.AnnotatedString
@@ -28,6 +29,7 @@ import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.getComposeTextStyle
 import com.door43.translationstudio.ui.dialogs.source.SourceTabItem
 import com.door43.translationstudio.ui.translate.components.SourceTabRow
+import com.door43.translationstudio.ui.translate.components.withSearchHighlight
 import org.unfoldingword.resourcecontainer.ResourceContainer
 
 @Composable
@@ -40,8 +42,12 @@ fun ChunkSourceCard(
     onSourceTabClick: (String) -> Unit,
     onAddNewSourceClick: () -> Unit,
     onRemoveSourceClick: (String) -> Unit,
+    searchQuery: String? = null,
     modifier: Modifier = Modifier
 ) {
+    val displayText = remember(text, searchQuery) {
+        text.withSearchHighlight(searchQuery)
+    }
     val titleStyle = typography.getComposeTextStyle(
         translationType = TranslationType.SOURCE,
         style = TextStyleType.SUB,
@@ -110,7 +116,7 @@ fun ChunkSourceCard(
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = text,
+                text = displayText,
                 inlineContent = inlineContentMap,
                 style = bodyStyle,
                 modifier = Modifier.fillMaxWidth()

@@ -25,7 +25,7 @@ import com.door43.translationstudio.ui.dialogs.export.DefaultExportComponent
 import com.door43.translationstudio.ui.dialogs.feedback.DefaultFeedbackComponent
 import com.door43.translationstudio.ui.dialogs.export.ExportComponent
 import com.door43.translationstudio.ui.dialogs.feedback.FeedbackComponent
-import com.door43.translationstudio.ui.navigation.ComponentScope
+import com.door43.translationstudio.core.ComponentScope
 import com.door43.translationstudio.ui.textadapters.ComposeTextAdapter
 import com.door43.usecases.ValidateProject
 import kotlinx.coroutines.CoroutineScope

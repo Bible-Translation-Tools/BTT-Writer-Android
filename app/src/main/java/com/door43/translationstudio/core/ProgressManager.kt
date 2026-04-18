@@ -1,6 +1,7 @@
 package com.door43.translationstudio.core
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -8,6 +9,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
@@ -107,5 +109,18 @@ class ProgressManager(scope: CoroutineScope) : ProgressOwner {
         val value = if (isAnyIndeterminate) -1f else tasks.map { it.value }.average().toFloat()
 
         return Progress(value, message, details)
+    }
+}
+
+/**
+ * Launches a coroutine in the custom scope and immediately starts a tracked task.
+ * This extension is only available to classes that are BOTH a ComponentContext and a ProgressOwner.
+ */
+fun <T> T.launchWithProgress(
+    message: String? = null,
+    block: suspend (TaskHandle) -> Unit
+): Job where T : ComponentScope, T : ProgressOwner {
+    return coroutineScope.launch {
+        runTask(message, block)
     }
 }

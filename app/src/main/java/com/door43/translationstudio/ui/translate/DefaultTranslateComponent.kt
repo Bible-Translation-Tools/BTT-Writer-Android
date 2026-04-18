@@ -37,8 +37,8 @@ import com.door43.translationstudio.ui.dialogs.source.DefaultSelectSourcesCompon
 import com.door43.translationstudio.ui.dialogs.source.MAX_SOURCE_ITEMS
 import com.door43.translationstudio.ui.dialogs.source.SelectSourcesComponent
 import com.door43.translationstudio.ui.dialogs.source.SourceTabItem
-import com.door43.translationstudio.ui.launchWithProgress
-import com.door43.translationstudio.ui.navigation.ComponentScope
+import com.door43.translationstudio.core.ComponentScope
+import com.door43.translationstudio.core.launchWithProgress
 import com.door43.translationstudio.ui.navigation.RootComponent
 import com.door43.translationstudio.ui.translate.chunk.DefaultChunkModeComponent
 import com.door43.translationstudio.ui.translate.read.DefaultReadModeComponent

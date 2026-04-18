@@ -199,7 +199,12 @@ fun ReviewModeSection(
                         )
                     },
                     onConflictSelected = { component.selectConflict(item, it) },
-                    searchQuery = state.search?.let { search ->
+                    sourceSearchQuery = state.search?.let { search ->
+                        if (search.query.length >= 2 && search.subject == SearchSubject.SOURCE) {
+                            search.query
+                        } else null
+                    },
+                    targetSearchQuery = state.search?.let { search ->
                         if (search.query.length >= 2 && search.subject == SearchSubject.TARGET) {
                             search.query
                         } else null

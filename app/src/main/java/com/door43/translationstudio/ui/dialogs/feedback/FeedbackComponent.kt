@@ -5,12 +5,12 @@ import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.door43.translationstudio.App
 import com.door43.translationstudio.R
+import com.door43.translationstudio.core.ComponentScope
 import com.door43.translationstudio.core.Progress
 import com.door43.translationstudio.core.ProgressManager
 import com.door43.translationstudio.core.ProgressOwner
 import com.door43.translationstudio.core.TaskHandle
-import com.door43.translationstudio.ui.launchWithProgress
-import com.door43.translationstudio.ui.navigation.ComponentScope
+import com.door43.translationstudio.core.launchWithProgress
 import com.door43.usecases.CheckForLatestRelease
 import com.door43.usecases.DownloadLatestRelease
 import com.door43.usecases.UploadFeedback

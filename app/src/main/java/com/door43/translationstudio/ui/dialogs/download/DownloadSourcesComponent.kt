@@ -9,12 +9,12 @@ import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.BibleCodes
+import com.door43.translationstudio.core.ComponentScope
 import com.door43.translationstudio.core.Progress
 import com.door43.translationstudio.core.ProgressManager
 import com.door43.translationstudio.core.ProgressOwner
 import com.door43.translationstudio.core.TaskHandle
-import com.door43.translationstudio.ui.launchWithProgress
-import com.door43.translationstudio.ui.navigation.ComponentScope
+import com.door43.translationstudio.core.launchWithProgress
 import com.door43.usecases.DownloadResourceContainers
 import com.door43.usecases.GetAvailableSources
 import kotlinx.coroutines.CoroutineScope
@@ -28,7 +28,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import kotlin.collections.get
 
 enum class FilterMode { ByLanguage, ByBook }
 

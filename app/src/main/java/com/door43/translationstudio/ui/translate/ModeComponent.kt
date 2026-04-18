@@ -95,8 +95,7 @@ interface ModeComponent<ITEM: TranslateItem> {
     fun renderSourceText(
         chunkId: String,
         translationFormat: TranslationFormat,
-        sourceText: String,
-        searchQuery: String? = null
+        sourceText: String
     ): AnnotatedString {
         return try {
             val renderingGroup = RenderingGroup()
@@ -107,9 +106,6 @@ interface ModeComponent<ITEM: TranslateItem> {
                 verseDisplay = VerseDisplay.NUMBER,
                 target = false
             )
-            if (!searchQuery.isNullOrEmpty()) {
-                renderingGroup.setSearchString(searchQuery)
-            }
             val renderNodes = renderingGroup.start()
             ComposeTextAdapter.convert(
                 renderNodes,
@@ -128,7 +124,6 @@ interface ModeComponent<ITEM: TranslateItem> {
         targetText: String,
         verseDisplay: VerseDisplay = VerseDisplay.RAW,
         footnoteAction: FootnoteAction,
-        searchQuery: String? = null,
         onVerseClick: ((RenderNode.Verse) -> Unit)? = null
     ): AnnotatedString {
         return try {
@@ -140,9 +135,6 @@ interface ModeComponent<ITEM: TranslateItem> {
                 verseDisplay,
                 target = true
             )
-            if (!searchQuery.isNullOrEmpty()) {
-                renderingGroup.setSearchString(searchQuery)
-            }
             val renderNodes = renderingGroup.start()
             ComposeTextAdapter.convert(
                 nodes = renderNodes,
