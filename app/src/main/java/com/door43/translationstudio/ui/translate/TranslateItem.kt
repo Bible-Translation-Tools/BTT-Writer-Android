@@ -1,5 +1,6 @@
 package com.door43.translationstudio.ui.translate
 
+import androidx.compose.runtime.Stable
 import androidx.compose.ui.text.AnnotatedString
 import com.door43.translationstudio.core.ChapterTranslation
 import com.door43.translationstudio.core.Chunk
@@ -17,6 +18,7 @@ interface Swipable {
     fun selfCopy(sourceOnTop: Boolean = this.sourceOnTop): Swipable
 }
 
+@Stable
 abstract class TranslateItem {
     abstract val id: String
     abstract val chunk: Chunk

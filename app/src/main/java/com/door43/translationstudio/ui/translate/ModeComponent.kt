@@ -6,13 +6,19 @@ import com.door43.translationstudio.core.Chunk
 import com.door43.translationstudio.core.FrameTranslation
 import com.door43.translationstudio.core.Progress
 import com.door43.translationstudio.core.ProjectTranslation
+import com.door43.translationstudio.core.SlugSorter
+import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.TranslationFormat
+import com.door43.translationstudio.core.TranslationViewMode
 import com.door43.translationstudio.rendering.RenderingGroup
 import com.door43.translationstudio.rendering.RenderingProvider
 import com.door43.translationstudio.rendering.VerseDisplay
 import com.door43.translationstudio.rendering.model.RenderNode
 import com.door43.translationstudio.ui.textadapters.ComposeTextAdapter
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.withContext
+import org.unfoldingword.resourcecontainer.ResourceContainer
 
 enum class FootnoteAction {
     VIEW, ACTIONS, EDIT
@@ -40,10 +46,38 @@ interface ModeComponent<ITEM: TranslateItem> {
     fun saveFootnote(note: Footnote){}
     fun clearFootnote()
 
-    fun updateItem(item: ITEM)
-    fun updateItems(items: List<ITEM>)
     fun onNoteClicked(note: RenderNode.Note, chunkId: String, action: FootnoteAction)
-    suspend fun handleResourceChange()
+    suspend fun handleResourceChange(resourceContainer: ResourceContainer?)
+    suspend fun loadChunks(
+        viewMode: TranslationViewMode,
+        sourceContainer: ResourceContainer?,
+        targetTranslation: TargetTranslation
+    ): List<Chunk> {
+        val isReadMode = viewMode == TranslationViewMode.READ
+        val chunks = withContext(Dispatchers.IO) {
+            val chunks = mutableListOf<Chunk>()
+            sourceContainer?.let { source ->
+                val sorter = SlugSorter()
+                val chapterSlugs = sorter.sort(source.chapters())
+                for (chapterSlug: String in chapterSlugs) {
+                    val chunkSlugs = sorter.sort(source.chunks(chapterSlug))
+                    for (chunkSlug in chunkSlugs) {
+                        if (!isReadMode || !chunks.any { it.chapterSlug == chapterSlug }) {
+                            chunks.add(
+                                Chunk(chapterSlug, chunkSlug, source, targetTranslation)
+                            )
+                        }
+                    }
+                }
+            }
+            chunks
+        }
+        return chunks
+    }
+
+    fun updateItem(item: ITEM)
+
+    fun updateItems(items: List<ITEM>)
 
     fun prepareTranslations(
         chunk: Chunk

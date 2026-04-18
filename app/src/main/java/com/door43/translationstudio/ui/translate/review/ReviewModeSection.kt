@@ -43,8 +43,8 @@ fun ReviewModeSection(
     onSearchConsumed: () -> Unit,
     onSourceDialogOpen: () -> Unit,
     onHasMergeConflicts: (Boolean) -> Unit,
-    mergeFilterOn: Boolean = false,
-    onMergeConflictFilterReset: () -> Unit,
+    conflictFilterOn: Boolean = false,
+    onConflictFilterReset: () -> Unit,
     chunksDoneRequested: Boolean,
     onChunksDoneConsumed: () -> Unit
 ) {
@@ -60,14 +60,14 @@ fun ReviewModeSection(
     // Auto-disable conflict filter when no conflicts remain
     LaunchedEffect(hasConflicts) {
         onHasMergeConflicts(hasConflicts)
-        if (items.isNotEmpty() && !hasConflicts && mergeFilterOn) {
-            onMergeConflictFilterReset()
-            component.setMergeFilterOn(false)
+        if (items.isNotEmpty() && !hasConflicts && conflictFilterOn) {
+            onConflictFilterReset()
+            component.setConflictFilterOn(false)
         }
     }
 
-    LaunchedEffect(mergeFilterOn) {
-        component.setMergeFilterOn(mergeFilterOn)
+    LaunchedEffect(conflictFilterOn) {
+        component.setConflictFilterOn(conflictFilterOn)
     }
 
     // Open search when requested from sidebar

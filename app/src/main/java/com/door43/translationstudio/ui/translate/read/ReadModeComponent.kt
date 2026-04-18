@@ -49,7 +49,7 @@ interface ReadModeComponent : ModeComponent<ReadItem> {
 class DefaultReadModeComponent(
     componentContext: ComponentContext,
     sharedState: StateFlow<TranslateComponent.SharedState>,
-    private val loadChunks: suspend (TranslationViewMode) -> List<Chunk>
+    private val targetTranslation: TargetTranslation
 ) : ReadModeComponent, ProgressOwner, KoinComponent,
     ComponentContext by componentContext,
     ComponentScope, ModeComponent<ReadItem> {
@@ -61,17 +61,17 @@ class DefaultReadModeComponent(
     private val _state = MutableStateFlow(ReadModeComponent.State())
     override val state: StateFlow<ReadModeComponent.State> = _state
 
-    private val _items = MutableStateFlow<List<ReadItem>>(emptyList())
-    override val items: StateFlow<List<ReadItem>> = _items
-
     private val progressManager = ProgressManager(coroutineScope)
     override val progress get() = progressManager.progress
+
+    private val _items = MutableStateFlow<List<ReadItem>>(emptyList())
+    override val items: StateFlow<List<ReadItem>> = _items
 
     init {
         sharedState
             .map { it.resourceContainer }
             .distinctUntilChanged()
-            .onEach { handleResourceChange() }
+            .onEach { handleResourceChange(it) }
             .launchIn(coroutineScope)
 
         lifecycle.doOnDestroy {
@@ -79,8 +79,12 @@ class DefaultReadModeComponent(
         }
     }
 
-    override suspend fun handleResourceChange() {
-        val chunks = loadChunks(TranslationViewMode.READ)
+    override suspend fun handleResourceChange(resourceContainer: ResourceContainer?) {
+        val chunks = loadChunks(
+            TranslationViewMode.READ,
+            resourceContainer,
+            targetTranslation
+        )
 
         launchWithProgress(application.getString(R.string.loading_sources)) {
             val items = withContext(Dispatchers.Default) {
@@ -88,6 +92,16 @@ class DefaultReadModeComponent(
             }
             updateItems(items)
         }
+    }
+
+    override fun updateItem(item: ReadItem) {
+        _items.update { items ->
+            items.map { if (it.id == item.id) item else it }
+        }
+    }
+
+    override fun updateItems(items: List<ReadItem>) {
+        _items.value = items
     }
 
     override suspend fun runTask(message: String?, block: suspend (TaskHandle) -> Unit) {
@@ -104,16 +118,6 @@ class DefaultReadModeComponent(
 
     override fun clearFootnote() {
         _state.update { it.copy(footnote = null) }
-    }
-
-    override fun updateItem(item: ReadItem) {
-        _items.value =  _items.value.map {
-            if (it.id == item.id) item else it
-        }
-    }
-
-    override fun updateItems(items: List<ReadItem>) {
-        _items.value = items
     }
 
     override fun onNoteClicked(

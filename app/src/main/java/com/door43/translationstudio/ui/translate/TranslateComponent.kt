@@ -3,7 +3,6 @@ package com.door43.translationstudio.ui.translate
 import com.arkivanov.decompose.router.slot.ChildSlot
 import com.arkivanov.decompose.router.stack.ChildStack
 import com.arkivanov.decompose.value.Value
-import com.door43.translationstudio.core.Chunk
 import com.door43.translationstudio.core.Progress
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.TranslationViewMode
@@ -32,13 +31,19 @@ interface TranslateComponent {
     val event: Flow<Event>
     val eventSender: SendChannel<Event>
 
+    val currentViewMode: Value<TranslationViewMode>
+
     val targetTranslation: TargetTranslation
+
+    fun openViewMode(viewMode: TranslationViewMode)
+    fun openReadMode()
+    fun openChunkMode()
+    fun openReviewMode(conflictFilterOn: Boolean = false)
 
     fun restartAutoCommitTimer()
     fun updateMergeFilter(on: Boolean)
     fun removeSource(sourceId: String)
     fun selectSource(sourceId: String)
-    fun saveLastViewMode(viewMode: TranslationViewMode)
     fun saveLastFocus(chapterId: String, frameId: String?)
 
     fun openHome(withUpdate: Boolean = false)
@@ -56,8 +61,7 @@ interface TranslateComponent {
     }
 
     data class State(
-        val viewMode: TranslationViewMode = TranslationViewMode.LOADING,
-        val mergeFilterOn: Boolean = false,
+        val conflictFilterOn: Boolean = false,
         val draftAvailable: Boolean = false,
         val showDraftAvailable: Boolean = false,
         val lastFocusChapterId: String? = null,
@@ -66,7 +70,6 @@ interface TranslateComponent {
     )
 
     data class SharedState(
-        val chunks: List<Chunk> = emptyList(),
         val sourceTabs: List<SourceTabItem> = emptyList(),
         val resourceContainer: ResourceContainer? = null
     )
@@ -106,7 +109,7 @@ interface TranslateComponent {
         data object Chunk : Config
 
         @Serializable
-        data object Review : Config
+        data class Review(val conflictFilterOn: Boolean) : Config
     }
 
     @Serializable

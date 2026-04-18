@@ -22,7 +22,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import com.door43.translationstudio.R
-import com.door43.translationstudio.core.TranslationViewMode
 import com.door43.translationstudio.ui.components.LocalSnackbarHostState
 import com.door43.translationstudio.ui.components.rememberTranslateMenuItems
 import com.door43.translationstudio.ui.dialogs.ProgressDialog
@@ -40,6 +39,7 @@ fun TargetTranslationScreen(
     val state by component.state.collectAsStateWithLifecycle()
     val sharedState by component.sharedState.collectAsStateWithLifecycle()
     val progress by component.progress.collectAsStateWithLifecycle()
+    val currentViewMode by component.currentViewMode.subscribeAsState()
 
     val dialogSlot by component.dialogSlot.subscribeAsState()
 
@@ -52,14 +52,14 @@ fun TargetTranslationScreen(
     var hasMergeConflicts by remember { mutableStateOf(false) }
 
     val scrollCoordinator = rememberScrollCoordinator(
-        chunks = sharedState.chunks,
+        items = emptyList(),
         lastFocusChapterId = state.lastFocusChapterId,
         lastFocusFrameId = state.lastFocusFrameId,
         component = component
     )
 
     val menuItems = rememberTranslateMenuItems(
-        viewMode = state.viewMode,
+        viewMode = currentViewMode,
         draftAvailable = state.draftAvailable,
         onHomeClick = { component.openHome() },
         onNavigateToDraft = {
@@ -118,35 +118,19 @@ fun TargetTranslationScreen(
         ) { paddingValues ->
             Row(modifier = Modifier.padding(paddingValues)) {
                 TranslateSidebar(
-                    currentViewMode = state.viewMode,
+                    currentViewMode = currentViewMode,
                     showMergeConflict = hasMergeConflicts,
-                    mergeConflictFilterOn = state.mergeFilterOn,
-                    onReadClick = {
-                        component.updateMergeFilter(false)
-                        if (state.viewMode != TranslationViewMode.READ) {
-                            component.saveLastViewMode(TranslationViewMode.READ)
-                        }
-                    },
-                    onChunkClick = {
-                        component.updateMergeFilter(false)
-                        if (state.viewMode != TranslationViewMode.CHUNK) {
-                            component.saveLastViewMode(TranslationViewMode.CHUNK)
-                        }
-                    },
+                    conflictFilterOn = state.conflictFilterOn,
+                    onReadClick = component::openReadMode,
+                    onChunkClick = component::openChunkMode,
                     onReviewClick = {
-                        component.updateMergeFilter(false)
-                        if (state.viewMode != TranslationViewMode.REVIEW) {
-                            component.saveLastViewMode(TranslationViewMode.REVIEW)
-                        }
+                        component.openReviewMode(false)
                     },
-                    onMergeConflictClick = {
-                        component.updateMergeFilter(!state.mergeFilterOn)
-                        if (state.viewMode != TranslationViewMode.REVIEW) {
-                            component.saveLastViewMode(TranslationViewMode.REVIEW)
-                        }
+                    onConflictClick = {
+                        component.openReviewMode(!state.conflictFilterOn)
                     },
                     onSliderValueChange = {
-                        scrollCoordinator.onSliderChange(it, sharedState.chunks)
+                        scrollCoordinator.onSliderChange(it, emptyList())
                     },
                     sliderValue = scrollCoordinator.sliderValue.value,
                     chapterLabel = scrollCoordinator.sliderChapterLabel,
@@ -167,8 +151,8 @@ fun TargetTranslationScreen(
                             onHasMergeConflicts = { hasMergeConflicts = it },
                             searchRequested = searchRequested,
                             onSearchConsumed = { searchRequested = false },
-                            mergeConflictFilterOn = state.mergeFilterOn,
-                            onMergeConflictFilterReset = { component.updateMergeFilter(false) },
+                            conflictFilterOn = state.conflictFilterOn,
+                            onConflictFilterReset = { component.updateMergeFilter(false) },
                             chunksDoneRequested = chunksDoneRequested,
                             onChunksDoneConsumed = { chunksDoneRequested = false }
                         )

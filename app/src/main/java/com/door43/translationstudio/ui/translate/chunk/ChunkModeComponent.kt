@@ -36,6 +36,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import org.unfoldingword.resourcecontainer.ResourceContainer
 
 interface ChunkModeComponent : ModeComponent<ChunkItem> {
     override val state: StateFlow<State>
@@ -53,7 +54,7 @@ interface ChunkModeComponent : ModeComponent<ChunkItem> {
 class DefaultChunkModeComponent(
     componentContext: ComponentContext,
     sharedState: StateFlow<TranslateComponent.SharedState>,
-    private val loadChunks: suspend (TranslationViewMode) -> List<Chunk>
+    private val targetTranslation: TargetTranslation
 ) : ChunkModeComponent, ProgressOwner, KoinComponent,
     ComponentContext by componentContext,
     ComponentScope, ModeComponent<ChunkItem> {
@@ -65,17 +66,17 @@ class DefaultChunkModeComponent(
     private val _state = MutableStateFlow(ChunkModeComponent.State())
     override val state: StateFlow<ChunkModeComponent.State> = _state
 
-    private val _items = MutableStateFlow<List<ChunkItem>>(emptyList())
-    override val items: StateFlow<List<ChunkItem>> = _items
-
     private val progressManager = ProgressManager(coroutineScope)
     override val progress get() = progressManager.progress
+
+    private val _items = MutableStateFlow<List<ChunkItem>>(emptyList())
+    override val items: StateFlow<List<ChunkItem>> = _items
 
     init {
         sharedState
             .map { it.resourceContainer }
             .distinctUntilChanged()
-            .onEach { handleResourceChange() }
+            .onEach { handleResourceChange(it) }
             .launchIn(coroutineScope)
 
         lifecycle.doOnDestroy {
@@ -83,8 +84,12 @@ class DefaultChunkModeComponent(
         }
     }
 
-    override suspend fun handleResourceChange() {
-        val chunks = loadChunks(TranslationViewMode.CHUNK)
+    override suspend fun handleResourceChange(resourceContainer: ResourceContainer?) {
+        val chunks = loadChunks(
+            TranslationViewMode.CHUNK,
+            resourceContainer,
+            targetTranslation
+        )
 
         launchWithProgress(application.getString(R.string.loading_sources)) {
             val items = withContext(Dispatchers.Default) {
@@ -92,6 +97,16 @@ class DefaultChunkModeComponent(
             }
             updateItems(items)
         }
+    }
+
+    override fun updateItem(item: ChunkItem) {
+        _items.update { items ->
+            items.map { if (it.id == item.id) item else it }
+        }
+    }
+
+    override fun updateItems(items: List<ChunkItem>) {
+        _items.value = items
     }
 
     override suspend fun runTask(message: String?, block: suspend (TaskHandle) -> Unit) {
@@ -137,16 +152,6 @@ class DefaultChunkModeComponent(
                 chunkToReopen = null
             )
         }
-    }
-
-    override fun updateItem(item: ChunkItem) {
-        _items.value =  _items.value.map {
-            if (it.id == item.id) item else it
-        }
-    }
-
-    override fun updateItems(items: List<ChunkItem>) {
-        _items.value = items
     }
 
     override fun onNoteClicked(

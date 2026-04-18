@@ -171,7 +171,7 @@ interface ReviewModeComponent : ModeComponent<ReviewItem> {
         targetRawPosition: Int
     )
     fun selectConflict(item: ReviewItem, index: Int)
-    fun setMergeFilterOn(value: Boolean)
+    fun setConflictFilterOn(value: Boolean)
 
     data class State(
         val resourcesOpen: Boolean = false,
@@ -180,7 +180,7 @@ interface ReviewModeComponent : ModeComponent<ReviewItem> {
         val chunkToDone: ReviewItem? = null,
         val search: SearchState? = null,
         val markAllDoneState: MarkAllDialogState? = null,
-        val mergeConflictFilterOn: Boolean = false,
+        val conflictFilterOn: Boolean = false,
         override val footnote: Footnote? = null
     ) : ModeComponent.State
 }
@@ -189,7 +189,7 @@ class DefaultReviewModeComponent(
     componentContext: ComponentContext,
     private val sharedState: StateFlow<TranslateComponent.SharedState>,
     private val eventSender: SendChannel<TranslateComponent.Event>,
-    private val loadChunks: suspend (TranslationViewMode) -> List<Chunk>
+    private val targetTranslation: TargetTranslation
 ) : ReviewModeComponent,
     ComponentContext by componentContext,
     KoinComponent, ComponentScope,
@@ -206,17 +206,17 @@ class DefaultReviewModeComponent(
     private val _state = MutableStateFlow(ReviewModeComponent.State())
     override val state: StateFlow<ReviewModeComponent.State> = _state
 
-    private val _items = MutableStateFlow<List<ReviewItem>>(emptyList())
-    override val items: StateFlow<List<ReviewItem>> = _items
-
     private val progressManager = ProgressManager(coroutineScope)
     override val progress get() = progressManager.progress
 
     private val sourceContainer: ResourceContainer?
         get() = sharedState.value.resourceContainer
 
+    private val _items = MutableStateFlow<List<ReviewItem>>(emptyList())
+    override val items: StateFlow<List<ReviewItem>> = _items
+
     private val searchConfig = _state.map {
-        Triple(it.mergeConflictFilterOn, it.search?.query, it.search?.subject)
+        Triple(it.conflictFilterOn, it.search?.query, it.search?.subject)
     }.distinctUntilChanged()
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -239,7 +239,7 @@ class DefaultReviewModeComponent(
         sharedState
             .map { it.resourceContainer }
             .distinctUntilChanged()
-            .onEach { handleResourceChange() }
+            .onEach { handleResourceChange(it) }
             .launchIn(coroutineScope)
 
         lifecycle.doOnDestroy {
@@ -247,12 +247,32 @@ class DefaultReviewModeComponent(
         }
     }
 
-    override suspend fun handleResourceChange() {
+    override suspend fun handleResourceChange(resourceContainer: ResourceContainer?) {
         if (_state.value.resourcesOpen && _state.value.help != null) {
             _state.update { it.copy(help = null) }
         }
-        val chunks = loadChunks(TranslationViewMode.REVIEW)
-        mapChunksToItems(chunks)
+        val chunks = loadChunks(
+            TranslationViewMode.REVIEW,
+            resourceContainer,
+            targetTranslation
+        )
+
+        launchWithProgress(application.getString(R.string.loading_sources)) {
+            val items = withContext(Dispatchers.Default) {
+                chunks.map { prepareItem(it) }
+            }
+            updateItems(items)
+        }
+    }
+
+    override fun updateItem(item: ReviewItem) {
+        _items.update { items ->
+            items.map { if (it.id == item.id) item else it }
+        }
+    }
+
+    override fun updateItems(items: List<ReviewItem>) {
+        _items.value = items
     }
 
     override suspend fun runTask(message: String?, block: suspend (TaskHandle) -> Unit) {
@@ -528,9 +548,9 @@ class DefaultReviewModeComponent(
         }
     }
 
-    override fun setMergeFilterOn(value: Boolean) {
+    override fun setConflictFilterOn(value: Boolean) {
         _state.update { state ->
-            state.copy(mergeConflictFilterOn = value)
+            state.copy(conflictFilterOn = value)
         }
     }
 
@@ -558,16 +578,6 @@ class DefaultReviewModeComponent(
 
     override fun clearFootnote() {
         _state.update { it.copy(footnote = null) }
-    }
-
-    override fun updateItem(item: ReviewItem) {
-        _items.value =  _items.value.map {
-            if (it.id == item.id) item else it
-        }
-    }
-
-    override fun updateItems(items: List<ReviewItem>) {
-        _items.value = items
     }
 
     override fun onNoteClicked(

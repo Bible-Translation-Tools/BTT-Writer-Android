@@ -12,6 +12,7 @@ import com.arkivanov.decompose.router.stack.StackNavigation
 import com.arkivanov.decompose.router.stack.childStack
 import com.arkivanov.decompose.router.stack.replaceAll
 import com.arkivanov.decompose.value.Value
+import com.arkivanov.decompose.value.operator.map
 import com.arkivanov.essenty.instancekeeper.InstanceKeeper
 import com.arkivanov.essenty.instancekeeper.getOrCreate
 import com.arkivanov.essenty.lifecycle.doOnDestroy
@@ -19,11 +20,9 @@ import com.door43.data.AssetsProvider
 import com.door43.data.IPreferenceRepository
 import com.door43.translationstudio.App.Companion.deviceLanguageCode
 import com.door43.translationstudio.R
-import com.door43.translationstudio.core.Chunk
 import com.door43.translationstudio.core.ContainerCache
 import com.door43.translationstudio.core.ProgressManager
 import com.door43.translationstudio.core.ProgressOwner
-import com.door43.translationstudio.core.SlugSorter
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.TaskHandle
 import com.door43.translationstudio.core.TranslationViewMode
@@ -55,10 +54,6 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -69,7 +64,6 @@ import org.koin.core.component.inject
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.door43client.models.Translation
 import org.unfoldingword.resourcecontainer.Project
-import org.unfoldingword.resourcecontainer.ResourceContainer
 import org.unfoldingword.tools.logger.Logger
 import java.util.Locale
 import java.util.Timer
@@ -79,7 +73,7 @@ class DefaultTranslateComponent(
     componentContext: ComponentContext,
     translationId: String,
     initialViewMode: TranslationViewMode?,
-    mergeFilterOn: Boolean,
+    conflictFilterOn: Boolean,
     private val sharedFlow: SharedFlow<RootComponent.SharedEvent>,
     private val onResult: (TranslateComponent.Result) -> Unit
 ) : TranslateComponent,
@@ -126,9 +120,6 @@ class DefaultTranslateComponent(
     override val event = _event.receiveAsFlow()
     override val eventSender: SendChannel<TranslateComponent.Event> = _event
 
-    private val sourceContainer: ResourceContainer?
-        get() = _sharedState.value.resourceContainer
-
     val initialized: Boolean
         get() = this::targetTranslation.isInitialized
 
@@ -140,38 +131,34 @@ class DefaultTranslateComponent(
         childFactory = ::child
     )
 
+    override val currentViewMode: Value<TranslationViewMode> = stack
+        .map {
+            when (it.active.instance) {
+                is TranslateComponent.Child.Read -> TranslationViewMode.READ
+                is TranslateComponent.Child.Chunk -> TranslationViewMode.CHUNK
+                is TranslateComponent.Child.Review -> TranslationViewMode.REVIEW
+                else -> TranslationViewMode.LOADING
+            }
+        }
+
     init {
         translator.getTargetTranslation(translationId)?.let { translation ->
             targetTranslation = translation
 
             val draftAvailable = draftIsAvailable()
-            val lastViewMode = initialViewMode?.let {
-                translator.setLastViewMode(targetTranslation.id, it)
-                it
-            } ?: translator.getLastViewMode(targetTranslation.id)
+
+            val viewMode = initialViewMode ?: translator.getLastViewMode(
+                targetTranslation.id
+            )
+            openViewMode(viewMode)
 
             val projectTitle = "${getProject()?.name} - ${targetTranslation.targetLanguageName}"
 
             commitOnDestroy.scheduleAutoCommit()
 
-            state
-                .map { it.viewMode }
-                .distinctUntilChanged()
-                .onEach {
-                    val config = when (it) {
-                        TranslationViewMode.LOADING -> TranslateComponent.Config.Loading
-                        TranslationViewMode.READ -> TranslateComponent.Config.Read
-                        TranslationViewMode.CHUNK -> TranslateComponent.Config.Chunk
-                        TranslationViewMode.REVIEW -> TranslateComponent.Config.Review
-                    }
-                    navigation.replaceAll(config)
-                }
-                .launchIn(coroutineScope)
-
             _state.update {
                 it.copy(
-                    viewMode = lastViewMode,
-                    mergeFilterOn = mergeFilterOn,
+                    conflictFilterOn = conflictFilterOn,
                     draftAvailable = draftAvailable,
                     showDraftAvailable = draftAvailable && targetTranslation.numTranslated == 0,
                     projectTitle = projectTitle
@@ -218,14 +205,14 @@ class DefaultTranslateComponent(
             component = DefaultReadModeComponent(
                 componentContext = componentContext,
                 sharedState = sharedState,
-                loadChunks = ::loadChunks
+                targetTranslation = targetTranslation
             )
         )
         is TranslateComponent.Config.Chunk -> TranslateComponent.Child.Chunk(
             component = DefaultChunkModeComponent(
                 componentContext = componentContext,
                 sharedState = sharedState,
-                loadChunks = ::loadChunks
+                targetTranslation = targetTranslation
             )
         )
         is TranslateComponent.Config.Review -> TranslateComponent.Child.Review(
@@ -233,7 +220,7 @@ class DefaultTranslateComponent(
                 componentContext = componentContext,
                 sharedState = sharedState,
                 eventSender = eventSender,
-                loadChunks = ::loadChunks
+                targetTranslation = targetTranslation
             )
         )
         is TranslateComponent.Config.Loading -> TranslateComponent.Child.Loading(
@@ -245,12 +232,47 @@ class DefaultTranslateComponent(
         progressManager.runTask(message, block)
     }
 
+    override fun openViewMode(viewMode: TranslationViewMode) {
+        when (viewMode) {
+            TranslationViewMode.CHUNK -> openChunkMode()
+            TranslationViewMode.REVIEW -> openReviewMode()
+            else -> openReadMode()
+        }
+    }
+
+    override fun openReadMode() {
+        saveViewMode(TranslationViewMode.READ)
+        updateMergeFilter(false)
+
+        if (currentViewMode.value !== TranslationViewMode.READ) {
+            navigation.replaceAll(TranslateComponent.Config.Read)
+        }
+    }
+
+    override fun openChunkMode() {
+        saveViewMode(TranslationViewMode.CHUNK)
+        updateMergeFilter(false)
+
+        if (currentViewMode.value !== TranslationViewMode.CHUNK) {
+            navigation.replaceAll(TranslateComponent.Config.Chunk)
+        }
+    }
+
+    override fun openReviewMode(conflictFilterOn: Boolean) {
+        saveViewMode(TranslationViewMode.REVIEW)
+        updateMergeFilter(conflictFilterOn)
+
+        if (currentViewMode.value !== TranslationViewMode.REVIEW) {
+            navigation.replaceAll(TranslateComponent.Config.Review(conflictFilterOn))
+        }
+    }
+
     override fun restartAutoCommitTimer() {
         commitOnDestroy.scheduleAutoCommit()
     }
 
     override fun updateMergeFilter(on: Boolean) {
-        _state.update { it.copy(mergeFilterOn = on) }
+        _state.update { it.copy(conflictFilterOn = on) }
     }
 
     override fun removeSource(sourceId: String) {
@@ -262,17 +284,6 @@ class DefaultTranslateComponent(
     override fun selectSource(sourceId: String) {
         launchWithProgress {
             setSelectedResourceContainer(sourceId)
-        }
-    }
-
-    override fun saveLastViewMode(viewMode: TranslationViewMode) {
-        launchWithProgress {
-            _state.update { it.copy(viewMode = viewMode) }
-            _sharedState.update { it.copy(chunks = emptyList()) }
-            translator.setLastViewMode(
-                targetTranslationId = targetTranslation.id,
-                viewMode = viewMode
-            )
         }
     }
 
@@ -332,13 +343,20 @@ class DefaultTranslateComponent(
         }
     }
 
+    private fun saveViewMode(viewMode: TranslationViewMode) {
+        launchWithProgress {
+            translator.setLastViewMode(
+                targetTranslationId = targetTranslation.id,
+                viewMode = viewMode
+            )
+        }
+    }
+
     private suspend fun refreshSelectedResourceContainer() {
         getSelectedSourceTranslationId()?.let { sourceTranslationSlug ->
             setSelectedResourceContainer(sourceTranslationSlug)
         } ?: run {
-            _sharedState.update {
-                it.copy(resourceContainer = null, chunks = emptyList())
-            }
+            _sharedState.update { it.copy(resourceContainer = null) }
         }
         refreshSourceTranslationTabs()
     }
@@ -353,27 +371,6 @@ class DefaultTranslateComponent(
             0,
             -1
         ).any { it.resource.slug != "udb" }
-    }
-
-    private suspend fun loadChunks(viewMode: TranslationViewMode): List<Chunk> {
-        val isReadMode = viewMode == TranslationViewMode.READ
-        val chunks = withContext(Dispatchers.IO) {
-            val chunks = mutableListOf<Chunk>()
-            sourceContainer?.let { source ->
-                val sorter = SlugSorter()
-                val chapterSlugs = sorter.sort(source.chapters())
-                for (chapterSlug: String in chapterSlugs) {
-                    val chunkSlugs = sorter.sort(source.chunks(chapterSlug))
-                    for (chunkSlug in chunkSlugs) {
-                        if (!isReadMode || !chunks.any { it.chapterSlug == chapterSlug }) {
-                            chunks.add(Chunk(chapterSlug, chunkSlug, source, targetTranslation))
-                        }
-                    }
-                }
-            }
-            chunks
-        }
-        return chunks
     }
 
     private fun initLastFocus() {
@@ -654,9 +651,7 @@ class DefaultTranslateComponent(
             }
             is ExportComponent.Result.MergeConflict -> {
                 dismissDialog()
-                _state.update {
-                    it.copy(viewMode = TranslationViewMode.REVIEW, mergeFilterOn = true) // TODO Revise navigation for merge conflict
-                }
+                openReviewMode(true)
             }
             is ExportComponent.Result.OpenFeedback -> {
                 dismissDialog()

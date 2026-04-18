@@ -41,13 +41,13 @@ fun TranslateSidebar(
     onReadClick: () -> Unit,
     onChunkClick: () -> Unit,
     onReviewClick: () -> Unit,
-    onMergeConflictClick: () -> Unit,
+    onConflictClick: () -> Unit,
     onSliderValueChange: (Float) -> Unit,
     modifier: Modifier = Modifier,
     showMergeConflict: Boolean,
     sliderValue: Float = 0f,
     chapterLabel: String? = null,
-    mergeConflictFilterOn: Boolean = false,
+    conflictFilterOn: Boolean = false,
     actions: List<SidebarAction>
 ) {
     var showMenu by remember { mutableStateOf(false) }
@@ -77,17 +77,17 @@ fun TranslateSidebar(
             )
             SidebarIconButton(
                 isSelected = currentViewMode == TranslationViewMode.REVIEW
-                        && !mergeConflictFilterOn,
+                        && !conflictFilterOn,
                 icon = Icons.Default.ViewWeek,
                 contentDescription = "Review Mode",
                 onClick = onReviewClick
             )
             if (showMergeConflict) {
                 SidebarIconButton(
-                    isSelected = mergeConflictFilterOn,
+                    isSelected = conflictFilterOn,
                     icon = Icons.Default.Warning,
                     contentDescription = "Merge Conflict Warning",
-                    onClick = onMergeConflictClick
+                    onClick = onConflictClick
                 )
             }
         }

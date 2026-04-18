@@ -31,7 +31,7 @@ fun ReadModeSection(
 
     ModeScreenTemplate(
         component = component,
-        items = items,
+        items = items.toList(),
         listState = listState
     ) { item ->
         ReadCard(

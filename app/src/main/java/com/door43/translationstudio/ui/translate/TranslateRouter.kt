@@ -4,7 +4,6 @@ import androidx.compose.runtime.Composable
 import com.arkivanov.decompose.extensions.compose.stack.Children
 import com.arkivanov.decompose.extensions.compose.stack.animation.fade
 import com.arkivanov.decompose.extensions.compose.stack.animation.stackAnimation
-import com.door43.translationstudio.core.TranslationViewMode
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.ui.translate.chunk.ChunkModeSection
 import com.door43.translationstudio.ui.translate.read.ReadModeSection
@@ -19,8 +18,8 @@ fun TranslateRouter(
     onHasMergeConflicts: (Boolean) -> Unit,
     searchRequested: Boolean,
     onSearchConsumed: () -> Unit,
-    mergeConflictFilterOn: Boolean,
-    onMergeConflictFilterReset: () -> Unit,
+    conflictFilterOn: Boolean,
+    onConflictFilterReset: () -> Unit,
     chunksDoneRequested: Boolean,
     onChunksDoneConsumed: () -> Unit
 ) {
@@ -43,7 +42,7 @@ fun TranslateRouter(
                     scrollCoordinator.pendingScrollChapter = PendingScrollItem(
                         chapterId = it
                     )
-                    component.saveLastViewMode(TranslationViewMode.CHUNK)
+                    component.openChunkMode()
                 }
             )
             is TranslateComponent.Child.Chunk -> ChunkModeSection(
@@ -58,7 +57,7 @@ fun TranslateRouter(
                         chapterId = chapterId,
                         chunkId = chunkId
                     )
-                    component.saveLastViewMode(TranslationViewMode.REVIEW)
+                    component.openReviewMode(true)
                 }
             )
             is TranslateComponent.Child.Review -> ReviewModeSection(
@@ -70,8 +69,8 @@ fun TranslateRouter(
                 onSearchConsumed = onSearchConsumed,
                 onSourceDialogOpen = onSourceDialogOpen,
                 onHasMergeConflicts = onHasMergeConflicts,
-                mergeFilterOn = mergeConflictFilterOn,
-                onMergeConflictFilterReset = onMergeConflictFilterReset,
+                conflictFilterOn = conflictFilterOn,
+                onConflictFilterReset = onConflictFilterReset,
                 chunksDoneRequested = chunksDoneRequested,
                 onChunksDoneConsumed = onChunksDoneConsumed
             )

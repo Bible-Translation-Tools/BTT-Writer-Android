@@ -36,7 +36,7 @@ fun ChunkModeSection(
 
     ModeScreenTemplate(
         component = component,
-        items = items,
+        items = items.toList(),
         listState = listState,
         dialogs = {
             if (chunkState.chunkToReopen != null) {
