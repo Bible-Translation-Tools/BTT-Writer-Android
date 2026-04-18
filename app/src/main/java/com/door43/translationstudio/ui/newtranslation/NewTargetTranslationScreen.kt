@@ -49,9 +49,7 @@ fun NewTargetTranslationScreen(
                     IconButton(onClick = {
                         when (state.screenStep) {
                             ScreenStep.LANGUAGE -> component.navigateBack()
-                            ScreenStep.PROJECT -> component.onAction(
-                                NewTranslationComponent.Action.CategoryBack
-                            )
+                            ScreenStep.PROJECT -> component.onCategoryBack()
                         }
                     }) {
                         Icon(
@@ -64,9 +62,7 @@ fun NewTargetTranslationScreen(
                 actions = {
                     SearchBar(
                         query = state.searchQuery,
-                        onQueryChanged = {
-                            component.onAction(NewTranslationComponent.Action.OnSearch(it))
-                        },
+                        onQueryChanged = component::onSearch,
                         placeholder = stringResource(R.string.search_hint)
                     )
                 },
@@ -106,27 +102,15 @@ fun NewTargetTranslationScreen(
                         LanguagesList(
                             languages = state.filteredLanguages,
                             disabledLanguages = state.disabledLanguages,
-                            onLanguageSelected = {
-                                component.onAction(
-                                    NewTranslationComponent.Action.LanguageSelected(it)
-                                )
-                            },
+                            onLanguageSelected = component::onLanguageSelected,
                             modifier = Modifier.width(800.dp)
                         )
                     }
                     ScreenStep.PROJECT -> {
                         ProjectList(
                             categories = state.filteredCategories,
-                            onProjectSelected = {
-                                component.onAction(
-                                    NewTranslationComponent.Action.ProjectSelected(it)
-                                )
-                            },
-                            onCategorySelected = {
-                                component.onAction(
-                                    NewTranslationComponent.Action.CategorySelected(it)
-                                )
-                            },
+                            onProjectSelected = component::onProjectSelected,
+                            onCategorySelected = component::onCategorySelected,
                             modifier = Modifier.width(800.dp)
                         )
                     }
@@ -139,11 +123,9 @@ fun NewTargetTranslationScreen(
         ConfirmDialog(
             title = stringResource(R.string.warn_existing_target_translation_label),
             message = conflict.message,
-            onDismiss = {
-                component.onAction(NewTranslationComponent.Action.ClearMergeConflict)
-            },
+            onDismiss = component::clearMergeConflict,
             onConfirm = {
-                component.onAction(NewTranslationComponent.Action.MergeTranslation(conflict))
+                component.mergeTranslation(conflict)
             },
             confirmText = stringResource(R.string.yes),
             dismissText = stringResource(R.string.no)

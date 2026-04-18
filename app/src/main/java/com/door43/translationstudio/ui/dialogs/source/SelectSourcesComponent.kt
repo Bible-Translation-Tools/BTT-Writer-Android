@@ -65,7 +65,9 @@ interface SelectSourcesComponent {
 
     fun onUpdateSources()
     fun onConfirmSources()
-    fun onAction(action: Action)
+    fun toggleSelection(source: RCItem)
+    fun downloadSource(source: RCItem)
+    fun deleteSource(source: RCItem)
 
     data class State(
         val sources: List<RCItem> = emptyList()
@@ -73,13 +75,6 @@ interface SelectSourcesComponent {
 
     sealed interface Event {
         data class SnackbarMessage(val message: String) : Event
-    }
-
-    sealed interface Action {
-        data object LoadSources : Action
-        data class ToggleSelection(val source: RCItem) : Action
-        data class DownloadSource(val source: RCItem) : Action
-        data class DeleteSource(val source: RCItem) : Action
     }
 
     sealed interface Result {
@@ -123,6 +118,7 @@ class DefaultSelectSourcesComponent(
     init {
         translator.getTargetTranslation(translationId)?.let { translation ->
             targetTranslation = translation
+            loadAvailableSources()
         } ?: run {
             val error = application.getString(R.string.target_translation_not_found)
             onResult(SelectSourcesComponent.Result.Error(error))
@@ -145,12 +141,57 @@ class DefaultSelectSourcesComponent(
         onResult(SelectSourcesComponent.Result.UpdateSources)
     }
 
-    override fun onAction(action: SelectSourcesComponent.Action) {
-        when (action) {
-            is SelectSourcesComponent.Action.LoadSources -> loadAvailableSources()
-            is SelectSourcesComponent.Action.ToggleSelection -> toggleSourceSelection(action.source)
-            is SelectSourcesComponent.Action.DownloadSource -> downloadSource(action.source)
-            is SelectSourcesComponent.Action.DeleteSource -> deleteSource(action.source)
+    override fun toggleSelection(source: RCItem) {
+        val stackFull = state.value.sources.filter { it.selected }.size == MAX_SOURCE_ITEMS
+
+        if (!stackFull || source.selected) {
+            _state.update { state ->
+                state.copy(
+                    sources = state.sources.map {
+                        if (it.containerSlug == source.containerSlug) {
+                            it.copy(selected = !it.selected)
+                        } else {
+                            it
+                        }
+                    }
+                )
+            }
+        }
+    }
+
+    override fun downloadSource(source: RCItem) {
+        val translation = source.sourceTranslation ?: return
+
+        launchWithProgress { handle ->
+            val result = withContext(Dispatchers.IO) {
+                downloadResourceContainers.download(translation) { progress, message ->
+                    handle.update(progress, message)
+                }
+            }
+
+            for (rc in result.containers) {
+                // reset cached containers that were downloaded
+                ContainerCache.remove(rc.slug)
+            }
+
+            val message = if (result.success) {
+                application.getString(R.string.download_complete)
+            } else {
+                application.getString(R.string.download_failed)
+            }
+
+            _event.trySend(SelectSourcesComponent.Event.SnackbarMessage(message))
+
+            loadAvailableSources()
+        }
+    }
+
+    override fun deleteSource(source: RCItem) {
+        coroutineScope.launch {
+            source.containerSlug?.let {
+                library.delete(it)
+                loadAvailableSources()
+            }
         }
     }
 
@@ -193,60 +234,6 @@ class DefaultSelectSourcesComponent(
 
     private fun getOpenSources(): List<String> {
         return prefRepository.getOpenSourceTranslations(targetTranslation.id)
-    }
-
-    private fun toggleSourceSelection(source: RCItem) {
-        val stackFull = state.value.sources.filter { it.selected }.size == MAX_SOURCE_ITEMS
-
-        if (!stackFull || source.selected) {
-            _state.update { state ->
-                state.copy(
-                    sources = state.sources.map {
-                        if (it.containerSlug == source.containerSlug) {
-                            it.copy(selected = !it.selected)
-                        } else {
-                            it
-                        }
-                    }
-                )
-            }
-        }
-    }
-
-    private fun downloadSource(source: RCItem) {
-        val translation = source.sourceTranslation ?: return
-
-        launchWithProgress { handle ->
-            val result = withContext(Dispatchers.IO) {
-                downloadResourceContainers.download(translation) { progress, message ->
-                    handle.update(progress, message)
-                }
-            }
-
-            for (rc in result.containers) {
-                // reset cached containers that were downloaded
-                ContainerCache.remove(rc.slug)
-            }
-
-            val message = if (result.success) {
-                application.getString(R.string.download_complete)
-            } else {
-                application.getString(R.string.download_failed)
-            }
-
-            _event.trySend(SelectSourcesComponent.Event.SnackbarMessage(message))
-
-            loadAvailableSources()
-        }
-    }
-
-    private fun deleteSource(source: RCItem) {
-        coroutineScope.launch {
-            source.containerSlug?.let {
-                library.delete(it)
-                loadAvailableSources()
-            }
-        }
     }
 
     private fun addSource(sourceTranslation: Translation, selected: Boolean): RCItem {

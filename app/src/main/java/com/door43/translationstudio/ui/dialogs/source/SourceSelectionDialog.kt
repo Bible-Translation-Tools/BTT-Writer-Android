@@ -73,10 +73,6 @@ fun SourceSelectionDialog(
         }
     }
 
-    LaunchedEffect(Unit) {
-        component.onAction(SelectSourcesComponent.Action.LoadSources)
-    }
-
     LaunchedEffect(component) {
         component.event.collect {
             when (it) {
@@ -134,9 +130,7 @@ fun SourceSelectionDialog(
                 } else {
                     SourceItemRow(
                         item = item,
-                        onTriggerSelected = {
-                            component.onAction(SelectSourcesComponent.Action.ToggleSelection(it))
-                        },
+                        onTriggerSelected = component::toggleSelection,
                         onTriggerDownload = { sourceToDownload = it },
                         onTriggerDelete = {
                             if (it.downloaded) {
@@ -201,7 +195,7 @@ fun SourceSelectionDialog(
             message = stringResource(R.string.download_source_language, source.title),
             onConfirm = {
                 sourceToDownload = null
-                component.onAction(SelectSourcesComponent.Action.DownloadSource(source))
+                component.downloadSource(source)
             },
             onDismiss = { sourceToDownload = null }
         )
@@ -213,7 +207,7 @@ fun SourceSelectionDialog(
             message = stringResource(R.string.confirm_delete_project),
             onConfirm = {
                 sourceToDelete = null
-                component.onAction(SelectSourcesComponent.Action.DeleteSource(source))
+                component.deleteSource(source)
             },
             onDismiss = { sourceToDelete = null }
         )

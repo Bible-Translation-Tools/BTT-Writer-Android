@@ -36,21 +36,17 @@ interface FeedbackComponent {
 
     val initialMessage: String
 
-    fun onAction(action: FeedbackAction)
+    fun reportBug(message: String)
+    fun uploadFeedback(message: String)
+    fun downloadLatestRelease(release: CheckForLatestRelease.Release)
+    fun clearError()
+    fun clearRelease()
 
     data class FeedbackState(
         val message: String = "",
         val release: CheckForLatestRelease.Release? = null,
         val uploadError: String? = null
     )
-
-    sealed interface FeedbackAction {
-        data class ReportBug(val message: String) : FeedbackAction
-        data class UploadFeedback(val message: String) : FeedbackAction
-        data class DownloadLatestRelease(val release: CheckForLatestRelease.Release) : FeedbackAction
-        data object ClearError : FeedbackAction
-        data object ClearRelease : FeedbackAction
-    }
 
     sealed interface FeedbackEvent {
         data class SnackbarMessage(val message: String) : FeedbackEvent
@@ -86,21 +82,11 @@ class DefaultFeedbackComponent(
         }
     }
 
-    override fun onAction(action: FeedbackComponent.FeedbackAction) {
-        when (action) {
-            is FeedbackComponent.FeedbackAction.ReportBug -> reportBug(action.message)
-            is FeedbackComponent.FeedbackAction.UploadFeedback -> uploadFeedback(action.message)
-            is FeedbackComponent.FeedbackAction.DownloadLatestRelease -> downloadLatestRelease(action.release)
-            is FeedbackComponent.FeedbackAction.ClearError -> clearError()
-            is FeedbackComponent.FeedbackAction.ClearRelease -> clearRelease()
-        }
-    }
-
     override suspend fun runTask(message: String?, block: suspend (TaskHandle) -> Unit) {
         progressManager.runTask(message, block)
     }
 
-    private fun reportBug(message: String) {
+    override fun reportBug(message: String) {
         if (message.isEmpty()) {
             val msg = application.getString(R.string.input_required)
             _event.trySend(FeedbackComponent.FeedbackEvent.SnackbarMessage(msg))
@@ -113,7 +99,7 @@ class DefaultFeedbackComponent(
         }
     }
 
-    private fun uploadFeedback(message: String) {
+    override fun uploadFeedback(message: String) {
         if (message.isEmpty()) {
             val msg = application.getString(R.string.input_required)
             _event.trySend(FeedbackComponent.FeedbackEvent.SnackbarMessage(msg))
@@ -125,6 +111,23 @@ class DefaultFeedbackComponent(
         }
     }
 
+    override fun downloadLatestRelease(release: CheckForLatestRelease.Release) {
+        launchWithProgress {
+            _state.update { it.copy(release = null) }
+            withContext(Dispatchers.IO) {
+                downloadLatestRelease.execute(release)
+            }
+        }
+    }
+
+    override fun clearError() {
+        _state.update { it.copy(uploadError = null) }
+    }
+
+    override fun clearRelease() {
+        _state.update { it.copy(release = null) }
+    }
+
     private suspend fun checkForLatestRelease(handle: TaskHandle) {
         handle.update(-1f, application.getString(R.string.checking_for_updates))
         val result = withContext(Dispatchers.IO) {
@@ -134,15 +137,6 @@ class DefaultFeedbackComponent(
             _state.update { it.copy(release = result.release) }
         } else {
             doUploadFeedback(_state.value.message, handle)
-        }
-    }
-
-    private fun downloadLatestRelease(release: CheckForLatestRelease.Release) {
-        launchWithProgress {
-            _state.update { it.copy(release = null) }
-            withContext(Dispatchers.IO) {
-                downloadLatestRelease.execute(release)
-            }
         }
     }
 
@@ -162,14 +156,6 @@ class DefaultFeedbackComponent(
             }
             _state.update { it.copy(uploadError = msg) }
         }
-    }
-
-    private fun clearError() {
-        _state.update { it.copy(uploadError = null) }
-    }
-
-    private fun clearRelease() {
-        _state.update { it.copy(release = null) }
     }
 }
 

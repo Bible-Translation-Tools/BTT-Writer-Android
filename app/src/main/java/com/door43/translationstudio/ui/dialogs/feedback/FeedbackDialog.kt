@@ -107,9 +107,7 @@ fun FeedbackDialog(
                 )
             }
             TextButton(
-                onClick = {
-                    component.onAction(FeedbackComponent.FeedbackAction.ReportBug(text))
-                }
+                onClick = { component.reportBug(text) }
             ) {
                 Text(
                     text = stringResource(R.string.confirm),
@@ -123,7 +121,7 @@ fun FeedbackDialog(
         BaseDialog(
             title = stringResource(R.string.upload_failed),
             message = error,
-            onDismiss = { component.onAction(FeedbackComponent.FeedbackAction.ClearError) }
+            onDismiss = component::clearError
         ) { onDismiss ->
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -135,7 +133,7 @@ fun FeedbackDialog(
                 TextButton(
                     onClick = {
                         onDismiss()
-                        component.onAction(FeedbackComponent.FeedbackAction.ReportBug(text))
+                        component.reportBug(text)
                     }
                 ) {
                     Text(stringResource(R.string.retry_label))
@@ -148,11 +146,9 @@ fun FeedbackDialog(
         ConfirmDialog(
             title = stringResource(R.string.apk_update_available),
             message = stringResource(R.string.download_latest_apk),
-            onDismiss = {
-                component.onAction(FeedbackComponent.FeedbackAction.ClearRelease)
-            },
+            onDismiss = component::clearRelease,
             onConfirm = {
-                component.onAction(FeedbackComponent.FeedbackAction.DownloadLatestRelease(release))
+                component.downloadLatestRelease(release)
             }
         )
     }

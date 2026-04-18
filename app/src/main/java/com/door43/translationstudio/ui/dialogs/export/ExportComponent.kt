@@ -72,7 +72,19 @@ interface ExportComponent {
 
     fun onMergeConflict()
     fun showFeedbackDialog(message: String)
-    fun onAction(action: Action)
+
+    fun printPdf(uri: Uri, includeImages: Boolean, includeIncomplete: Boolean)
+    fun exportUsfm(uri: Uri)
+    fun exportProject(uri: Uri)
+    fun exportToApp()
+    fun openExportToCloud()
+    fun logout(thenLogin: Boolean)
+    fun registerKeys()
+    fun resetToMaster()
+    fun clearInfoMessage()
+    fun clearErrorMessage()
+    fun clearUploadSuccess()
+    fun clearMergeConflict()
 
     data class State(
         val info: DialogMessage? = null,
@@ -84,26 +96,6 @@ interface ExportComponent {
     sealed interface Event {
         data class SnackbarMessage(val message: String) : Event
         data object AuthRequested : Event
-    }
-
-    sealed interface Action {
-        data class PrintPdf(
-            val includeImages: Boolean,
-            val includeIncomplete: Boolean,
-            val uri: Uri
-        ) : Action
-        data class ExportUsfm(val uri: Uri) : Action
-        data class ExportProject(val uri: Uri) : Action
-        data object ClearExport : Action
-        data object ExportToApp : Action
-        data object ExportToCloud : Action
-        data class Logout(val thenLogin: Boolean) : Action
-        data object RegisterKeys : Action
-        data object ClearInfoMessage : Action
-        data object ClearErrorMessage : Action
-        data object ClearUploadSuccess : Action
-        data object ResetToMaster : Action
-        data object ClearMergeConflict : Action
     }
 
     sealed interface Result {
@@ -181,91 +173,7 @@ class DefaultExportComponent(
         onResult(ExportComponent.Result.OpenFeedback(message))
     }
 
-    override fun onAction(action: ExportComponent.Action) {
-        when (action) {
-            is ExportComponent.Action.PrintPdf -> exportPDF(
-                action.uri,
-                action.includeImages,
-                action.includeIncomplete
-            )
-            is ExportComponent.Action.ExportUsfm -> exportUSFM(action.uri)
-            is ExportComponent.Action.ExportProject -> exportProject(action.uri)
-            is ExportComponent.Action.ExportToApp -> exportToApp()
-            is ExportComponent.Action.ExportToCloud -> exportToCloud()
-            is ExportComponent.Action.ClearExport -> clearInfo()
-            is ExportComponent.Action.Logout -> logout(action.thenLogin)
-            is ExportComponent.Action.RegisterKeys -> forceRegisterSSHKeys()
-            is ExportComponent.Action.ClearInfoMessage -> clearInfo()
-            is ExportComponent.Action.ClearUploadSuccess -> clearUploadSuccess()
-            is ExportComponent.Action.ResetToMaster -> resetToMaster()
-            is ExportComponent.Action.ClearMergeConflict -> clearMergeConflict()
-            is ExportComponent.Action.ClearErrorMessage -> clearError()
-        }
-    }
-
-    private fun exportProject(uri: Uri) {
-        if (!validateUriExtension(uri, Translator.TSTUDIO_EXTENSION)) {
-            reportExportFailed()
-            return
-        }
-
-        launchWithProgress(
-            application.getString(R.string.exporting)
-        ) {
-            val result = withContext(Dispatchers.IO) {
-                export.exportProject(targetTranslation, uri)
-            }
-
-            val title = application.getString(R.string.backup_to_sd)
-            val message = if (result.success) {
-                application.getString(
-                    R.string.export_success,
-                    FileUtilities.getFileName(application, result.uri)
-                )
-            } else {
-                application.getString(R.string.export_failed)
-            }
-
-            _state.update {
-                it.copy(info = DialogMessage(title, message))
-            }
-        }
-    }
-
-    private fun exportUSFM(uri: Uri) {
-        if (!validateUriExtension(uri, Translator.USFM_EXTENSION)) {
-            reportExportFailed()
-            return
-        }
-
-        launchWithProgress(
-            application.getString(R.string.exporting)
-        ) {
-            val result = withContext(Dispatchers.IO) {
-                export.exportUSFM(targetTranslation, uri)
-            }
-
-            val title = application.getString(R.string.title_export_usfm)
-            val message = if (result.success) {
-                application.getString(
-                    R.string.export_success,
-                    FileUtilities.getFileName(application, result.uri)
-                )
-            } else {
-                application.getString(R.string.export_failed)
-            }
-
-            _state.update {
-                it.copy(info = DialogMessage(title, message))
-            }
-        }
-    }
-
-    private fun exportPDF(
-        uri: Uri,
-        includeImages: Boolean,
-        includeIncompleteFrames: Boolean
-    ) {
+    override fun printPdf(uri: Uri, includeImages: Boolean, includeIncomplete: Boolean) {
         if (!validateUriExtension(uri, Translator.PDF_EXTENSION)) {
             reportExportFailed()
             return
@@ -300,7 +208,7 @@ class DefaultExportComponent(
                     targetTranslation,
                     uri,
                     includeImages,
-                    includeIncompleteFrames,
+                    includeIncomplete,
                     imagesDir
                 )
             }
@@ -324,10 +232,144 @@ class DefaultExportComponent(
         }
     }
 
-    private fun exportToCloud() {
+    override fun exportUsfm(uri: Uri) {
+        if (!validateUriExtension(uri, Translator.USFM_EXTENSION)) {
+            reportExportFailed()
+            return
+        }
+
+        launchWithProgress(
+            application.getString(R.string.exporting)
+        ) {
+            val result = withContext(Dispatchers.IO) {
+                export.exportUSFM(targetTranslation, uri)
+            }
+
+            val title = application.getString(R.string.title_export_usfm)
+            val message = if (result.success) {
+                application.getString(
+                    R.string.export_success,
+                    FileUtilities.getFileName(application, result.uri)
+                )
+            } else {
+                application.getString(R.string.export_failed)
+            }
+
+            _state.update {
+                it.copy(info = DialogMessage(title, message))
+            }
+        }
+    }
+
+    override fun exportProject(uri: Uri) {
+        if (!validateUriExtension(uri, Translator.TSTUDIO_EXTENSION)) {
+            reportExportFailed()
+            return
+        }
+
+        launchWithProgress(
+            application.getString(R.string.exporting)
+        ) {
+            val result = withContext(Dispatchers.IO) {
+                export.exportProject(targetTranslation, uri)
+            }
+
+            val title = application.getString(R.string.backup_to_sd)
+            val message = if (result.success) {
+                application.getString(
+                    R.string.export_success,
+                    FileUtilities.getFileName(application, result.uri)
+                )
+            } else {
+                application.getString(R.string.export_failed)
+            }
+
+            _state.update {
+                it.copy(info = DialogMessage(title, message))
+            }
+        }
+    }
+
+    override fun exportToApp() {
+        launchWithProgress(
+            application.getString(R.string.exporting)
+        ) {
+            val exportFile = withContext(Dispatchers.IO) {
+                try {
+                    val filename = "${targetTranslation.id}.${Translator.TSTUDIO_EXTENSION}"
+                    val exportFile = File(directoryProvider.sharingDir, filename)
+                    export.exportProject(targetTranslation, exportFile)
+                    exportFile
+                } catch (e: Exception) {
+                    Logger.e(
+                        this@DefaultExportComponent::class.simpleName,
+                        "Failed to export the target translation " + targetTranslation.id,
+                        e
+                    )
+                    null
+                }
+            }
+
+            if (exportFile?.exists() == true) {
+                onResult(ExportComponent.Result.ExportToApp(exportFile))
+            } else {
+                _event.trySend(
+                    ExportComponent.Event.SnackbarMessage(
+                        application.getString(R.string.translation_export_failed)
+                    ))
+            }
+        }
+    }
+
+    override fun openExportToCloud() {
         launchWithProgress { handle ->
             pullTargetTranslation(MergeStrategy.RECURSIVE, handle)
         }
+    }
+
+    override fun logout(thenLogin: Boolean) {
+        launchWithProgress(
+            application.getString(R.string.log_out)
+        ) {
+            withContext(Dispatchers.IO) {
+                gogsLogout.execute()
+                profile.logout()
+            }
+
+            if (thenLogin) {
+                onResult(ExportComponent.Result.OpenLogin)
+            } else {
+                onResult(ExportComponent.Result.Logout)
+            }
+        }
+    }
+
+    override fun registerKeys() {
+        forceRegisterSSHKeys()
+    }
+
+    override fun resetToMaster() {
+        launchWithProgress {
+            withContext(Dispatchers.IO) {
+                targetTranslation.resetToMasterBackup()
+            }
+        }
+    }
+
+    override fun clearInfoMessage() {
+        _state.update { it.copy(info = null) }
+    }
+
+    override fun clearErrorMessage() {
+        _state.update { it.copy(uploadError = null) }
+    }
+
+    override fun clearUploadSuccess() {
+        _state.update { it.copy(uploadSuccess = null) }
+    }
+
+    override fun clearMergeConflict() {
+        _state.update { it.copy(mergeConflict = null) }
     }
 
     private suspend fun pullTargetTranslation(strategy: MergeStrategy, handle: TaskHandle) {
@@ -482,62 +524,6 @@ class DefaultExportComponent(
         }
     }
 
-    private fun logout(thenLogin: Boolean) {
-        launchWithProgress(
-            application.getString(R.string.log_out)
-        ) {
-            withContext(Dispatchers.IO) {
-                gogsLogout.execute()
-                profile.logout()
-            }
-
-            if (thenLogin) {
-                onResult(ExportComponent.Result.OpenLogin)
-            } else {
-                onResult(ExportComponent.Result.Logout)
-            }
-        }
-    }
-
-    private fun exportToApp() {
-        launchWithProgress(
-            application.getString(R.string.exporting)
-        ) {
-            val exportFile = withContext(Dispatchers.IO) {
-                try {
-                    val filename = "${targetTranslation.id}.${Translator.TSTUDIO_EXTENSION}"
-                    val exportFile = File(directoryProvider.sharingDir, filename)
-                    export.exportProject(targetTranslation, exportFile)
-                    exportFile
-                } catch (e: Exception) {
-                    Logger.e(
-                        this@DefaultExportComponent::class.simpleName,
-                        "Failed to export the target translation " + targetTranslation.id,
-                        e
-                    )
-                    null
-                }
-            }
-
-            if (exportFile?.exists() == true) {
-                onResult(ExportComponent.Result.ExportToApp(exportFile))
-            } else {
-                _event.trySend(
-                    ExportComponent.Event.SnackbarMessage(
-                    application.getString(R.string.translation_export_failed)
-                ))
-            }
-        }
-    }
-
-    fun getProject(targetTranslation: TargetTranslation): Project? {
-        return library.index.getProject(
-            "en",
-            targetTranslation.projectId,
-            true
-        )
-    }
-
     private fun validateUriExtension(uri: Uri, extension: String): Boolean {
         val filename = FileUtilities.getFileName(application, uri)
         val filenameRegex = Regex(".*\\.$extension(\\s\\(\\d+\\))?$")
@@ -575,35 +561,11 @@ class DefaultExportComponent(
         _state.update { it.copy(uploadSuccess = success) }
     }
 
-    private fun resetToMaster() {
-        launchWithProgress {
-            withContext(Dispatchers.IO) {
-                targetTranslation.resetToMasterBackup()
-            }
-        }
-    }
-
     private fun getProject(): Project? {
         return library.index.getProject(
             deviceLanguageCode,
             targetTranslation.projectId,
             true
         )
-    }
-
-    private fun clearInfo() {
-        _state.update { it.copy(info = null) }
-    }
-
-    private fun clearError() {
-        _state.update { it.copy(uploadError = null) }
-    }
-
-    private fun clearUploadSuccess() {
-        _state.update { it.copy(uploadSuccess = null) }
-    }
-
-    private fun clearMergeConflict() {
-        _state.update { it.copy(mergeConflict = null) }
     }
 }

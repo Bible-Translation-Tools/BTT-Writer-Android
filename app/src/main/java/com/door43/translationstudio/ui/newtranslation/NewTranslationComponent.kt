@@ -6,6 +6,7 @@ import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.door43.data.IPreferenceRepository
 import com.door43.translationstudio.App
 import com.door43.translationstudio.R
+import com.door43.translationstudio.core.ComponentScope
 import com.door43.translationstudio.core.MergeConflictsHandler
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.Progress
@@ -16,7 +17,6 @@ import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.TaskHandle
 import com.door43.translationstudio.core.TranslationFormat
 import com.door43.translationstudio.core.Translator
-import com.door43.translationstudio.core.ComponentScope
 import com.door43.translationstudio.core.launchWithProgress
 import com.door43.usecases.MergeTargetTranslation
 import kotlinx.coroutines.CoroutineScope
@@ -51,7 +51,13 @@ interface NewTranslationComponent {
     val state: StateFlow<State>
     val progress: StateFlow<Progress?>
 
-    fun onAction(action: Action)
+    fun onLanguageSelected(targetLanguage: TargetLanguage)
+    fun onProjectSelected(projectId: String)
+    fun onCategorySelected(categoryId: Long)
+    fun onCategoryBack()
+    fun onSearch(query: String)
+    fun mergeTranslation(mergeConflict: MergeConflict)
+    fun clearMergeConflict()
 
     fun navigateBack()
 
@@ -67,16 +73,6 @@ interface NewTranslationComponent {
         val navigatingForward: Boolean = true,
         val mergeConflict: MergeConflict? = null
     )
-
-    sealed interface Action {
-        data class LanguageSelected(val targetLanguage: TargetLanguage) : Action
-        data class ProjectSelected(val projectId: String) : Action
-        data class CategorySelected(val categoryId: Long) : Action
-        data object CategoryBack : Action
-        data class OnSearch(val query: String) : Action
-        data class MergeTranslation(val mergeConflict: MergeConflict) : Action
-        data object ClearMergeConflict : Action
-    }
 
     sealed interface Result {
         data object NavigateBack : Result
@@ -135,28 +131,180 @@ class DefaultNewTranslationComponent(
         }
     }
 
-    override fun onAction(action: NewTranslationComponent.Action) {
-        when (action) {
-            is NewTranslationComponent.Action.LanguageSelected -> onLanguageSelected(action.targetLanguage)
-            is NewTranslationComponent.Action.ProjectSelected -> onProjectSelected(action.projectId)
-            is NewTranslationComponent.Action.CategorySelected -> navigateToCategory(action.categoryId)
-            is NewTranslationComponent.Action.CategoryBack -> navigateCategoryBack()
-            is NewTranslationComponent.Action.OnSearch -> onSearch(action.query)
-            is NewTranslationComponent.Action.MergeTranslation -> mergeTargetTranslation(action.mergeConflict)
-            is NewTranslationComponent.Action.ClearMergeConflict -> _state.update { it.copy(mergeConflict = null) }
-        }
-    }
-
     override fun navigateBack() {
         onResult(NewTranslationComponent.Result.NavigateBack)
     }
 
-    private fun onSearch(query: String) {
+    override fun onLanguageSelected(targetLanguage: TargetLanguage) {
+        selectedTargetLanguage = targetLanguage
+
+        if (translationId == null) {
+            showProjectStep()
+            return
+        }
+
+        val sourceTranslation = translator.getTargetTranslation(translationId)
+        if (sourceTranslation == null) {
+            val error = application.getString(R.string.target_translation_not_found, translationId)
+            onResult(NewTranslationComponent.Result.Error(error))
+            return
+        }
+
+        if (targetLanguage.slug == sourceTranslation.targetLanguage.slug) {
+            onResult(NewTranslationComponent.Result.Success)
+            return
+        }
+
+        val projectId = sourceTranslation.projectId
+        val resourceSlug = sourceTranslation.resourceSlug
+        val existingTranslation = getTargetTranslation(
+            TargetTranslation.generateTargetTranslationId(
+                targetLanguage.slug, projectId, ResourceType.TEXT, resourceSlug
+            )
+        )
+
+        if (existingTranslation != null) {
+            val message = application.getString(
+                R.string.warn_existing_target_translation,
+                getProject(existingTranslation)?.name,
+                existingTranslation.targetLanguageName
+            )
+            _state.update {
+                it.copy(mergeConflict = MergeConflict(
+                    sourceTranslation = sourceTranslation,
+                    destinationTranslation = existingTranslation,
+                    message = message
+                ))
+            }
+        } else {
+            val originalId = sourceTranslation.id
+            sourceTranslation.changeTargetLanguage(targetLanguage)
+            sourceTranslation.normalizePath()
+            val newId = sourceTranslation.id
+            moveTargetTranslationAppSettings(originalId, newId)
+            onResult(NewTranslationComponent.Result.Success)
+        }
+    }
+
+    override fun onProjectSelected(projectId: String) {
+        val resourceSlug = if (projectId == "obs") "obs" else "reg"
+        val existingTranslation = selectedTargetLanguage?.let { selected ->
+            getTargetTranslation(
+                TargetTranslation.generateTargetTranslationId(
+                    selected.slug, projectId, ResourceType.TEXT, resourceSlug
+                )
+            )
+        }
+
+        if (existingTranslation == null) {
+            val format = if (projectId == "obs") TranslationFormat.MARKDOWN else TranslationFormat.USFM
+            val targetTranslation = createTargetTranslation(
+                projectId, ResourceType.TEXT, resourceSlug, format
+            )
+            if (targetTranslation != null) {
+                onResult(NewTranslationComponent.Result.Success)
+            } else {
+                val error = application.getString(R.string.failed_to_create_target_translation)
+                deleteTargetTranslation(projectId, resourceSlug)
+                onResult(NewTranslationComponent.Result.Error(error))
+            }
+        } else {
+            onResult(NewTranslationComponent.Result.Duplicate(existingTranslation.id))
+        }
+    }
+
+    override fun onCategorySelected(categoryId: Long) {
+        val categories = library.index.getProjectCategories(
+            categoryId, App.deviceLanguageCode, "all"
+        )
+        _state.value = _state.value.copy(
+            searchQuery = "",
+            categories = categories,
+            filteredCategories = categories,
+            categoryStack = _state.value.categoryStack + categoryId,
+            navigatingForward = true
+        )
+    }
+
+    override fun onCategoryBack() {
+        val stack = _state.value.categoryStack
+        if (stack.size <= 1) {
+            _state.value = _state.value.copy(
+                screenStep = ScreenStep.LANGUAGE,
+                searchQuery = "",
+                categories = emptyList(),
+                filteredCategories = emptyList(),
+                categoryStack = listOf(0L),
+                navigatingForward = false
+            )
+            return
+        }
+        val newStack = stack.dropLast(1)
+        val parentId = newStack.last()
+        val categories = library.index.getProjectCategories(
+            parentId, App.deviceLanguageCode, "all"
+        )
+        _state.value = _state.value.copy(
+            searchQuery = "",
+            categories = categories,
+            filteredCategories = categories,
+            categoryStack = newStack,
+            navigatingForward = false
+        )
+    }
+
+    override fun onSearch(query: String) {
         _state.value = _state.value.copy(searchQuery = query)
         when (_state.value.screenStep) {
             ScreenStep.LANGUAGE -> filterLanguages(query)
             ScreenStep.PROJECT -> filterCategories(query)
         }
+    }
+
+    override fun mergeTranslation(mergeConflict: MergeConflict) {
+        launchWithProgress {
+            _state.update { it.copy(mergeConflict = null) }
+            val result = withContext(Dispatchers.IO) {
+                mergeTargetTranslation.execute(
+                    mergeConflict.destinationTranslation,
+                    mergeConflict.sourceTranslation,
+                    true
+                )
+            }
+
+            when (result.status) {
+                MergeTargetTranslation.Status.MERGE_CONFLICTS -> {
+                    translator.clearTargetTranslationSettings(
+                        result.sourceTranslation.id
+                    )
+                    val hasConflicts = MergeConflictsHandler.isTranslationMergeConflicted(
+                        result.destinationTranslation.id,
+                        translator
+                    )
+                    if (hasConflicts) {
+                        onResult(NewTranslationComponent.Result.MergeConflict(
+                            result.destinationTranslation.id
+                        ))
+                    } else {
+                        onResult(NewTranslationComponent.Result.Success)
+                    }
+                }
+                MergeTargetTranslation.Status.SUCCESS -> {
+                    translator.clearTargetTranslationSettings(
+                        result.sourceTranslation.id
+                    )
+                    onResult(NewTranslationComponent.Result.Success)
+                }
+                else -> {
+                    val error = application.getString(R.string.error)
+                    onResult(NewTranslationComponent.Result.Error(error))
+                }
+            }
+        }
+    }
+
+    override fun clearMergeConflict() {
+        _state.update { it.copy(mergeConflict = null) }
     }
 
     private fun filterLanguages(query: String) {
@@ -226,172 +374,11 @@ class DefaultNewTranslationComponent(
         )
     }
 
-    private fun navigateToCategory(categoryId: Long) {
-        val categories = library.index.getProjectCategories(
-            categoryId, App.deviceLanguageCode, "all"
-        )
-        _state.value = _state.value.copy(
-            searchQuery = "",
-            categories = categories,
-            filteredCategories = categories,
-            categoryStack = _state.value.categoryStack + categoryId,
-            navigatingForward = true
-        )
-    }
-
-    private fun navigateCategoryBack(): Boolean {
-        val stack = _state.value.categoryStack
-        if (stack.size <= 1) {
-            _state.value = _state.value.copy(
-                screenStep = ScreenStep.LANGUAGE,
-                searchQuery = "",
-                categories = emptyList(),
-                filteredCategories = emptyList(),
-                categoryStack = listOf(0L),
-                navigatingForward = false
-            )
-            return true
-        }
-        val newStack = stack.dropLast(1)
-        val parentId = newStack.last()
-        val categories = library.index.getProjectCategories(
-            parentId, App.deviceLanguageCode, "all"
-        )
-        _state.value = _state.value.copy(
-            searchQuery = "",
-            categories = categories,
-            filteredCategories = categories,
-            categoryStack = newStack,
-            navigatingForward = false
-        )
-        return false
-    }
-
-    private fun onLanguageSelected(targetLanguage: TargetLanguage) {
-        selectedTargetLanguage = targetLanguage
-
-        if (translationId == null) {
-            showProjectStep()
-            return
-        }
-
-        val sourceTranslation = translator.getTargetTranslation(translationId)
-        if (sourceTranslation == null) {
-            val error = application.getString(R.string.target_translation_not_found, translationId)
-            onResult(NewTranslationComponent.Result.Error(error))
-            return
-        }
-
-        if (targetLanguage.slug == sourceTranslation.targetLanguage.slug) {
-            onResult(NewTranslationComponent.Result.Success)
-            return
-        }
-
-        val projectId = sourceTranslation.projectId
-        val resourceSlug = sourceTranslation.resourceSlug
-        val existingTranslation = getTargetTranslation(
-            TargetTranslation.generateTargetTranslationId(
-                targetLanguage.slug, projectId, ResourceType.TEXT, resourceSlug
-            )
-        )
-
-        if (existingTranslation != null) {
-            val message = application.getString(
-                R.string.warn_existing_target_translation,
-                getProject(existingTranslation)?.name,
-                existingTranslation.targetLanguageName
-            )
-            _state.update {
-                it.copy(mergeConflict = MergeConflict(
-                    sourceTranslation = sourceTranslation,
-                    destinationTranslation = existingTranslation,
-                    message = message
-                ))
-            }
-        } else {
-            val originalId = sourceTranslation.id
-            sourceTranslation.changeTargetLanguage(targetLanguage)
-            sourceTranslation.normalizePath()
-            val newId = sourceTranslation.id
-            moveTargetTranslationAppSettings(originalId, newId)
-            onResult(NewTranslationComponent.Result.Success)
-        }
-    }
-
-    private fun onProjectSelected(projectId: String) {
-        val resourceSlug = if (projectId == "obs") "obs" else "reg"
-        val existingTranslation = selectedTargetLanguage?.let { selected ->
-            getTargetTranslation(
-                TargetTranslation.generateTargetTranslationId(
-                    selected.slug, projectId, ResourceType.TEXT, resourceSlug
-                )
-            )
-        }
-
-        if (existingTranslation == null) {
-            val format = if (projectId == "obs") TranslationFormat.MARKDOWN else TranslationFormat.USFM
-            val targetTranslation = createTargetTranslation(
-                projectId, ResourceType.TEXT, resourceSlug, format
-            )
-            if (targetTranslation != null) {
-                onResult(NewTranslationComponent.Result.Success)
-            } else {
-                val error = application.getString(R.string.failed_to_create_target_translation)
-                deleteTargetTranslation(projectId, resourceSlug)
-                onResult(NewTranslationComponent.Result.Error(error))
-            }
-        } else {
-            onResult(NewTranslationComponent.Result.Duplicate(existingTranslation.id))
-        }
-    }
-
     private fun getProject(targetTranslation: TargetTranslation): Project? {
         return library.index.getProject(
             App.deviceLanguageCode,
             targetTranslation.projectId
         )
-    }
-
-    private fun mergeTargetTranslation(mergeConflict: MergeConflict) {
-        launchWithProgress {
-            _state.update { it.copy(mergeConflict = null) }
-            val result = withContext(Dispatchers.IO) {
-                mergeTargetTranslation.execute(
-                    mergeConflict.destinationTranslation,
-                    mergeConflict.sourceTranslation,
-                    true
-                )
-            }
-
-            when (result.status) {
-                MergeTargetTranslation.Status.MERGE_CONFLICTS -> {
-                    translator.clearTargetTranslationSettings(
-                        result.sourceTranslation.id
-                    )
-                    val hasConflicts = MergeConflictsHandler.isTranslationMergeConflicted(
-                        result.destinationTranslation.id,
-                        translator
-                    )
-                    if (hasConflicts) {
-                        onResult(NewTranslationComponent.Result.MergeConflict(
-                            result.destinationTranslation.id
-                        ))
-                    } else {
-                        onResult(NewTranslationComponent.Result.Success)
-                    }
-                }
-                MergeTargetTranslation.Status.SUCCESS -> {
-                    translator.clearTargetTranslationSettings(
-                        result.sourceTranslation.id
-                    )
-                    onResult(NewTranslationComponent.Result.Success)
-                }
-                else -> {
-                    val error = application.getString(R.string.error)
-                    onResult(NewTranslationComponent.Result.Error(error))
-                }
-            }
-        }
     }
 
     private fun getTargetTranslation(translationId: String): TargetTranslation? {

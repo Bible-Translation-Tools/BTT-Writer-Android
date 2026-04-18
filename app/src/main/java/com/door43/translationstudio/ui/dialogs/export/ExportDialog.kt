@@ -80,12 +80,10 @@ fun ExportDialog(
         contract = ActivityResultContracts.CreateDocument(EXPORT_PDF_MIME_TYPE),
         onResult = { uri ->
             uri?.let {
-                component.onAction(
-                    ExportComponent.Action.PrintPdf(
-                        includeImages = imagesToInclude,
-                        includeIncomplete = incompleteToInclude,
-                        it
-                    )
+                component.printPdf(
+                    it,
+                    includeImages = imagesToInclude,
+                    includeIncomplete = incompleteToInclude
                 )
                 showPrintDialog = false
             }
@@ -95,22 +93,14 @@ fun ExportDialog(
     val usfmPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument(EXPORT_GENERIC_MIME_TYPE),
         onResult = { uri ->
-            uri?.let {
-                component.onAction(
-                    ExportComponent.Action.ExportUsfm(it)
-                )
-            }
+            uri?.let(component::exportUsfm)
         }
     )
 
     val projectPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument(EXPORT_GENERIC_MIME_TYPE),
         onResult = { uri ->
-            uri?.let {
-                component.onAction(
-                    ExportComponent.Action.ExportProject(it)
-                )
-            }
+            uri?.let(component::exportProject)
         }
     )
 
@@ -151,7 +141,7 @@ fun ExportDialog(
                 icon = Icons.Default.CloudUpload,
                 onClick = {
                     if (profile.gogsUser != null) {
-                        component.onAction(ExportComponent.Action.ExportToCloud)
+                        component.openExportToCloud()
                     } else {
                         showLoginDialog = true
                     }
@@ -169,9 +159,7 @@ fun ExportDialog(
                     textAlign = TextAlign.End
                 )
                 TextButton(
-                    onClick = {
-                        component.onAction(ExportComponent.Action.Logout(false))
-                    },
+                    onClick = { component.logout(false) },
                     shape = RoundedCornerShape(4.dp)
                 ) {
                     Text(
@@ -223,9 +211,7 @@ fun ExportDialog(
             ExportOptionRow(
                 title = stringResource(id = R.string.backup_to_app),
                 icon = Icons.Default.Share,
-                onClick = {
-                    component.onAction(ExportComponent.Action.ExportToApp)
-                }
+                onClick = component::exportToApp
             )
 
             HorizontalDivider()
@@ -247,9 +233,7 @@ fun ExportDialog(
         BaseDialog(
             title = it.title,
             message = it.message,
-            onDismiss = {
-                component.onAction(ExportComponent.Action.ClearInfoMessage)
-            },
+            onDismiss = component::clearInfoMessage,
             buttons = { onDismiss ->
                 TextButton(onClick = onDismiss) {
                     Text(stringResource(R.string.dismiss))
@@ -262,9 +246,7 @@ fun ExportDialog(
         BaseDialog(
             title = it.title,
             message = it.message,
-            onDismiss = {
-                component.onAction(ExportComponent.Action.ClearErrorMessage)
-            },
+            onDismiss = component::clearErrorMessage,
             buttons = { onDismiss ->
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -294,9 +276,7 @@ fun ExportDialog(
     state.uploadSuccess?.let { info ->
         UploadSuccessDialog(
             info = info,
-            onDismiss = {
-                component.onAction(ExportComponent.Action.ClearUploadSuccess)
-            }
+            onDismiss = component::clearUploadSuccess
         )
     }
 
@@ -343,16 +323,14 @@ fun ExportDialog(
             onDismiss = { showAuthDialog = false },
             onConfirm = {
                 showAuthDialog = false
-                component.onAction(ExportComponent.Action.RegisterKeys)
+                component.registerKeys()
             }
         )
     }
 
     if (showLoginDialog) {
         LoginOnlineDialog(
-            onLogin = {
-                component.onAction(ExportComponent.Action.Logout(true))
-            },
+            onLogin = { component.logout(true) },
             onDismiss = { showLoginDialog = false }
         )
     }
@@ -361,7 +339,7 @@ fun ExportDialog(
         BaseDialog(
             title = conflict.title,
             message = conflict.message,
-            onDismiss = { component.onAction(ExportComponent.Action.ClearMergeConflict) },
+            onDismiss = component::clearMergeConflict,
             buttons = { onBaseDismiss ->
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -379,7 +357,7 @@ fun ExportDialog(
                     TextButton(
                         onClick = {
                             onBaseDismiss()
-                            component.onAction(ExportComponent.Action.ResetToMaster)
+                            component.resetToMaster()
                         }
                     ) {
                         Text(stringResource(R.string.no))
