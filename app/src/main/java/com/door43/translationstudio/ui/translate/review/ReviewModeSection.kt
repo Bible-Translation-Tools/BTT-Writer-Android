@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -30,7 +29,9 @@ import com.door43.translationstudio.ui.dialogs.BaseDialog
 import com.door43.translationstudio.ui.dialogs.ConfirmDialog
 import com.door43.translationstudio.ui.dialogs.ProgressDialog
 import com.door43.translationstudio.ui.translate.ModeScreenTemplate
+import com.door43.translationstudio.ui.translate.ScrollCoordinator
 import com.door43.translationstudio.ui.translate.TranslateComponent
+import com.door43.translationstudio.ui.translate.rememberScrollBinding
 import org.unfoldingword.resourcecontainer.Language
 
 @Composable
@@ -38,7 +39,7 @@ fun ReviewModeSection(
     component: ReviewModeComponent,
     parentComponent: TranslateComponent,
     typography: Typography,
-    listState: LazyListState,
+    scrollCoordinator: ScrollCoordinator,
     searchRequested: Boolean,
     onSearchConsumed: () -> Unit,
     onSourceDialogOpen: () -> Unit,
@@ -54,6 +55,8 @@ fun ReviewModeSection(
     val filteredItems by component.filteredItems.collectAsStateWithLifecycle()
     val progress by component.progress.collectAsStateWithLifecycle()
     val urlHandler = LocalUriHandler.current
+
+    rememberScrollBinding(scrollCoordinator, filteredItems, parentComponent)
 
     val hasConflicts = items.any { it.hasMergeConflict }
 
@@ -83,7 +86,7 @@ fun ReviewModeSection(
         val targetId = state.search?.currentItemId ?: return@LaunchedEffect
         val index = filteredItems.indexOfFirst { it.id == targetId }
         if (index >= 0) {
-            listState.scrollToItem(index)
+            scrollCoordinator.listState.scrollToItem(index)
         }
     }
 
@@ -109,7 +112,7 @@ fun ReviewModeSection(
             ModeScreenTemplate(
                 component = component,
                 items = filteredItems,
-                listState = listState,
+                listState = scrollCoordinator.listState,
                 dialogs = {
                     // URL handler
                     LaunchedEffect(state.url) {

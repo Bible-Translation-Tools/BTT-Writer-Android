@@ -51,12 +51,7 @@ fun TargetTranslationScreen(
 
     var hasMergeConflicts by remember { mutableStateOf(false) }
 
-    val scrollCoordinator = rememberScrollCoordinator(
-        items = emptyList(),
-        lastFocusChapterId = state.lastFocusChapterId,
-        lastFocusFrameId = state.lastFocusFrameId,
-        component = component
-    )
+    val scrollCoordinator = rememberScrollCoordinator()
 
     val menuItems = rememberTranslateMenuItems(
         viewMode = currentViewMode,
@@ -129,9 +124,7 @@ fun TargetTranslationScreen(
                     onConflictClick = {
                         component.openReviewMode(!state.conflictFilterOn)
                     },
-                    onSliderValueChange = {
-                        scrollCoordinator.onSliderChange(it, emptyList())
-                    },
+                    onSliderValueChange = scrollCoordinator::onSliderChange,
                     sliderValue = scrollCoordinator.sliderValue.value,
                     chapterLabel = scrollCoordinator.sliderChapterLabel,
                     actions = menuItems

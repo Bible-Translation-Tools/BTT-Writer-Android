@@ -1,6 +1,5 @@
 package com.door43.translationstudio.ui.translate.chunk
 
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -11,14 +10,16 @@ import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.ui.dialogs.ConfirmDialog
 import com.door43.translationstudio.ui.dialogs.ProgressDialog
 import com.door43.translationstudio.ui.translate.ModeScreenTemplate
+import com.door43.translationstudio.ui.translate.ScrollCoordinator
 import com.door43.translationstudio.ui.translate.TranslateComponent
+import com.door43.translationstudio.ui.translate.rememberScrollBinding
 
 @Composable
 fun ChunkModeSection(
     component: ChunkModeComponent,
     parentComponent: TranslateComponent,
     typography: Typography,
-    listState: LazyListState,
+    scrollCoordinator: ScrollCoordinator,
     onSourceDialogOpen: () -> Unit,
     onHasMergeConflicts: (Boolean) -> Unit,
     onConflictClick: (String, String) -> Unit
@@ -27,6 +28,8 @@ fun ChunkModeSection(
     val chunkState by component.state.collectAsStateWithLifecycle()
     val progress by component.progress.collectAsStateWithLifecycle()
     val items by component.items.collectAsStateWithLifecycle()
+
+    rememberScrollBinding(scrollCoordinator, items, parentComponent)
 
     val hasConflicts = items.any { it.hasMergeConflict }
 
@@ -37,7 +40,7 @@ fun ChunkModeSection(
     ModeScreenTemplate(
         component = component,
         items = items.toList(),
-        listState = listState,
+        listState = scrollCoordinator.listState,
         dialogs = {
             if (chunkState.chunkToReopen != null) {
                 ConfirmDialog(

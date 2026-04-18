@@ -35,7 +35,7 @@ fun TranslateRouter(
                 component = instance.component,
                 parentComponent = component,
                 typography = typography,
-                listState = scrollCoordinator.listState,
+                scrollCoordinator = scrollCoordinator,
                 onSourceDialogOpen = onSourceDialogOpen,
                 onHasMergeConflicts = onHasMergeConflicts,
                 onBeginTranslation = {
@@ -49,7 +49,7 @@ fun TranslateRouter(
                 component = instance.component,
                 parentComponent = component,
                 typography = typography,
-                listState = scrollCoordinator.listState,
+                scrollCoordinator = scrollCoordinator,
                 onSourceDialogOpen = onSourceDialogOpen,
                 onHasMergeConflicts = onHasMergeConflicts,
                 onConflictClick = { chapterId, chunkId ->
@@ -64,7 +64,7 @@ fun TranslateRouter(
                 component = instance.component,
                 parentComponent = component,
                 typography = typography,
-                listState = scrollCoordinator.listState,
+                scrollCoordinator = scrollCoordinator,
                 searchRequested = searchRequested,
                 onSearchConsumed = onSearchConsumed,
                 onSourceDialogOpen = onSourceDialogOpen,
