@@ -39,9 +39,7 @@ fun TranslateRouter(
                 onSourceDialogOpen = onSourceDialogOpen,
                 onHasMergeConflicts = onHasMergeConflicts,
                 onBeginTranslation = {
-                    scrollCoordinator.pendingScrollChapter = PendingScrollItem(
-                        chapterId = it
-                    )
+                    scrollCoordinator.requestScroll(chapterId = it)
                     component.openChunkMode()
                 }
             )
@@ -53,10 +51,7 @@ fun TranslateRouter(
                 onSourceDialogOpen = onSourceDialogOpen,
                 onHasMergeConflicts = onHasMergeConflicts,
                 onConflictClick = { chapterId, chunkId ->
-                    scrollCoordinator.pendingScrollChapter = PendingScrollItem(
-                        chapterId = chapterId,
-                        chunkId = chunkId
-                    )
+                    scrollCoordinator.requestScroll(chapterId, chunkId)
                     component.openReviewMode(true)
                 }
             )

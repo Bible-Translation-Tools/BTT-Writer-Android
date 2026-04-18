@@ -12,7 +12,7 @@ import com.door43.translationstudio.ui.dialogs.ProgressDialog
 import com.door43.translationstudio.ui.translate.ModeScreenTemplate
 import com.door43.translationstudio.ui.translate.ScrollCoordinator
 import com.door43.translationstudio.ui.translate.TranslateComponent
-import com.door43.translationstudio.ui.translate.rememberScrollBinding
+import com.door43.translationstudio.ui.translate.ScrollBindingEffect
 
 @Composable
 fun ChunkModeSection(
@@ -29,7 +29,7 @@ fun ChunkModeSection(
     val progress by component.progress.collectAsStateWithLifecycle()
     val items by component.items.collectAsStateWithLifecycle()
 
-    rememberScrollBinding(scrollCoordinator, items, parentComponent)
+    ScrollBindingEffect(scrollCoordinator, items, parentComponent)
 
     val hasConflicts = items.any { it.hasMergeConflict }
 

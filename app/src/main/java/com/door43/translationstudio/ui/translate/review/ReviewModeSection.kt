@@ -31,7 +31,7 @@ import com.door43.translationstudio.ui.dialogs.ProgressDialog
 import com.door43.translationstudio.ui.translate.ModeScreenTemplate
 import com.door43.translationstudio.ui.translate.ScrollCoordinator
 import com.door43.translationstudio.ui.translate.TranslateComponent
-import com.door43.translationstudio.ui.translate.rememberScrollBinding
+import com.door43.translationstudio.ui.translate.ScrollBindingEffect
 import org.unfoldingword.resourcecontainer.Language
 
 @Composable
@@ -56,7 +56,7 @@ fun ReviewModeSection(
     val progress by component.progress.collectAsStateWithLifecycle()
     val urlHandler = LocalUriHandler.current
 
-    rememberScrollBinding(scrollCoordinator, filteredItems, parentComponent)
+    ScrollBindingEffect(scrollCoordinator, filteredItems, parentComponent)
 
     val hasConflicts = items.any { it.hasMergeConflict }
 

@@ -3,7 +3,6 @@ package com.door43.translationstudio.ui.translate
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
@@ -16,7 +15,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.door43.translationstudio.core.Chunk
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
@@ -26,20 +30,19 @@ data class PendingScrollItem(val chapterId: String, val chunkId: String? = null)
 class ScrollCoordinator(
     val listState: LazyListState
 ) {
-    var lastViewedChunk by mutableStateOf<Chunk?>(null)
-    var hasDoneInitialLoad by mutableStateOf(false)
-    var pendingScrollChapter by mutableStateOf<PendingScrollItem?>(null)
     var sliderChapterLabel by mutableStateOf<String?>(null)
 
-    var onSliderDrag: ((Float) -> Unit)? = null
+    private val _pendingScroll = MutableStateFlow<PendingScrollItem?>(null)
+    val pendingScroll: StateFlow<PendingScrollItem?> = _pendingScroll.asStateFlow()
+
+    private val _sliderDrags = MutableSharedFlow<Float>(extraBufferCapacity = 16)
+    val sliderDrags: SharedFlow<Float> = _sliderDrags.asSharedFlow()
 
     val dominantIndex = derivedStateOf {
         val visibleItems = listState.layoutInfo.visibleItemsInfo
         if (visibleItems.isEmpty()) return@derivedStateOf 0
-
         val dominantItem = visibleItems.find { it.offset > -(it.size / 2) }
-        val rawIndex = dominantItem?.index ?: visibleItems.first().index
-        rawIndex
+        dominantItem?.index ?: visibleItems.first().index
     }
 
     val sliderValue = derivedStateOf {
@@ -56,8 +59,16 @@ class ScrollCoordinator(
         else (absolutePosition / totalItems).coerceIn(0f, 1f)
     }
 
+    fun requestScroll(chapterId: String, chunkId: String? = null) {
+        _pendingScroll.value = PendingScrollItem(chapterId, chunkId)
+    }
+
+    fun consumePending() {
+        _pendingScroll.value = null
+    }
+
     fun onSliderChange(value: Float) {
-        onSliderDrag?.invoke(value)
+        _sliderDrags.tryEmit(value)
     }
 }
 
@@ -68,7 +79,7 @@ fun rememberScrollCoordinator(): ScrollCoordinator {
 }
 
 @Composable
-fun rememberScrollBinding(
+fun ScrollBindingEffect(
     coordinator: ScrollCoordinator,
     items: List<TranslateItem>,
     component: TranslateComponent
@@ -77,15 +88,18 @@ fun rememberScrollBinding(
     val scope = rememberCoroutineScope()
     val currentItems by rememberUpdatedState(items)
 
-    var savedInitialLoad by rememberSaveable { mutableStateOf(false) }
-    LaunchedEffect(Unit) {
-        coordinator.hasDoneInitialLoad = savedInitialLoad
-    }
+    var hasDoneInitialLoad by rememberSaveable { mutableStateOf(false) }
+    var lastViewedChapter by remember { mutableStateOf<String?>(null) }
+    var lastViewedFrame by remember { mutableStateOf<String?>(null) }
 
     val lastFocusChapterId = state.lastFocusChapterId
     val lastFocusFrameId = state.lastFocusFrameId
+
+    val pendingScroll by coordinator.pendingScroll.collectAsStateWithLifecycle()
+    val dominantIndex by coordinator.dominantIndex
+
     LaunchedEffect(items, lastFocusChapterId) {
-        if (!coordinator.hasDoneInitialLoad && items.isNotEmpty() && lastFocusChapterId != null) {
+        if (!hasDoneInitialLoad && items.isNotEmpty() && lastFocusChapterId != null) {
             var targetIndex = items.indexOfFirst {
                 it.chunk.chapterSlug == lastFocusChapterId && it.chunk.chunkSlug == lastFocusFrameId
             }
@@ -94,15 +108,16 @@ fun rememberScrollBinding(
             }
             if (targetIndex != -1) {
                 coordinator.listState.scrollToItem(targetIndex)
-                coordinator.lastViewedChunk = items[targetIndex].chunk
-                coordinator.hasDoneInitialLoad = true
-                savedInitialLoad = true
+                val chunk = items[targetIndex].chunk
+                lastViewedChapter = chunk.chapterSlug
+                lastViewedFrame = chunk.chunkSlug
+                hasDoneInitialLoad = true
             }
         }
     }
 
-    LaunchedEffect(coordinator.pendingScrollChapter) {
-        val scrollTarget = coordinator.pendingScrollChapter ?: return@LaunchedEffect
+    LaunchedEffect(pendingScroll) {
+        val scrollTarget = pendingScroll ?: return@LaunchedEffect
 
         snapshotFlow { currentItems }
             .first { list ->
@@ -122,21 +137,24 @@ fun rememberScrollBinding(
                 .first { it > targetIndex }
 
             coordinator.listState.scrollToItem(targetIndex)
-            coordinator.lastViewedChunk = resolved[targetIndex].chunk
+            val chunk = resolved[targetIndex].chunk
+            lastViewedChapter = chunk.chapterSlug
+            lastViewedFrame = chunk.chunkSlug
         }
-        coordinator.pendingScrollChapter = null
+        coordinator.consumePending()
     }
 
     LaunchedEffect(items) {
-        val chunkToFind = coordinator.lastViewedChunk
-        if (coordinator.hasDoneInitialLoad && chunkToFind != null && items.isNotEmpty()
-            && coordinator.pendingScrollChapter == null
+        val chapterToFind = lastViewedChapter
+        val frameToFind = lastViewedFrame
+        if (hasDoneInitialLoad && chapterToFind != null && items.isNotEmpty()
+            && coordinator.pendingScroll.value == null
         ) {
             var newIndex = items.indexOfFirst {
-                it.chunk.chapterSlug == chunkToFind.chapterSlug && it.chunk.chunkSlug == chunkToFind.chunkSlug
+                it.chunk.chapterSlug == chapterToFind && it.chunk.chunkSlug == frameToFind
             }
             if (newIndex == -1) {
-                newIndex = items.indexOfFirst { it.chunk.chapterSlug == chunkToFind.chapterSlug }
+                newIndex = items.indexOfFirst { it.chunk.chapterSlug == chapterToFind }
             }
             if (newIndex != -1) {
                 coordinator.listState.scrollToItem(newIndex)
@@ -144,20 +162,20 @@ fun rememberScrollBinding(
         }
     }
 
-    val dominantIndex by coordinator.dominantIndex
     LaunchedEffect(dominantIndex, items) {
-        if (items.isNotEmpty() && coordinator.pendingScrollChapter == null) {
+        if (items.isNotEmpty() && coordinator.pendingScroll.value == null) {
             val safeIndex = dominantIndex.coerceIn(0, maxOf(0, items.size - 1))
             val item = items[safeIndex]
-            coordinator.lastViewedChunk = item.chunk
+            lastViewedChapter = item.chunk.chapterSlug
+            lastViewedFrame = item.chunk.chunkSlug
             component.saveLastFocus(item.chunk.chapterSlug, item.chunk.chunkSlug)
         }
     }
 
-    DisposableEffect(Unit) {
-        coordinator.onSliderDrag = handler@{ value ->
+    LaunchedEffect(coordinator) {
+        coordinator.sliderDrags.collect { value ->
             val activeItems = currentItems
-            if (activeItems.isEmpty()) return@handler
+            if (activeItems.isEmpty()) return@collect
 
             val exactPosition = value * activeItems.size
             val targetIndex = exactPosition.toInt().coerceIn(0, activeItems.size - 1)
@@ -173,6 +191,5 @@ fun rememberScrollBinding(
                 coordinator.listState.scrollToItem(targetIndex, estimatedOffsetPixels)
             }
         }
-        onDispose { coordinator.onSliderDrag = null }
     }
 }

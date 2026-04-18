@@ -9,7 +9,7 @@ import com.door43.translationstudio.ui.dialogs.ProgressDialog
 import com.door43.translationstudio.ui.translate.ModeScreenTemplate
 import com.door43.translationstudio.ui.translate.ScrollCoordinator
 import com.door43.translationstudio.ui.translate.TranslateComponent
-import com.door43.translationstudio.ui.translate.rememberScrollBinding
+import com.door43.translationstudio.ui.translate.ScrollBindingEffect
 
 @Composable
 fun ReadModeSection(
@@ -26,7 +26,7 @@ fun ReadModeSection(
     val items by component.items.collectAsStateWithLifecycle()
     val hasConflicts = items.any { it.hasMergeConflict }
 
-    rememberScrollBinding(scrollCoordinator, items, parentComponent)
+    ScrollBindingEffect(scrollCoordinator, items, parentComponent)
 
     LaunchedEffect(hasConflicts) {
         onHasMergeConflicts(hasConflicts)
