@@ -232,7 +232,7 @@ class Translator (
     /**
      * Imports a draft translation into a target translation.
      * A new target translation will be created if one does not already exist.
-     * This is a lengthy operation and should be ran within a task
+     * This is a lengthy operation and should be run within a task
      * @param draftTranslation the draft translation to be imported
      * @return
      */

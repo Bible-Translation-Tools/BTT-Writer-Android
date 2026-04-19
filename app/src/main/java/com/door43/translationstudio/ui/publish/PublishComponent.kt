@@ -11,7 +11,9 @@ import com.arkivanov.decompose.router.slot.dismiss
 import com.arkivanov.decompose.value.Value
 import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.door43.translationstudio.App.Companion.deviceLanguageCode
+import com.door43.translationstudio.Platform
 import com.door43.translationstudio.R
+import com.door43.translationstudio.core.ComponentScope
 import com.door43.translationstudio.core.NativeSpeaker
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TargetTranslation
@@ -22,10 +24,9 @@ import com.door43.translationstudio.core.Validation
 import com.door43.translationstudio.rendering.RenderingGroup
 import com.door43.translationstudio.rendering.RenderingProvider
 import com.door43.translationstudio.ui.dialogs.export.DefaultExportComponent
-import com.door43.translationstudio.ui.dialogs.feedback.DefaultFeedbackComponent
 import com.door43.translationstudio.ui.dialogs.export.ExportComponent
+import com.door43.translationstudio.ui.dialogs.feedback.DefaultFeedbackComponent
 import com.door43.translationstudio.ui.dialogs.feedback.FeedbackComponent
-import com.door43.translationstudio.core.ComponentScope
 import com.door43.translationstudio.ui.textadapters.ComposeTextAdapter
 import com.door43.usecases.ValidateProject
 import kotlinx.coroutines.CoroutineScope
@@ -45,7 +46,6 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.resourcecontainer.Project
-import java.io.File
 
 data class ValidationItem(
     val validation: Validation,
@@ -90,7 +90,6 @@ interface PublishComponent {
     sealed interface Result {
         data class Error(val message: String) : Result
         data class OpenReview(val translationId: String) : Result
-        data class ExportToApp(val file: File) : Result
         data object Login : Result
         data object Logout : Result
         data class MergeConflict(val translationId: String) : Result
@@ -101,6 +100,7 @@ interface PublishComponent {
 class DefaultPublishComponent(
     componentContext: ComponentContext,
     translationId: String,
+    private val platform: Platform,
     private val onResult: (PublishComponent.Result) -> Unit
 ) : PublishComponent,
     ComponentContext by componentContext,
@@ -216,7 +216,7 @@ class DefaultPublishComponent(
             is ExportComponent.Result.Error -> {}
             is ExportComponent.Result.ExportToApp -> {
                 dismissDialog()
-                onResult(PublishComponent.Result.ExportToApp(result.file))
+                platform.shareProject(result.file)
             }
             is ExportComponent.Result.OpenLogin -> {
                 dismissDialog()

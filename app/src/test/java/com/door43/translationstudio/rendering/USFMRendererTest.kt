@@ -279,61 +279,6 @@ class USFMRendererTest {
     }
 
     @Test
-    fun `search string produces SearchHighlight nodes`() {
-        val input = """\v 1 In the beginning God created"""
-        val r = renderer()
-        r.setSearchString("beginning")
-        val nodes = r.render(input)
-        val highlights = flatten(nodes).filterIsInstance<RenderNode.Text>()
-            .filter { it.attributes.searchHighlighted }
-        assertTrue("Expected search-highlighted Text node", highlights.isNotEmpty())
-        assertEquals("beginning", highlights.first().content)
-    }
-
-    @Test
-    fun `search highlight preserves surrounding text`() {
-        val input = "In the beginning God"
-        val r = renderer()
-        r.setSearchString("beginning")
-        val nodes = r.render(input)
-        val allText = flatten(nodes).filterIsInstance<RenderNode.Text>()
-            .joinToString("") { it.content }
-        assertEquals("In the beginning God", allText)
-    }
-
-    @Test
-    fun `search is case-insensitive`() {
-        val input = "In the Beginning God"
-        val r = renderer()
-        r.setSearchString("beginning")
-        val nodes = r.render(input)
-        assertTrue(flatten(nodes).filterIsInstance<RenderNode.Text>()
-            .any { it.attributes.searchHighlighted })
-    }
-
-    @Test
-    fun `search highlight content matches original case`() {
-        val input = "In the Beginning God"
-        val r = renderer()
-        r.setSearchString("beginning")
-        val nodes = r.render(input)
-        val highlight = flatten(nodes).filterIsInstance<RenderNode.Text>()
-            .firstOrNull { it.attributes.searchHighlighted }
-        assertNotNull(highlight)
-        assertEquals("Beginning", highlight!!.content)
-    }
-
-    @Test
-    fun `empty search string disables highlighting`() {
-        val input = "In the beginning"
-        val r = renderer()
-        r.setSearchString("")
-        val nodes = r.render(input)
-        assertFalse(flatten(nodes).filterIsInstance<RenderNode.Text>()
-            .any { it.attributes.searchHighlighted })
-    }
-
-    @Test
     fun `note tag produces Note node`() {
         val input = """\f + \ft footnote text \f*"""
         val nodes = testRender(input)
@@ -341,28 +286,6 @@ class USFMRendererTest {
         assertNotNull("Expected Note node", note)
         assertEquals("+", note!!.caller)
         assertEquals(NoteStyle.FOOTNOTE, note.noteStyle)
-    }
-
-    @Test
-    fun `note marker highlighted when search matches note content`() {
-        val input = """\f + \ft special footnote text \f*"""
-        val r = renderer()
-        r.setSearchString("special")
-        val nodes = r.render(input)
-        val note = flatten(nodes).filterIsInstance<RenderNode.Note>().firstOrNull()
-        assertNotNull(note)
-        assertTrue("Note should be highlighted when search matches", note!!.attributes.searchHighlighted)
-    }
-
-    @Test
-    fun `note marker not highlighted when search does not match`() {
-        val input = """\f + \ft footnote text \f*"""
-        val r = renderer()
-        r.setSearchString("xyz")
-        val nodes = r.render(input)
-        val note = flatten(nodes).filterIsInstance<RenderNode.Note>().firstOrNull()
-        assertNotNull(note)
-        assertFalse("Note should not be highlighted when search doesn't match", note!!.attributes.searchHighlighted)
     }
 
     @Test
@@ -399,6 +322,18 @@ class USFMRendererTest {
         val nodes = testRender(input)
         // The verse marker should still be present, and text after it
         assertTrue(flatten(nodes).any { it is RenderNode.Verse })
+    }
+
+    @Test
+    fun `raw positions after chapter marker point into original input`() {
+        val input = """\c 1 \v 1 Verse text"""
+        val nodes = testRender(input)
+        val verse = flatten(nodes).filterIsInstance<RenderNode.Verse>().first()
+        val text = flatten(nodes).filterIsInstance<RenderNode.Text>().first { it.content.contains("Verse") }
+        // Positions must index into the original input so verse-marker drag
+        // can remove/insert correctly.
+        assertEquals("\\v 1 ", input.substring(verse.start, verse.end))
+        assertEquals("Verse text", input.substring(text.start, text.end))
     }
 
     @Test

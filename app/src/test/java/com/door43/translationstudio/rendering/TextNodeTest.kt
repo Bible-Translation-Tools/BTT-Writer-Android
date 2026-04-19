@@ -41,7 +41,6 @@ class TextNodeTest {
         assertEquals("+", node.caller)
         assertEquals("footnote text", node.notes)
         assertEquals(NoteStyle.FOOTNOTE, node.noteStyle)
-        assertFalse(node.highlighted)
     }
 
     @Test
@@ -66,12 +65,6 @@ class TextNodeTest {
         val node = TextNode.Link(data)
         assertTrue(node.linkData is LinkData.TranslationWord)
         assertEquals("grace", (node.linkData as LinkData.TranslationWord).id)
-    }
-
-    @Test
-    fun `SearchHighlight holds content`() {
-        val node = TextNode.SearchHighlight("beginning")
-        assertEquals("beginning", node.content)
     }
 
     @Test
@@ -102,16 +95,12 @@ class TextNodeTest {
             TextNode.Text("In the beginning "),
             TextNode.VerseMarker(1, 0, false),
             TextNode.Text("God created"),
-            TextNode.VerseMarker(2, 0, false),
-            TextNode.SearchHighlight("created")
+            TextNode.VerseMarker(2, 0, false)
         )
         val verses = nodes.filterIsInstance<TextNode.VerseMarker>()
-        val highlights = nodes.filterIsInstance<TextNode.SearchHighlight>()
         assertEquals(2, verses.size)
         assertEquals(1, verses[0].startVerse)
         assertEquals(2, verses[1].startVerse)
-        assertEquals(1, highlights.size)
-        assertEquals("created", highlights[0].content)
     }
 
     @Test
@@ -167,7 +156,6 @@ class TextNodeTest {
             is TextNode.PoeticLine -> "poetic"
             is TextNode.ChapterLabel -> "chapter"
             is TextNode.Link -> "link"
-            is TextNode.SearchHighlight -> "highlight"
             TextNode.LineBreak -> "linebreak"
         }
         assertEquals("text", result)

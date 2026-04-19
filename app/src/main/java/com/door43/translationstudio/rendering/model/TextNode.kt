@@ -44,7 +44,7 @@ sealed class TextNode {
     ) : TextNode()
 
     /**
-     * A note marker (footnote or cross-reference). highlighted=true when search matches.
+     * A note marker (footnote or cross-reference).
      * @param startPos Start position of the footnote in the original raw input text (-1 if unknown).
      * @param endPos End position of the footnote in the original raw input text (-1 if unknown).
      */
@@ -53,7 +53,6 @@ sealed class TextNode {
         val passage: String,
         val notes: String,
         val noteStyle: NoteStyle,
-        val highlighted: Boolean = false,
         val machineReadable: String = "",
         override val startPos: Int = -1,
         override val endPos: Int = -1
@@ -99,13 +98,6 @@ sealed class TextNode {
     /** A clickable link. */
     data class Link(
         val linkData: LinkData,
-        override val startPos: Int = -1,
-        override val endPos: Int = -1
-    ) : TextNode()
-
-    /** Text segment highlighted because it matches the current search string. */
-    data class SearchHighlight(
-        val content: String,
         override val startPos: Int = -1,
         override val endPos: Int = -1
     ) : TextNode()

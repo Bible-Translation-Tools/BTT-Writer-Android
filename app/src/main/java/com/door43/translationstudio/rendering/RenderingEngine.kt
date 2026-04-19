@@ -60,15 +60,6 @@ abstract class RenderingEngine {
     }
 
     /**
-     * If set to not empty, matched strings will be highlighted.
-     *
-     * @param searchString - empty string disables highlighting
-     */
-    open fun setSearchString(searchString: String) {
-        // by default does nothing
-    }
-
-    /**
      * Called when the engine is stopped.
      * Override this to perform cleanup actions
      */

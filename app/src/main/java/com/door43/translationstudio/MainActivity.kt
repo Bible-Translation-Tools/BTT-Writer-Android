@@ -1,12 +1,10 @@
 package com.door43.translationstudio
 
-import android.content.ClipData
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.getValue
-import androidx.core.content.FileProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.arkivanov.decompose.retainedComponent
 import com.door43.data.IDirectoryProvider
@@ -17,9 +15,7 @@ import com.door43.translationstudio.ui.BaseActivity
 import com.door43.translationstudio.ui.navigation.DefaultRootComponent
 import com.door43.translationstudio.ui.navigation.RootComponent
 import com.door43.translationstudio.ui.navigation.RootContent
-import com.door43.util.FileUtilities
 import org.koin.android.ext.android.inject
-import java.io.File
 
 class MainActivity : BaseActivity() {
 
@@ -39,14 +35,12 @@ class MainActivity : BaseActivity() {
         startBackupService()
         handleIntent(intent)
 
-        val platform = AndroidPlatform(this)
+        val platform = AndroidPlatform(this, directoryProvider)
 
         root = retainedComponent { componentContext ->
             DefaultRootComponent(
                 componentContext = componentContext,
                 platform = platform,
-                onExportToApp = ::exportToApp,
-                onShareApp = ::shareApp,
                 onExitApp = ::finishAffinity
             )
         }
@@ -102,51 +96,5 @@ class MainActivity : BaseActivity() {
     private fun startBackupService() {
         val backupIntent = Intent(baseContext, BackupService::class.java)
         baseContext.startService(backupIntent)
-    }
-
-    /**
-     * Export app .apk
-     */
-    private fun shareApp() {
-        val pInfo = packageManager.getPackageInfo(packageName, 0)
-        pInfo.applicationInfo?.let { info ->
-            val apkFile = File(info.publicSourceDir)
-            val exportFile = File(
-                directoryProvider.sharingDir, info.loadLabel(
-                    application.packageManager
-                ).toString() + "_" + pInfo.versionName + ".apk"
-            )
-            FileUtilities.copyFile(apkFile, exportFile)
-
-            shareArchive(exportFile)
-        }
-    }
-
-    /**
-     * Export translation project to an app
-     */
-    private fun exportToApp(file: File) {
-        shareArchive(file)
-    }
-
-    private fun shareArchive(file: File) {
-        if (!file.exists()) return
-
-        val uri = FileProvider.getUriForFile(
-            this,
-            "${packageName}.fileprovider",
-            file,
-        )
-        val intent = Intent(Intent.ACTION_SEND).apply {
-            setDataAndType(uri, "application/zip")
-
-            putExtra(Intent.EXTRA_STREAM, uri)
-
-            clipData = ClipData.newRawUri(null, uri)
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        }
-        startActivity(
-            Intent.createChooser(intent, getString(R.string.send_to)),
-        )
     }
 }

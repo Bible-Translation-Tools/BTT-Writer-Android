@@ -179,9 +179,9 @@ class DefaultExportComponent(
             return
         }
 
-        launchWithProgress(
-            application.getString(R.string.printing)
-        ) { handle ->
+        val printingMsg = application.getString(R.string.printing, projectTitle)
+
+        launchWithProgress(printingMsg) { handle ->
             val imagesDir = if (includeImages) {
                 handle.update(
                     value = 1f,
@@ -202,6 +202,8 @@ class DefaultExportComponent(
                 }
                 return@launchWithProgress
             }
+
+            handle.update(-1f, printingMsg)
 
             val result = withContext(Dispatchers.IO) {
                 export.exportPDF(

@@ -38,17 +38,6 @@ class RenderingGroup {
     }
 
     /**
-     * If set to not empty matched strings will be highlighted.
-     *
-     * @param searchString - empty string disables highlighting
-     */
-    fun setSearchString(searchString: String) {
-        for (engine in mEngines) {
-            engine.setSearchString(searchString)
-        }
-    }
-
-    /**
      * if set to true, then paragraphs (\p) will be rendered in the output.
      *
      * @param enable default is true

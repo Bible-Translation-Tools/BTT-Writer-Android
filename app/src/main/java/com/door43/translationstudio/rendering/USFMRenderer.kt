@@ -1,6 +1,5 @@
 package com.door43.translationstudio.rendering
 
-import com.door43.translationstudio.rendering.model.NodeAttributes
 import com.door43.translationstudio.rendering.model.NoteStyle
 import com.door43.translationstudio.rendering.model.RenderNode
 import com.door43.translationstudio.rendering.spannables.USFMNoteSpan
@@ -16,7 +15,6 @@ class USFMRenderer(
 
     private var renderParagraphs = true
     private var renderVerses = verseDisplay != VerseDisplay.RAW
-    private var search: String? = null
     private var expectedVerseRange = IntArray(0)
     private var suppressLeadingMajorSectionHeadings = false
     private var addedMissingVerse = false
@@ -27,10 +25,6 @@ class USFMRenderer(
 
     override fun setParagraphsEnabled(enable: Boolean) {
         renderParagraphs = enable
-    }
-
-    override fun setSearchString(searchString: String) {
-        search = if (searchString.isNotEmpty()) searchString.lowercase() else null
     }
 
     override fun setPopulateVerseMarkers(verseRange: IntArray) {
@@ -56,11 +50,10 @@ class USFMRenderer(
         if (isStopped()) return emptyList()
         text = stripCarriageReturns(text)
         if (isStopped()) return emptyList()
-        text = stripChapterMarkers(text)   // strips \c N
-        if (isStopped()) return emptyList()
 
         // collect all token matches simultaneously
         val allTokens = mutableListOf<Token>()
+        allTokens.addAll(findChapterMarkers(text))
         allTokens.addAll(findMajorSectionHeadings(text))
         allTokens.addAll(findSectionHeadings(text))
         allTokens.addAll(findParagraphBreaks(text))
@@ -71,6 +64,10 @@ class USFMRenderer(
         allTokens.addAll(findVerses(text))
         allTokens.addAll(findNotes(text))
         allTokens.addAll(findSelah(text))
+        allTokens.addAll(findUsxParagraphBreaks(text))
+        allTokens.addAll(findUsxPoeticLines(text))
+        allTokens.addAll(findUsxRightAlignedPoeticLines(text))
+        allTokens.addAll(findUsxParagraphCloses(text))
         if (isStopped()) return emptyList()
 
         // sort by position, remove overlapping tokens
@@ -94,9 +91,6 @@ class USFMRenderer(
             val cleaned = stripRemainingMarkers(tail)
             if (cleaned.isNotBlank()) nodes.add(RenderNode.Text(cleaned, start = lastIndex, end = text.length))
         }
-
-        // search highlights (post-process Text nodes)
-        if (!isStopped()) applySearchHighlights(nodes)
 
         // insert missing expected verses
         insertMissingVerses(nodes)
@@ -264,7 +258,6 @@ class USFMRenderer(
                 noteText = noteText.replace(Regex("\\s*\\n+\\s*"), " ").trim()
                 val note = USFMNoteSpan.parseNote(caller, noteText)
                 val style = if (note.style == "f") NoteStyle.FOOTNOTE else NoteStyle.CROSS_REFERENCE
-                val highlighted = search != null && noteText.lowercase().contains(search!!)
                 tokens.add(
                     Token(
                         matcher.start(), matcher.end(),
@@ -276,8 +269,7 @@ class USFMRenderer(
                                 noteStyle = style,
                                 machineReadable = matcher.group(),
                                 startPos = matcher.start(),
-                                endPos = matcher.end(),
-                                attributes = NodeAttributes(searchHighlighted = highlighted)
+                                endPos = matcher.end()
                             )
                         )
                     )
@@ -306,6 +298,63 @@ class USFMRenderer(
         return tokens
     }
 
+    private fun findUsxParagraphBreaks(text: String): List<Token> {
+        if (!renderParagraphs) return emptyList()
+        val tokens = mutableListOf<Token>()
+        val matcher = USX_PARAGRAPH_PATTERN.matcher(text)
+        while (matcher.find()) {
+            tokens.add(Token(
+                matcher.start(), matcher.end(),
+                listOf(RenderNode.Paragraph(indented = false, children = emptyList()))
+            ))
+        }
+        return tokens
+    }
+
+    private fun findUsxPoeticLines(text: String): List<Token> {
+        if (!renderParagraphs) return emptyList()
+        val tokens = mutableListOf<Token>()
+        val matcher = USX_POETRY_PATTERN.matcher(text)
+        while (matcher.find()) {
+            val level = matcher.group(1)?.toIntOrNull() ?: 1
+            tokens.add(
+                Token(
+                    matcher.start(), matcher.end(),
+                    listOf(RenderNode.PoeticLine(indentLevel = level, rightAligned = false, children = emptyList()))
+                )
+            )
+        }
+        return tokens
+    }
+
+    private fun findUsxRightAlignedPoeticLines(text: String): List<Token> {
+        if (!renderParagraphs) return emptyList()
+        val tokens = mutableListOf<Token>()
+        val matcher = USX_RIGHT_POETRY_PATTERN.matcher(text)
+        while (matcher.find()) {
+            tokens.add(
+                Token(
+                    matcher.start(), matcher.end(),
+                    listOf(RenderNode.PoeticLine(indentLevel = 0, rightAligned = true, children = emptyList()))
+                )
+            )
+        }
+        return tokens
+    }
+
+    private fun findUsxParagraphCloses(text: String): List<Token> {
+        if (!renderParagraphs) return emptyList()
+        val tokens = mutableListOf<Token>()
+        val matcher = USX_PARA_CLOSE_PATTERN.matcher(text)
+        while (matcher.find()) {
+            tokens.add(Token(
+                matcher.start(), matcher.end(),
+                listOf(RenderNode.Paragraph(indented = false, children = emptyList()))
+            ))
+        }
+        return tokens
+    }
+
     private fun removeOverlaps(sorted: List<Token>): List<Token> {
         val result = mutableListOf<Token>()
         var lastEnd = 0
@@ -326,50 +375,10 @@ class USFMRenderer(
     private fun stripRemainingMarkers(text: String): String {
         // Strip remaining USFM backslash markers (e.g. \fr, \ft, \fv, \fk, \fq, \fqa, \f*)
         // Pattern: backslash followed by one or more word chars, optionally ending with *
-        return text.replace(Regex("\\\\[a-zA-Z][a-zA-Z0-9]*\\*?"), "")
-    }
-
-    private fun applySearchHighlights(nodes: MutableList<RenderNode>) {
-        val term = search ?: return
-        val result = mutableListOf<RenderNode>()
-        for (node in nodes) {
-            if (isStopped()) return
-            if (node is RenderNode.Text && !node.attributes.searchHighlighted) {
-                val lower = node.content.lowercase()
-                val rawBase = node.start
-                val hasRawPos = rawBase >= 0
-                var last = 0
-                while (true) {
-                    val pos = lower.indexOf(term, last)
-                    if (pos < 0) break
-                    if (pos > last) {
-                        result.add(RenderNode.Text(
-                            node.content.substring(last, pos),
-                            start = if (hasRawPos) rawBase + last else -1,
-                            end = if (hasRawPos) rawBase + pos else -1
-                        ))
-                    }
-                    result.add(RenderNode.Text(
-                        node.content.substring(pos, pos + term.length),
-                        start = if (hasRawPos) rawBase + pos else -1,
-                        end = if (hasRawPos) rawBase + pos + term.length else -1,
-                        attributes = NodeAttributes(searchHighlighted = true)
-                    ))
-                    last = pos + term.length
-                }
-                if (last < node.content.length) {
-                    result.add(RenderNode.Text(
-                        node.content.substring(last),
-                        start = if (hasRawPos) rawBase + last else -1,
-                        end = if (hasRawPos) rawBase + node.content.length else -1
-                    ))
-                }
-            } else {
-                result.add(node)
-            }
-        }
-        nodes.clear()
-        nodes.addAll(result)
+        // Also strip stray USX <para...> / </para> tags not consumed by finders (unknown styles).
+        return text
+            .replace(Regex("\\\\[a-zA-Z][a-zA-Z0-9]*\\*?"), "")
+            .replace(Regex("</?para\\b[^>]*/?>"), "")
     }
 
     private fun insertMissingVerses(nodes: MutableList<RenderNode>) {
@@ -415,12 +424,22 @@ class USFMRenderer(
         input.replace("\r", "")
 
     /**
-     * Strips chapter markers (\\c N) from the input. No node is emitted for these.
+     * Tokenize chapter markers (\\c N). No node is emitted — position is consumed
+     * so RAW_POSITION annotations downstream stay aligned with the original input.
      */
-    private fun stripChapterMarkers(input: String): String =
-        input.replace(Regex("\\\\c +\\d+ *"), "")
+    private fun findChapterMarkers(text: String): List<Token> {
+        val tokens = mutableListOf<Token>()
+        val matcher = CHAPTER_MARKER_PATTERN.matcher(text)
+        while (matcher.find()) {
+            tokens.add(Token(matcher.start(), matcher.end(), emptyList()))
+        }
+        return tokens
+    }
 
     companion object {
+        // \c N — chapter marker; consumed but emits no node
+        private val CHAPTER_MARKER_PATTERN = Pattern.compile("\\\\c +\\d+ *")
+
         // \p or \m followed by non-word char or end of string
         private val PARAGRAPH_PATTERN = Pattern.compile("\\\\[pm](?=\\W|$)")
 
@@ -444,5 +463,11 @@ class USFMRenderer(
 
         // \qs content\qs* — Selah char style
         private val SELAH_PATTERN = Pattern.compile("\\\\qs\\s(.+?)\\\\qs\\*")
+
+        // USX paragraph tags that may appear mixed inside USFM content
+        private val USX_PARAGRAPH_PATTERN = Pattern.compile("<para\\s+style=\"[pm]\"\\s*>")
+        private val USX_POETRY_PATTERN = Pattern.compile("<para\\s+style=\"q(\\d+)\"\\s*>")
+        private val USX_RIGHT_POETRY_PATTERN = Pattern.compile("<para\\s+style=\"qr\"\\s*>")
+        private val USX_PARA_CLOSE_PATTERN = Pattern.compile("</para>")
     }
 }

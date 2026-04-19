@@ -408,7 +408,7 @@
     <string name="importing_draft">Импортирование черновика</string>
     <string name="draft_translation_exists">Доступен черновик этого перевода</string>
     <string name="print_failed">Не удалось распечатать</string>
-    <string name="printing">Печать:\n</string>
+    <string name="printing">Печать: <xliff:g example="Genesis" id="project">%1$s</xliff:g></string>
     <string name="label_undo">Отменить</string>
     <string name="label_redo">Повторить</string>
     <string name="restored_to_time">Восстановлено в %s</string>

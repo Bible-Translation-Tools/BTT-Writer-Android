@@ -2,24 +2,32 @@ package com.door43.translationstudio
 
 import android.app.Activity
 import android.app.ActivityManager
+import android.content.ClipData
 import android.content.Context
 import android.content.Context.ACTIVITY_SERVICE
 import android.content.Intent
 import android.os.Build
 import android.os.Process
+import androidx.core.content.FileProvider
+import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.Platform.Companion.GB
 import com.door43.translationstudio.Platform.Companion.KB
 import com.door43.translationstudio.Platform.Companion.MB
 import com.door43.translationstudio.Platform.Companion.TB
 import com.door43.translationstudio.services.BackupService
+import com.door43.util.FileUtilities
 import com.door43.util.RuntimeWrapper
 import org.unfoldingword.tools.logger.Logger
+import java.io.File
 import java.io.RandomAccessFile
 import java.text.DecimalFormat
 
 interface Platform {
     fun restart()
     fun exit()
+
+    suspend fun shareApp()
+    fun shareProject(file: File)
 
     fun calculateSystemResources(): String
     fun getTotalRam(): Long
@@ -44,7 +52,10 @@ interface Platform {
     }
 }
 
-class AndroidPlatform(private val context: Context) : Platform {
+class AndroidPlatform(
+    private val context: Context,
+    private val directoryProvider: IDirectoryProvider
+) : Platform {
 
     override fun restart() {
         val backupIntent = Intent(context, BackupService::class.java)
@@ -61,6 +72,24 @@ class AndroidPlatform(private val context: Context) : Platform {
 
     override fun exit() {
         (context as? Activity)?.finishAffinity()
+    }
+
+    override suspend fun shareApp() {
+        val pInfo = context.packageManager.getPackageInfo(context.packageName, 0)
+        pInfo.applicationInfo?.let { info ->
+            val apkFile = File(info.publicSourceDir)
+            val exportFile = File(
+                directoryProvider.sharingDir, info.loadLabel(
+                    context.packageManager
+                ).toString() + "_" + pInfo.versionName + ".apk"
+            )
+            FileUtilities.copyFile(apkFile, exportFile)
+            shareArchive(exportFile)
+        }
+    }
+
+    override fun shareProject(file: File) {
+        shareArchive(file)
     }
 
     override fun calculateSystemResources(): String {
@@ -123,5 +152,26 @@ class AndroidPlatform(private val context: Context) : Platform {
         }
 
         return lastValue
+    }
+
+    private fun shareArchive(file: File) {
+        if (!file.exists()) return
+
+        val uri = FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.fileprovider",
+            file,
+        )
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            setDataAndType(uri, "application/zip")
+
+            putExtra(Intent.EXTRA_STREAM, uri)
+
+            clipData = ClipData.newRawUri(null, uri)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        context.startActivity(
+            Intent.createChooser(intent, context.getString(R.string.send_to)),
+        )
     }
 }

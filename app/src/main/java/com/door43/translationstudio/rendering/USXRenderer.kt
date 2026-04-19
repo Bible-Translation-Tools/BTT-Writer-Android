@@ -1,6 +1,5 @@
 package com.door43.translationstudio.rendering
 
-import com.door43.translationstudio.rendering.model.NodeAttributes
 import com.door43.translationstudio.rendering.model.NoteStyle
 import com.door43.translationstudio.rendering.model.RenderNode
 import com.door43.translationstudio.rendering.spannables.USXChar
@@ -18,7 +17,6 @@ class USXRenderer(
     private var renderLineBreaks = false
     private var renderParagraphs = true
     private var renderVerses = verseDisplay != VerseDisplay.RAW
-    private var search: String? = null
     private var expectedVerseRange = IntArray(0)
     private var suppressLeadingMajorSectionHeadings = false
     private var addedMissingVerse = false
@@ -29,10 +27,6 @@ class USXRenderer(
 
     override fun setParagraphsEnabled(enable: Boolean) {
         renderParagraphs = enable
-    }
-
-    override fun setSearchString(searchString: String) {
-        search = if (searchString.isNotEmpty()) searchString.lowercase() else null
     }
 
     override fun setPopulateVerseMarkers(verseRange: IntArray) {
@@ -97,9 +91,6 @@ class USXRenderer(
             val cleaned = stripRemainingMarkers(tail)
             if (cleaned.isNotBlank()) nodes.add(RenderNode.Text(cleaned, start = lastIndex, end = text.length))
         }
-
-        // search highlights (post-process Text nodes)
-        if (!isStopped()) applySearchHighlights(nodes)
 
         // insert missing expected verses
         insertMissingVerses(nodes)
@@ -298,7 +289,6 @@ class USXRenderer(
             }
             if (note != null) {
                 val style = if (note.style == "f") NoteStyle.FOOTNOTE else NoteStyle.CROSS_REFERENCE
-                val highlighted = search != null && noteText.lowercase().contains(search!!)
                 tokens.add(
                     Token(
                         matcher.start(), matcher.end(),
@@ -310,8 +300,7 @@ class USXRenderer(
                                 noteStyle = style,
                                 machineReadable = noteText,
                                 startPos = matcher.start(),
-                                endPos = matcher.end(),
-                                attributes = NodeAttributes(searchHighlighted = highlighted)
+                                endPos = matcher.end()
                             )
                         )
                     )
@@ -380,49 +369,6 @@ class USXRenderer(
         }
         sb.append(out.substring(last))
         return sb.toString()
-    }
-
-    private fun applySearchHighlights(nodes: MutableList<RenderNode>) {
-        val term = search ?: return
-        val result = mutableListOf<RenderNode>()
-        for (node in nodes) {
-            if (isStopped()) return
-            if (node is RenderNode.Text && !node.attributes.searchHighlighted) {
-                val lower = node.content.lowercase()
-                val rawBase = node.start
-                val hasRawPos = rawBase >= 0
-                var last = 0
-                while (true) {
-                    val pos = lower.indexOf(term, last)
-                    if (pos < 0) break
-                    if (pos > last) {
-                        result.add(RenderNode.Text(
-                            node.content.substring(last, pos),
-                            start = if (hasRawPos) rawBase + last else -1,
-                            end = if (hasRawPos) rawBase + pos else -1
-                        ))
-                    }
-                    result.add(RenderNode.Text(
-                        node.content.substring(pos, pos + term.length),
-                        start = if (hasRawPos) rawBase + pos else -1,
-                        end = if (hasRawPos) rawBase + pos + term.length else -1,
-                        attributes = NodeAttributes(searchHighlighted = true)
-                    ))
-                    last = pos + term.length
-                }
-                if (last < node.content.length) {
-                    result.add(RenderNode.Text(
-                        node.content.substring(last),
-                        start = if (hasRawPos) rawBase + last else -1,
-                        end = if (hasRawPos) rawBase + node.content.length else -1
-                    ))
-                }
-            } else {
-                result.add(node)
-            }
-        }
-        nodes.clear()
-        nodes.addAll(result)
     }
 
     private fun insertMissingVerses(nodes: MutableList<RenderNode>) {

@@ -91,6 +91,5 @@ sealed class RenderNode {
 }
 
 data class NodeAttributes(
-    val searchHighlighted: Boolean = false,
     val metadata: Map<String, Any> = emptyMap()
 )

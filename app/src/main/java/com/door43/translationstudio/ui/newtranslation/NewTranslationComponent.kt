@@ -143,46 +143,52 @@ class DefaultNewTranslationComponent(
             return
         }
 
-        val sourceTranslation = translator.getTargetTranslation(translationId)
-        if (sourceTranslation == null) {
-            val error = application.getString(R.string.target_translation_not_found, translationId)
-            onResult(NewTranslationComponent.Result.Error(error))
-            return
-        }
+        launchWithProgress(
+            application.getString(R.string.loading)
+        ) {
+            withContext(Dispatchers.IO) {
+                val sourceTranslation = translator.getTargetTranslation(translationId)
+                if (sourceTranslation == null) {
+                    val error = application.getString(R.string.target_translation_not_found, translationId)
+                    onResult(NewTranslationComponent.Result.Error(error))
+                    return@withContext
+                }
 
-        if (targetLanguage.slug == sourceTranslation.targetLanguage.slug) {
-            onResult(NewTranslationComponent.Result.Success)
-            return
-        }
+                if (targetLanguage.slug == sourceTranslation.targetLanguage.slug) {
+                    onResult(NewTranslationComponent.Result.Success)
+                    return@withContext
+                }
 
-        val projectId = sourceTranslation.projectId
-        val resourceSlug = sourceTranslation.resourceSlug
-        val existingTranslation = getTargetTranslation(
-            TargetTranslation.generateTargetTranslationId(
-                targetLanguage.slug, projectId, ResourceType.TEXT, resourceSlug
-            )
-        )
+                val projectId = sourceTranslation.projectId
+                val resourceSlug = sourceTranslation.resourceSlug
+                val existingTranslation = getTargetTranslation(
+                    TargetTranslation.generateTargetTranslationId(
+                        targetLanguage.slug, projectId, ResourceType.TEXT, resourceSlug
+                    )
+                )
 
-        if (existingTranslation != null) {
-            val message = application.getString(
-                R.string.warn_existing_target_translation,
-                getProject(existingTranslation)?.name,
-                existingTranslation.targetLanguageName
-            )
-            _state.update {
-                it.copy(mergeConflict = MergeConflict(
-                    sourceTranslation = sourceTranslation,
-                    destinationTranslation = existingTranslation,
-                    message = message
-                ))
+                if (existingTranslation != null) {
+                    val message = application.getString(
+                        R.string.warn_existing_target_translation,
+                        getProject(existingTranslation)?.name,
+                        existingTranslation.targetLanguageName
+                    )
+                    _state.update {
+                        it.copy(mergeConflict = MergeConflict(
+                            sourceTranslation = sourceTranslation,
+                            destinationTranslation = existingTranslation,
+                            message = message
+                        ))
+                    }
+                } else {
+                    val originalId = sourceTranslation.id
+                    sourceTranslation.changeTargetLanguage(targetLanguage)
+                    sourceTranslation.normalizePath()
+                    val newId = sourceTranslation.id
+                    moveTargetTranslationAppSettings(originalId, newId)
+                    onResult(NewTranslationComponent.Result.Success)
+                }
             }
-        } else {
-            val originalId = sourceTranslation.id
-            sourceTranslation.changeTargetLanguage(targetLanguage)
-            sourceTranslation.normalizePath()
-            val newId = sourceTranslation.id
-            moveTargetTranslationAppSettings(originalId, newId)
-            onResult(NewTranslationComponent.Result.Success)
         }
     }
 

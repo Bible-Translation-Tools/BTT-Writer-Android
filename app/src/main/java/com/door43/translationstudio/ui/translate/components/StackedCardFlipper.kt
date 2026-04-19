@@ -135,15 +135,18 @@ fun StackedCardFlipper(
                     .padding(end = stackOffset, bottom = stackOffset)
                     .offset(x = backX.value, y = backY.value)
                     .zIndex(backZ.value)
-                    .clickable(
-                        enabled = isFrontOnTop,
-                        interactionSource = interactionSource,
-                        indication = null
-                    ) {
-                        triggerFlipAnimation(leftToRight = true)
-                    }
             ) {
                 backCard()
+                if (isFrontOnTop) {
+                    Box(
+                        Modifier
+                            .matchParentSize()
+                            .clickable(
+                                interactionSource = interactionSource,
+                                indication = null
+                            ) { triggerFlipAnimation(leftToRight = true) }
+                    )
+                }
             }
 
             Box(
@@ -152,15 +155,18 @@ fun StackedCardFlipper(
                     .padding(end = stackOffset, bottom = stackOffset)
                     .offset(x = frontX.value, y = frontY.value)
                     .zIndex(frontZ.value)
-                    .clickable(
-                        enabled = !isFrontOnTop,
-                        interactionSource = interactionSource,
-                        indication = null
-                    ) {
-                        triggerFlipAnimation(leftToRight = true)
-                    }
             ) {
                 frontCard()
+                if (!isFrontOnTop) {
+                    Box(
+                        Modifier
+                            .matchParentSize()
+                            .clickable(
+                                interactionSource = interactionSource,
+                                indication = null
+                            ) { triggerFlipAnimation(leftToRight = true) }
+                    )
+                }
             }
         }
     }

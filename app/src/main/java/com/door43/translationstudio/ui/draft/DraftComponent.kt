@@ -47,6 +47,7 @@ interface DraftComponent {
     val state: StateFlow<State>
     val progress: StateFlow<Progress?>
 
+    fun onNavigateBack()
     fun getResourceContainer(rcSlug: String): ResourceContainer?
     fun getSourceLanguage(draftTranslation: ResourceContainer): SourceLanguage?
     suspend fun parseChapterContent(
@@ -100,6 +101,10 @@ class DefaultDraftComponent(
         lifecycle.doOnDestroy {
             coroutineScope.cancel()
         }
+    }
+
+    override fun onNavigateBack() {
+        onResult(DraftComponent.Result.NavigateBack)
     }
 
     override fun getResourceContainer(rcSlug: String): ResourceContainer? {

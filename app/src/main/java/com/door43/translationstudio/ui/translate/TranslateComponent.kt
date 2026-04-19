@@ -20,6 +20,7 @@ import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.door43.data.AssetsProvider
 import com.door43.data.IPreferenceRepository
 import com.door43.translationstudio.App.Companion.deviceLanguageCode
+import com.door43.translationstudio.Platform
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.ComponentScope
 import com.door43.translationstudio.core.ContainerCache
@@ -74,7 +75,6 @@ import org.unfoldingword.door43client.models.Translation
 import org.unfoldingword.resourcecontainer.Project
 import org.unfoldingword.resourcecontainer.ResourceContainer
 import org.unfoldingword.tools.logger.Logger
-import java.io.File
 import java.util.Locale
 import java.util.Timer
 import java.util.TimerTask
@@ -152,7 +152,6 @@ interface TranslateComponent {
         data object Logout : Result
         data object OpenLogin : Result
         data object OpenSettings : Result
-        data class ExportToApp(val file: File) : Result
         data class Error(val message: String) : Result
     }
 
@@ -195,6 +194,7 @@ class DefaultTranslateComponent(
     translationId: String,
     initialViewMode: TranslationViewMode?,
     conflictFilterOn: Boolean,
+    private val platform: Platform,
     private val sharedFlow: SharedFlow<RootComponent.SharedEvent>,
     private val onResult: (TranslateComponent.Result) -> Unit
 ) : TranslateComponent,
@@ -760,7 +760,7 @@ class DefaultTranslateComponent(
                 onResult(TranslateComponent.Result.Error(result.text))
             }
             is ExportComponent.Result.ExportToApp -> {
-                onResult(TranslateComponent.Result.ExportToApp(result.file))
+                platform.shareProject(result.file)
             }
             is ExportComponent.Result.OpenLogin -> {
                 dismissDialog()

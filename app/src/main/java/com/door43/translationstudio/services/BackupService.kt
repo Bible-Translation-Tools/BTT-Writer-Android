@@ -190,11 +190,13 @@ class BackupService : Service(), Foreground.Listener {
         val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
 
         // For Android 8.0 and above, create a notification channel
-        val channelName = "Backup Notification"
-        val importance = NotificationManager.IMPORTANCE_DEFAULT
-        val notificationChannel = NotificationChannel(channelId, channelName, importance)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channelName = "Backup Notification"
+            val importance = NotificationManager.IMPORTANCE_DEFAULT
+            val notificationChannel = NotificationChannel(channelId, channelName, importance)
 
-        notificationManager.createNotificationChannel(notificationChannel)
+            notificationManager.createNotificationChannel(notificationChannel)
+        }
 
         val notificationBuilder = NotificationCompat.Builder(this, channelId)
             .setSmallIcon(R.drawable.ic_stat_notify_msg)

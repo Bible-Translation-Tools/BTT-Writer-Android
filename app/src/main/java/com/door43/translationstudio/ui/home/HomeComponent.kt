@@ -14,6 +14,7 @@ import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
 import com.door43.data.setDefaultPref
+import com.door43.translationstudio.Platform
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.BibleCodes
 import com.door43.translationstudio.core.ComponentScope
@@ -190,8 +191,6 @@ interface HomeComponent {
             val mergeConflictFilterOn: Boolean
         ) : Result
         data object ExitApp : Result
-        data object ShareApp : Result
-        data class ExportToApp(val file: File) : Result
         data class ChangeTranslationLanguage(
             val disabledLanguages: List<String>,
             val translationId: String?
@@ -202,6 +201,7 @@ interface HomeComponent {
 
 class DefaultHomeComponent(
     componentContext: ComponentContext,
+    private val platform: Platform,
     private val sharedFlow: SharedFlow<RootComponent.SharedEvent>,
     private val onResult: (HomeComponent.Result) -> Unit
 ) : HomeComponent,
@@ -287,6 +287,10 @@ class DefaultHomeComponent(
                     is RootComponent.SharedEvent.ImportProject -> showImportDialog(event.uri)
                 }
             }
+        }
+
+        lastOpened?.let {
+            onResult(HomeComponent.Result.OpenProject(it.id, false))
         }
 
         val projectSort = ProjectSort.of(
@@ -444,11 +448,17 @@ class DefaultHomeComponent(
     }
 
     override fun shareApp() {
-        onResult(HomeComponent.Result.ShareApp)
+        launchWithProgress(
+            application.getString(R.string.exporting)
+        ) {
+            withContext(Dispatchers.Default) {
+                platform.shareApp()
+            }
+        }
     }
 
     override fun exportToApp(file: File) {
-        onResult(HomeComponent.Result.ExportToApp(file))
+        platform.shareProject(file)
     }
 
     override fun openLogin() {

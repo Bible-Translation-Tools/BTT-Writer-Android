@@ -7,12 +7,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -32,6 +38,7 @@ import com.door43.translationstudio.ui.dialogs.ProgressDialog
 import com.door43.util.sortNumerically
 import org.koin.compose.koinInject
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DraftScreen(
     component: DraftComponent
@@ -73,18 +80,39 @@ fun DraftScreen(
     }
 
    Scaffold(
-        floatingActionButton = {
-            if (draftData != null) {
-                FloatingActionButton(
-                    onClick = { showConfirmDialog = true }
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Edit,
-                        contentDescription = "Import Draft"
-                    )
-                }
-            }
-        }
+       topBar = {
+           TopAppBar(
+               title = {
+                   Text(stringResource(R.string.preview))
+               },
+               navigationIcon = {
+                   IconButton(onClick = component::onNavigateBack) {
+                       Icon(
+                           imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                           contentDescription = "back",
+                           modifier = Modifier.padding(horizontal = 8.dp)
+                       )
+                   }
+               },
+               colors = TopAppBarDefaults.topAppBarColors(
+                   containerColor = MaterialTheme.colorScheme.primary,
+                   titleContentColor = MaterialTheme.colorScheme.onPrimary,
+                   navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
+               )
+           )
+       },
+       floatingActionButton = {
+           if (draftData != null) {
+               FloatingActionButton(
+                   onClick = { showConfirmDialog = true }
+               ) {
+                   Icon(
+                       imageVector = Icons.Filled.Edit,
+                       contentDescription = "Import Draft"
+                   )
+               }
+           }
+       }
     ) { paddingValues ->
         if (draftData != null) {
             val (container, language) = draftData

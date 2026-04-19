@@ -154,17 +154,6 @@ object ComposeTextAdapter {
                         end = end
                     )
                 }
-                if (node.attributes.searchHighlighted
-                    && highlightColor != Color.Unspecified) {
-                    addStyle(
-                        SpanStyle(
-                            background = highlightColor,
-                            color = Color.Black
-                        ),
-                        start,
-                        end
-                    )
-                }
             }
 
             is RenderNode.StyledText -> {
@@ -283,18 +272,10 @@ object ComposeTextAdapter {
             is RenderNode.Note -> {
                 val start = length
                 pushStyle(SpanStyle())
-                if (node.attributes.searchHighlighted
-                    && highlightColor != Color.Unspecified) {
-                    pushStyle(SpanStyle(background = highlightColor))
-                }
 
                 // Placeholder for the note icon using inline content
                 appendInlineContent("note_icon", NOTE_CHAR.toString())
 
-                if (node.attributes.searchHighlighted
-                    && highlightColor != Color.Unspecified) {
-                    pop()
-                }
                 pop()
                 val end = length
 

@@ -415,7 +415,7 @@
     <string name="importing_draft">Importation du brouillon</string>
     <string name="draft_translation_exists">Une ébauche de cette traduction est disponible</string>
     <string name="print_failed">Échec de l\'impression</string>
-    <string name="printing">Imprimer:\n</string>
+    <string name="printing">Imprimer: <xliff:g example="Genesis" id="project">%1$s</xliff:g></string>
     <string name="label_undo">Annuler</string>
     <string name="label_redo">Refaire</string>
     <string name="restored_to_time">Restauré à %s</string>

@@ -1,9 +1,7 @@
 package com.door43.translationstudio.ui.translate.review
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.awaitLongPressOrCancellation
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -40,16 +38,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.BiasAlignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.Placeholder
 import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -63,8 +65,20 @@ import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.getComposeTextStyle
 import com.door43.translationstudio.ui.translate.ReviewItem
 import com.door43.translationstudio.ui.translate.components.UsfmEditText
-import com.door43.translationstudio.ui.translate.components.footnote.NOTE_CHAR
 import com.door43.translationstudio.ui.translate.components.withSearchHighlight
+
+private const val VERSE_MARKER_TAG = "VERSE_MARKER"
+private const val RAW_POSITION_TAG = "RAW_POSITION"
+
+private data class DragContext(
+    val machineReadable: String,
+    val verseRawStart: Int,
+    val verseRawEnd: Int,
+    val annotStart: Int,
+    val annotEnd: Int,
+    val label: String,
+    val renderedText: AnnotatedString
+)
 
 @Composable
 fun ReviewTargetCard(
@@ -90,8 +104,15 @@ fun ReviewTargetCard(
     var textLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
     var highlightWordRange by remember { mutableStateOf<IntRange?>(null) }
     var dragPosition by remember { mutableStateOf<Offset?>(null) }
-    var dragVerseLabel by remember { mutableStateOf<String?>(null) }
-    var dragPinRange by remember { mutableStateOf<IntRange?>(null) }
+    var dragContext by remember { mutableStateOf<DragContext?>(null) }
+    var insertionOffset by remember { mutableStateOf<Int?>(null) }
+
+    val clearDrag: () -> Unit = {
+        dragContext = null
+        dragPosition = null
+        insertionOffset = null
+        highlightWordRange = null
+    }
 
     val titleStyle = typography.getComposeTextStyle(
         translationType = TranslationType.TARGET,
@@ -129,34 +150,12 @@ fun ReviewTargetCard(
                 placeholderVerticalAlign = PlaceholderVerticalAlign.TextCenter
             )
         ) { verseLabel ->
-            val pinFontSize = bodyStyle.fontSize / when {
-                verseLabel.length >= 7 -> 4.5
-                verseLabel.length >= 5 -> 3.5
-                verseLabel.length >= 3 -> 2.8
-                else -> 1.6
-            }
-            Box(
-                contentAlignment = BiasAlignment(
-                    horizontalBias = 0f,
-                    verticalBias = -0.35f
-                ),
-                modifier = Modifier.fillMaxSize()
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.ic_verse_black_48dp),
-                    contentDescription = null,
-                    colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.primary),
-                    modifier = Modifier.fillMaxSize()
-                )
-                Text(
-                    text = verseLabel,
-                    fontSize = pinFontSize,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White,
-                    textAlign = TextAlign.Center,
-                    maxLines = 1,
-                )
-            }
+            val isGhost = dragContext?.label == verseLabel
+            VersePin(
+                label = verseLabel,
+                bodyStyle = bodyStyle,
+                isGhost = isGhost
+            )
         }
     )
 
@@ -242,9 +241,7 @@ fun ReviewTargetCard(
                         text = currentItem.targetText,
                         shouldFocus = true,
                         textStyle = bodyStyle,
-                        onTextChange = {
-                            onTextChange(it)
-                        },
+                        onTextChange = onTextChange,
                         onCursorPositionChange = { cursorPosition = it },
                         searchQuery = searchQuery,
                         modifier = Modifier
@@ -261,28 +258,12 @@ fun ReviewTargetCard(
                         val highlightColor = MaterialTheme.colorScheme.primary
                         val onHighlightColor = MaterialTheme.colorScheme.onPrimary
 
-                        // Strip the dragged verse pin and apply word highlight
                         val displayText = remember(
                             currentItem.renderedTargetText,
-                            dragPinRange,
                             highlightWordRange,
                             searchQuery
                         ) {
-                            val base = dragPinRange?.let { range ->
-                                buildAnnotatedString {
-                                    append(
-                                        currentItem.renderedTargetText,
-                                        0,
-                                        range.first
-                                    )
-                                    append(
-                                        currentItem.renderedTargetText,
-                                        range.last + 1,
-                                        currentItem.renderedTargetText.length
-                                    )
-                                }
-                            } ?: currentItem.renderedTargetText
-
+                            val base = currentItem.renderedTargetText
                             val withWord = highlightWordRange?.let { wordRange ->
                                 buildAnnotatedString {
                                     append(base)
@@ -291,12 +272,11 @@ fun ReviewTargetCard(
                                             color = onHighlightColor,
                                             background = highlightColor
                                         ),
-                                        wordRange.first.coerceAtMost(base.length),
-                                        wordRange.last.coerceAtMost(base.length)
+                                        wordRange.first.coerceAtMost(length),
+                                        wordRange.last.coerceAtMost(length)
                                     )
                                 }
                             } ?: base
-
                             withWord.withSearchHighlight(searchQuery)
                         }
 
@@ -307,152 +287,62 @@ fun ReviewTargetCard(
                             onTextLayout = { textLayoutResult = it },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .then(
-                                    if (currentItem.targetMode == TargetMode.MARKER) {
-                                        Modifier.pointerInput(Unit) {
-                                            awaitEachGesture {
-                                                val down = awaitFirstDown(requireUnconsumed = false)
+                                .pointerInput(currentItem.renderedTargetText, currentItem.targetMode) {
+                                    if (currentItem.targetMode != TargetMode.MARKER) return@pointerInput
 
-                                                // Check if long-press is on a verse pin
-                                                val layout = textLayoutResult ?: return@awaitEachGesture
-                                                val charOffset = layout.getOffsetForPosition(down.position)
-                                                val renderedText = currentItem.renderedTargetText
-                                                val textLen = renderedText.length
-                                                val verseAnnotations = renderedText
-                                                    .getStringAnnotations(
-                                                        "VERSE_MARKER",
-                                                        maxOf(0, charOffset - 1),
-                                                        minOf(charOffset + 2, textLen)
+                                    detectDragGesturesAfterLongPress(
+                                        onDragStart = { offset ->
+                                            val layout = textLayoutResult ?: return@detectDragGesturesAfterLongPress
+                                            val renderedText = currentItem.renderedTargetText
+                                            val charOffset = layout.getOffsetForPosition(offset)
+
+                                            val ctx = buildDragContext(renderedText, charOffset)
+                                                ?: return@detectDragGesturesAfterLongPress
+
+                                            dragContext = ctx
+                                            dragPosition = offset
+                                        },
+
+                                        onDrag = { change, _ ->
+                                            change.consume()
+                                            val layout = textLayoutResult ?: return@detectDragGesturesAfterLongPress
+                                            val text = currentItem.renderedTargetText.text
+
+                                            dragPosition = change.position
+                                            val snapped = snapToClosestOffset(layout, text, change.position)
+                                            insertionOffset = snapped
+                                            highlightWordRange = wordRangeFromOffset(text, snapped)
+                                        },
+
+                                        onDragEnd = {
+                                            val ctx = dragContext
+                                            val displayOffset = insertionOffset
+                                            if (ctx != null && displayOffset != null) {
+                                                val target = computeTargetRawPosition(ctx, displayOffset)
+                                                if (target != null) {
+                                                    onDragDropVerse(
+                                                        ctx.machineReadable,
+                                                        ctx.verseRawStart,
+                                                        ctx.verseRawEnd,
+                                                        target
                                                     )
-                                                // Not on a verse pin — don't consume, let note clicks through
-                                                if (verseAnnotations.isEmpty()) return@awaitEachGesture
-
-                                                // Wait for long press
-                                                val longPress = awaitLongPressOrCancellation(down.id)
-                                                    ?: return@awaitEachGesture
-
-                                                // Pick the annotation whose pixel center is closest to tap
-                                                val verseAnnot = verseAnnotations.minBy { annot ->
-                                                    val startRect = layout.getBoundingBox(annot.start)
-                                                    val endRect = layout.getBoundingBox((annot.end - 1).coerceAtLeast(annot.start))
-                                                    val centerX = (startRect.left + endRect.right) / 2f
-                                                    val centerY = (startRect.top + endRect.bottom) / 2f
-                                                    val dx = down.position.x - centerX
-                                                    val dy = down.position.y - centerY
-                                                    dx * dx + dy * dy
                                                 }
-                                                val parts = verseAnnot.item.split("|", limit = 3)
-                                                val startVerse = parts[0].toIntOrNull() ?: return@awaitEachGesture
-                                                val endVerse = parts.getOrNull(1)?.toIntOrNull() ?: 0
-                                                val machineReadable = parts.getOrNull(2) ?: ""
-
-                                                // Get verse's raw source-text position
-                                                val verseRawAnnot = renderedText
-                                                    .getStringAnnotations("RAW_POSITION", verseAnnot.start, verseAnnot.end)
-                                                    .firstOrNull()
-                                                val verseRawStart: Int
-                                                val verseRawEnd: Int
-                                                if (verseRawAnnot != null) {
-                                                    val rawParts = verseRawAnnot.item.split("|")
-                                                    verseRawStart = rawParts[0].toIntOrNull() ?: return@awaitEachGesture
-                                                    verseRawEnd = rawParts[1].toIntOrNull() ?: return@awaitEachGesture
-                                                } else return@awaitEachGesture
-
-                                                // Enter drag mode — track finger position
-                                                var currentPosition = longPress.position
-
-                                                // Show floating verse pin & hide original
-                                                val verseLabel = if (endVerse > 0) "$startVerse-$endVerse" else "$startVerse"
-                                                dragVerseLabel = verseLabel
-                                                dragPinRange = verseAnnot.start..<verseAnnot.end
-                                                dragPosition = currentPosition
-
-                                                val strippedText = renderedText.text
-                                                    .removeRange(verseAnnot.start, verseAnnot.end)
-                                                val pinLen = verseAnnot.end - verseAnnot.start
-
-                                                // Track drag until release
-                                                do {
-                                                    val event = awaitPointerEvent()
-                                                    val change = event.changes.firstOrNull() ?: break
-                                                    currentPosition = change.position
-                                                    change.consume()
-
-                                                    dragPosition = currentPosition
-                                                    highlightWordRange = textLayoutResult?.let { tl ->
-                                                        wordRangeAt(tl, strippedText, currentPosition)
-                                                    }
-                                                } while (event.changes.any { it.pressed })
-
-                                                // Finger lifted — place verse
-                                                highlightWordRange = null
-                                                dragPosition = null
-                                                dragVerseLabel = null
-                                                dragPinRange = null
-                                                val displayOffset = textLayoutResult
-                                                    ?.getOffsetForPosition(currentPosition)
-                                                    ?: return@awaitEachGesture
-
-                                                // Map display offset back to original annotated string offset
-                                                val originalOffset = if (displayOffset >= verseAnnot.start) {
-                                                    displayOffset + pinLen
-                                                } else displayOffset
-
-                                                // Find RAW_POSITION at the drop point
-                                                val targetRawAnnot = renderedText
-                                                    .getStringAnnotations(
-                                                        "RAW_POSITION",
-                                                        originalOffset,
-                                                        (originalOffset + 1).coerceAtMost(textLen)
-                                                    )
-                                                    .firstOrNull()
-
-                                                val targetRawPosition = if (targetRawAnnot != null) {
-                                                    val rawParts = targetRawAnnot.item.split("|")
-                                                    val rawStart = rawParts[0].toIntOrNull() ?: return@awaitEachGesture
-                                                    val rawEnd = rawParts[1].toIntOrNull() ?: return@awaitEachGesture
-                                                    val annotLen = targetRawAnnot.end - targetRawAnnot.start
-                                                    if (annotLen <= 1) {
-                                                        // Inline content (note/verse pin) — insert before it
-                                                        rawStart
-                                                    } else {
-                                                        // Text node — map proportionally within the node
-                                                        val offsetInAnnot = originalOffset - targetRawAnnot.start
-                                                        rawStart + ((rawEnd - rawStart) * offsetInAnnot / annotLen)
-                                                    }
-                                                } else {
-                                                    // No annotation at drop point — insert after nearest preceding entity
-                                                    val before = renderedText
-                                                        .getStringAnnotations("RAW_POSITION", 0, originalOffset)
-                                                        .lastOrNull()
-                                                    if (before != null) {
-                                                        before.item.split("|")[1].toIntOrNull() ?: return@awaitEachGesture
-                                                    } else 0
-                                                }
-
-                                                onDragDropVerse(
-                                                    machineReadable,
-                                                    verseRawStart,
-                                                    verseRawEnd,
-                                                    targetRawPosition
-                                                )
                                             }
-                                        }
-                                    } else Modifier
-                                )
+                                            clearDrag()
+                                        },
+
+                                        onDragCancel = { clearDrag() }
+                                    )
+                                }
                         )
 
-                        // Floating verse pin following finger
                         val floatPos = dragPosition
-                        val floatLabel = dragVerseLabel
+                        val floatLabel = dragContext?.label
                         if (floatPos != null && floatLabel != null) {
                             val pinSize = bodyStyle.fontSize * 2.0
                             val pinSizeDp = with(LocalDensity.current) { pinSize.toDp() }
+
                             Box(
-                                contentAlignment = BiasAlignment(
-                                    horizontalBias = 0f,
-                                    verticalBias = -0.35f
-                                ),
                                 modifier = Modifier
                                     .offset {
                                         IntOffset(
@@ -462,29 +352,13 @@ fun ReviewTargetCard(
                                     }
                                     .size(pinSizeDp)
                             ) {
-                                Image(
-                                    painter = painterResource(id = R.drawable.ic_verse_black_48dp),
-                                    contentDescription = null,
-                                    colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.primary),
+                                VersePin(
+                                    label = floatLabel,
+                                    bodyStyle = bodyStyle,
                                     modifier = Modifier.fillMaxSize()
-                                )
-                                val pinFontSize = bodyStyle.fontSize / when {
-                                    floatLabel.length >= 7 -> 4.5
-                                    floatLabel.length >= 5 -> 3.5
-                                    floatLabel.length >= 3 -> 2.8
-                                    else -> 1.6
-                                }
-                                Text(
-                                    text = floatLabel,
-                                    fontSize = pinFontSize,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White,
-                                    textAlign = TextAlign.Center,
-                                    maxLines = 1,
                                 )
                             }
                         }
-
                     }
                 }
             }
@@ -512,35 +386,143 @@ fun ReviewTargetCard(
     }
 }
 
-/**
- * Find the character range of the word under the finger position.
- * Walks outward from the character at [position] to find word boundaries.
- * Returns an IntRange suitable for applying a SpanStyle highlight.
- */
-private fun wordRangeAt(layout: TextLayoutResult, text: String, position: Offset): IntRange? {
-    val charOffset = layout.getOffsetForPosition(position)
-    if (charOffset < 0 || charOffset >= text.length) return null
+@Composable
+fun VersePin(
+    label: String,
+    bodyStyle: TextStyle,
+    modifier: Modifier = Modifier,
+    isGhost: Boolean = false
+) {
+    val pinFontSize = bodyStyle.fontSize / when {
+        label.length >= 7 -> 4.5
+        label.length >= 5 -> 3.5
+        label.length >= 3 -> 2.8
+        else -> 1.6
+    }
+    val alpha = if (isGhost) 0.3f else 1f
 
-    val ch = text[charOffset]
-    // Skip whitespace
-    if (ch.isWhitespace()) return null
+    Box(
+        modifier = modifier.graphicsLayer { this.alpha = alpha },
+        contentAlignment = BiasAlignment(0f, -0.35f)
+    ) {
+        Image(
+            painter = painterResource(id = R.drawable.ic_verse_black_48dp),
+            contentDescription = null,
+            colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.primary),
+            modifier = Modifier.fillMaxSize()
+        )
+        Text(
+            text = label,
+            fontSize = pinFontSize,
+            fontWeight = FontWeight.Bold,
+            color = Color.White,
+            textAlign = TextAlign.Center,
+            maxLines = 1
+        )
+    }
+}
 
-    // Inline content (footnote icon) — single-char range
-    if (ch == NOTE_CHAR) return charOffset..charOffset + 1
+private fun buildDragContext(renderedText: AnnotatedString, charOffset: Int): DragContext? {
+    val verseAnnotation = renderedText.getStringAnnotations(
+        VERSE_MARKER_TAG,
+        maxOf(0, charOffset - 1),
+        minOf(charOffset + 2, renderedText.length)
+    ).firstOrNull() ?: return null
 
-    // Find word start
-    var wordStart = charOffset
-    while (wordStart > 0 && !text[wordStart - 1].isWhitespace() && text[wordStart - 1] != NOTE_CHAR) {
-        wordStart--
+    val verseParts = verseAnnotation.item.split("|", limit = 3)
+    val startVerse = verseParts.getOrNull(0)?.toIntOrNull() ?: return null
+    val endVerse = verseParts.getOrNull(1)?.toIntOrNull() ?: 0
+    val machineReadable = verseParts.getOrNull(2).orEmpty()
+
+    val rawParts = renderedText.getStringAnnotations(
+        RAW_POSITION_TAG,
+        verseAnnotation.start,
+        verseAnnotation.end
+    ).firstOrNull()?.item?.split("|") ?: return null
+
+    val verseRawStart = rawParts.getOrNull(0)?.toIntOrNull() ?: return null
+    val verseRawEnd = rawParts.getOrNull(1)?.toIntOrNull() ?: return null
+
+    return DragContext(
+        machineReadable = machineReadable,
+        verseRawStart = verseRawStart,
+        verseRawEnd = verseRawEnd,
+        annotStart = verseAnnotation.start,
+        annotEnd = verseAnnotation.end,
+        label = formatVerseLabel(startVerse, endVerse),
+        renderedText = renderedText
+    )
+}
+
+private fun computeTargetRawPosition(ctx: DragContext, displayOffset: Int): Int? {
+    val pinLen = ctx.annotEnd - ctx.annotStart
+    val originalOffset = if (displayOffset >= ctx.annotStart) displayOffset + pinLen else displayOffset
+
+    val targetRawAnnotation = ctx.renderedText.getStringAnnotations(
+        RAW_POSITION_TAG,
+        originalOffset,
+        (originalOffset + 1).coerceAtMost(ctx.renderedText.length)
+    ).firstOrNull()
+
+    if (targetRawAnnotation != null) {
+        val parts = targetRawAnnotation.item.split("|")
+        val rawStart = parts.getOrNull(0)?.toIntOrNull() ?: return null
+        val rawEnd = parts.getOrNull(1)?.toIntOrNull() ?: return null
+        val annotationLen = targetRawAnnotation.end - targetRawAnnotation.start
+        return if (annotationLen <= 1) {
+            rawStart
+        } else {
+            val offsetInAnnotation = originalOffset - targetRawAnnotation.start
+            rawStart + ((rawEnd - rawStart) * offsetInAnnotation / annotationLen)
+        }
     }
 
-    // Find word end
-    var wordEnd = charOffset
-    while (wordEnd < text.length && !text[wordEnd].isWhitespace() && text[wordEnd] != NOTE_CHAR) {
-        wordEnd++
+    return ctx.renderedText
+        .getStringAnnotations(RAW_POSITION_TAG, 0, originalOffset)
+        .lastOrNull()
+        ?.item?.split("|")?.getOrNull(1)?.toIntOrNull()
+        ?: 0
+}
+
+private fun formatVerseLabel(startVerse: Int, endVerse: Int): String =
+    if (endVerse > 0) "$startVerse-$endVerse" else "$startVerse"
+
+private fun snapToClosestOffset(
+    layout: TextLayoutResult,
+    text: String,
+    position: Offset
+): Int {
+    val targetLine = layout.getLineForVerticalPosition(position.y)
+    val start = layout.getLineStart(targetLine)
+    val end = minOf(layout.getLineEnd(targetLine, visibleEnd = true), text.length)
+
+    return (start..end).minByOrNull { offset ->
+        val dx = position.x - safeBoundingBox(layout, offset).left
+        dx * dx
+    } ?: start
+}
+
+private fun safeBoundingBox(layout: TextLayoutResult, offset: Int): Rect {
+    val lastIndex = layout.layoutInput.text.text.length - 1
+    return when {
+        offset <= 0 -> layout.getBoundingBox(0)
+        offset > lastIndex -> {
+            val r = layout.getBoundingBox(lastIndex)
+            Rect(r.right, r.top, r.right, r.bottom)
+        }
+        else -> layout.getBoundingBox(offset)
     }
+}
 
-    if (wordStart >= wordEnd) return null
+private fun wordRangeFromOffset(text: String, offset: Int): IntRange? {
+    if (offset < 0 || offset >= text.length) return null
+    if (text[offset].isWhitespace()) return null
 
-    return wordStart..wordEnd
+    var start = offset
+    while (start > 0 && !text[start - 1].isWhitespace()) start--
+
+    var end = offset
+    while (end < text.length && !text[end].isWhitespace()) end++
+
+    return start..end
 }

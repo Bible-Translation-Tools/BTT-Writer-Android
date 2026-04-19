@@ -62,12 +62,27 @@ open class USXtoUSFMConverter {
         out = renderVerse(out)
         out = renderNote(out)
         out = renderChapterLabel(out)
-        out = renderSelah(out)
+        out = renderChar(out)
 
         return out
     }
 
-    private fun renderSelah(input: CharSequence): CharSequence = input
+    /**
+     * Converts USX character-style tags to USFM paired markers.
+     * <char style="X">content</char> → \X content\X*
+     */
+    private fun renderChar(input: CharSequence): CharSequence {
+        var out = input.toString()
+        out = Regex("<char\\s+style=\"([^\"]+)\"\\s*>(.*?)</char>", RegexOption.DOT_MATCHES_ALL)
+            .replace(out) { m ->
+                val style = m.groupValues[1]
+                val content = m.groupValues[2].trim()
+                "\\$style $content\\$style*"
+            }
+        // strip malformed/unmatched char tags
+        out = Regex("</?char\\b[^>]*/?>").replace(out, "")
+        return out
+    }
 
     /**
      * Strips out new lines and replaces them with a single space
@@ -218,7 +233,20 @@ open class USXtoUSFMConverter {
         return out
     }
 
-    fun renderParagraph(input: CharSequence): CharSequence = input
+    fun renderParagraph(input: CharSequence): CharSequence {
+        var out = input.toString()
+        // <para style="X">content</para> → \n\X content
+        out = Regex("<para\\s+style=\"([^\"]+)\"\\s*>(.*?)</para>", RegexOption.DOT_MATCHES_ALL)
+            .replace(out) { m -> "\n\\${m.groupValues[1]} ${m.groupValues[2].trim()}" }
+        // <para style="X"/> → \n\X
+        out = Regex("<para\\s+style=\"([^\"]+)\"\\s*/>")
+            .replace(out) { m -> "\n\\${m.groupValues[1]}" }
+        // strip any malformed/unmatched para tags
+        out = Regex("</?para\\b[^>]*/?>").replace(out, "")
+        // trim leading newline if first marker was at start
+        out = out.trimStart('\n', ' ')
+        return out
+    }
 
     fun renderBlankLine(input: CharSequence): CharSequence = input
 

@@ -5,7 +5,6 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.door43.translationstudio.rendering.model.LinkData
-import com.door43.translationstudio.rendering.model.NodeAttributes
 import com.door43.translationstudio.rendering.model.NodeStyle
 import com.door43.translationstudio.rendering.model.NoteStyle
 import com.door43.translationstudio.rendering.model.RenderNode
@@ -231,32 +230,6 @@ class ComposeTextAdapterTest {
         assertTrue(
             "Expected italic SpanStyle",
             result.spanStyles.any { it.item.fontStyle == FontStyle.Italic }
-        )
-    }
-
-    // --- SearchHighlight ---
-
-    @Test
-    fun search_highlight_text_appears_in_output() {
-        val nodes = listOf(
-            RenderNode.Text("In the "),
-            RenderNode.Text("beginning", attributes = NodeAttributes(searchHighlighted = true)),
-            RenderNode.Text(" God")
-        )
-        val result = ComposeTextAdapter.convert(nodes)
-        assertEquals("In the beginning God", result.text)
-    }
-
-    @Test
-    fun search_highlight_applies_background_color_span() {
-        val highlightColor = Color.Yellow
-        val nodes = listOf(
-            RenderNode.Text("hello", attributes = NodeAttributes(searchHighlighted = true))
-        )
-        val result = ComposeTextAdapter.convert(nodes)
-        assertTrue(
-            "Expected background color span for search highlight",
-            result.spanStyles.any { it.item.background == highlightColor }
         )
     }
 

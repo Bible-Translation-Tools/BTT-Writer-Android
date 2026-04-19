@@ -45,7 +45,6 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.serialization.Serializable
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import java.io.File
 
 interface RootComponent {
 
@@ -123,8 +122,6 @@ interface RootComponent {
 class DefaultRootComponent(
     componentContext: ComponentContext,
     private val platform: Platform,
-    private val onExportToApp: (File) -> Unit,
-    private val onShareApp: () -> Unit,
     private val onExitApp: () -> Unit
 ) : RootComponent, ComponentContext by componentContext,
     KoinComponent {
@@ -177,6 +174,7 @@ class DefaultRootComponent(
         is Config.Home -> RootComponent.Child.Home(
             component = DefaultHomeComponent(
                 componentContext = componentContext,
+                platform = platform,
                 sharedFlow = sharedFlow,
                 onResult = ::onHomeResult
             )
@@ -195,6 +193,7 @@ class DefaultRootComponent(
                 translationId = config.translationId,
                 initialViewMode = null,
                 conflictFilterOn = config.conflictFilterOn,
+                platform = platform,
                 sharedFlow = sharedFlow,
                 onResult = ::onTranslateResult
             )
@@ -229,6 +228,7 @@ class DefaultRootComponent(
         is Config.Publish -> RootComponent.Child.Publish(
             component = DefaultPublishComponent(
                 componentContext = componentContext,
+                platform = platform,
                 translationId = config.translationId,
                 onResult = ::onPublishResult
             )
@@ -258,8 +258,6 @@ class DefaultRootComponent(
                 openTranslate(result.translationId, result.mergeConflictFilterOn)
             }
             is HomeComponent.Result.ExitApp -> onExitApp()
-            is HomeComponent.Result.ShareApp -> onShareApp()
-            is HomeComponent.Result.ExportToApp -> onExportToApp(result.file)
             is HomeComponent.Result.OpenNewTranslation -> openNewTranslation()
             is HomeComponent.Result.ChangeTranslationLanguage -> {
                 openNewTranslation(result.disabledLanguages, result.translationId)
@@ -298,7 +296,6 @@ class DefaultRootComponent(
             is TranslateComponent.Result.OpenLogin -> openProfile(true)
             is TranslateComponent.Result.Logout -> openProfile(false)
             is TranslateComponent.Result.OpenSettings -> openSettings()
-            is TranslateComponent.Result.ExportToApp -> exportToApp(result.file)
             is TranslateComponent.Result.Error -> exitAndShowError(result.message)
         }
     }
@@ -353,7 +350,6 @@ class DefaultRootComponent(
                     openTranslate(result.translationId, false)
                 }
             }
-            is PublishComponent.Result.ExportToApp -> onExportToApp(result.file)
             is PublishComponent.Result.Login -> openProfile(true)
             is PublishComponent.Result.Logout -> openProfile(false)
             is PublishComponent.Result.MergeConflict -> {
@@ -386,10 +382,6 @@ class DefaultRootComponent(
     private fun exitAndShowError(error: String) {
         navigation.pop()
         _sharedFlow.tryEmit(RootComponent.SharedEvent.SnackbarMessage(error))
-    }
-
-    private fun exportToApp(file: File) {
-        onExportToApp(file)
     }
 
     private fun openHome(withUpdate: Boolean = false) {

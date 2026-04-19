@@ -53,15 +53,16 @@ fun ReadTargetCard(
     val inlineContentMap = mapOf(
         "note_icon" to InlineTextContent(
             Placeholder(
-                width = 18.sp,
-                height = 18.sp,
+                width = bodyStyle.fontSize,
+                height = bodyStyle.fontSize,
                 placeholderVerticalAlign = PlaceholderVerticalAlign.Center
             )
         ) {
             Icon(
                 imageVector = Icons.Default.Description,
                 contentDescription = "Note",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.fillMaxSize()
             )
         }
     )

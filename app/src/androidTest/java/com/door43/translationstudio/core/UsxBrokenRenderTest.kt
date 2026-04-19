@@ -122,9 +122,6 @@ class UsxBrokenRenderTest : KoinTest {
 
         renderingProvider.setupRenderingGroup(format, renderingGroup)
 
-        if (search != null) {
-            renderingGroup.setSearchString(search)
-        }
         renderingGroup.init(testText)
         val nodes = renderingGroup.start()
 

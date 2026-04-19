@@ -278,57 +278,6 @@ class USXRendererTest {
     }
 
     @Test
-    fun `search string produces SearchHighlight nodes`() {
-        val input = """<verse number="1" style="v" />In the beginning God created"""
-        val r = renderer()
-        r.setSearchString("beginning")
-        val nodes = r.render(input)
-        val highlights = nodes.filterIsInstance<RenderNode.Text>().filter { it.attributes.searchHighlighted }
-        assertTrue("Expected search-highlighted Text node", highlights.isNotEmpty())
-        assertEquals("beginning", highlights.first().content)
-    }
-
-    @Test
-    fun `search highlight preserves surrounding text`() {
-        val input = "In the beginning God"
-        val r = renderer()
-        r.setSearchString("beginning")
-        val nodes = r.render(input)
-        val allText = nodes.filterIsInstance<RenderNode.Text>().joinToString("") { it.content }
-        assertEquals("In the beginning God", allText)
-    }
-
-    @Test
-    fun `search is case-insensitive`() {
-        val input = "In the Beginning God"
-        val r = renderer()
-        r.setSearchString("beginning")
-        val nodes = r.render(input)
-        assertTrue(nodes.any { it is RenderNode.Text && it.attributes.searchHighlighted })
-    }
-
-    @Test
-    fun `search highlight content matches original case`() {
-        val input = "In the Beginning God"
-        val r = renderer()
-        r.setSearchString("beginning")
-        val nodes = r.render(input)
-        val highlight = nodes.filterIsInstance<RenderNode.Text>().firstOrNull { it.attributes.searchHighlighted }
-        assertNotNull(highlight)
-        // The highlighted content preserves the original case from the input
-        assertEquals("Beginning", highlight!!.content)
-    }
-
-    @Test
-    fun `empty search string disables highlighting`() {
-        val input = "In the beginning"
-        val r = renderer()
-        r.setSearchString("")
-        val nodes = r.render(input)
-        assertFalse(nodes.any { it is RenderNode.Text && it.attributes.searchHighlighted })
-    }
-
-    @Test
     fun `mixed content produces correct node sequence`() {
         // verse + text + blank line
         val input = """<verse number="1" style="v" />text<para style="b"/>more text"""
@@ -371,28 +320,6 @@ class USXRendererTest {
         assertNotNull("Expected Note node", note)
         assertEquals("+", note!!.caller)
         assertEquals(NoteStyle.FOOTNOTE, note.noteStyle)
-    }
-
-    @Test
-    fun `note marker highlighted when search matches note content`() {
-        val input = """<note style="f" caller="+"><char style="ft">special footnote text</char></note>"""
-        val r = renderer()
-        r.setSearchString("special")
-        val nodes = r.render(input)
-        val note = nodes.filterIsInstance<RenderNode.Note>().firstOrNull()
-        assertNotNull(note)
-        assertTrue("Note should be highlighted when search matches", note!!.attributes.searchHighlighted)
-    }
-
-    @Test
-    fun `note marker not highlighted when search does not match`() {
-        val input = """<note style="f" caller="+"><char style="ft">footnote text</char></note>"""
-        val r = renderer()
-        r.setSearchString("xyz")
-        val nodes = r.render(input)
-        val note = nodes.filterIsInstance<RenderNode.Note>().firstOrNull()
-        assertNotNull(note)
-        assertFalse("Note should not be highlighted when search doesn't match", note!!.attributes.searchHighlighted)
     }
 
     @Test

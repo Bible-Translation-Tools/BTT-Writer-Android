@@ -23,13 +23,6 @@ abstract class ClickableRenderingEngine : RenderingEngine() {
     abstract fun setParagraphsEnabled(enable: Boolean)
 
     /**
-     * If set to not empty, matched strings will be highlighted.
-     *
-     * @param searchString - empty string disables highlighting
-     */
-    abstract override fun setSearchString(searchString: String)
-
-    /**
      * Specifies an inclusive range of verses expected in the input.
      * If a verse is not found it will be inserted at the front of the input.
      * @param verseRange
