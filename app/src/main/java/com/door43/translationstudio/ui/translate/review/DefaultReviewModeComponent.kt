@@ -138,7 +138,7 @@ class DefaultReviewModeComponent(
             targetTranslation
         )
 
-        launchWithProgress(application.getString(R.string.loading_sources)) {
+        coroutineScope.launch {
             val items = withContext(Dispatchers.Default) {
                 chunks.map { prepareItem(it) }
             }
@@ -481,7 +481,7 @@ class DefaultReviewModeComponent(
     }
 
     private fun mapChunksToItems(chunks: List<Chunk>) {
-        launchWithProgress(application.getString(R.string.loading_sources)) {
+        coroutineScope.launch {
             val items = withContext(Dispatchers.Default) {
                 chunks.map { prepareItem(it) }
             }

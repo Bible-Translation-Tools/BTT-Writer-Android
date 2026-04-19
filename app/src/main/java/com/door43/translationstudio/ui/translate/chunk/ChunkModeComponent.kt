@@ -91,7 +91,7 @@ class DefaultChunkModeComponent(
             targetTranslation
         )
 
-        launchWithProgress(application.getString(R.string.loading_sources)) {
+        coroutineScope.launch {
             val items = withContext(Dispatchers.Default) {
                 chunks.map { prepareItem(it) }
             }

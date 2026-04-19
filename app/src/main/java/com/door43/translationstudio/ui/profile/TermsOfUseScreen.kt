@@ -20,7 +20,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -29,13 +29,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
-import com.door43.translationstudio.ui.dialogs.ProgressDialog
 import com.door43.translationstudio.ui.dialogs.LegalDocumentDialog
+import com.door43.translationstudio.ui.dialogs.ProgressDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TermsOfUseScreen(component: TermsOfUseComponent) {
-    var openLegalDocumentId by remember { mutableStateOf<Int?>(null) }
+    var openLegalDocumentId by rememberSaveable { mutableStateOf<Int?>(null) }
 
     val progress by component.progress.collectAsStateWithLifecycle()
 

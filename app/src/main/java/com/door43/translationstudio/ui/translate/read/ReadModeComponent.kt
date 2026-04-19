@@ -33,6 +33,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -86,7 +87,7 @@ class DefaultReadModeComponent(
             targetTranslation
         )
 
-        launchWithProgress(application.getString(R.string.loading_sources)) {
+        coroutineScope.launch {
             val items = withContext(Dispatchers.Default) {
                 chunks.map { prepareItem(it) }
             }
