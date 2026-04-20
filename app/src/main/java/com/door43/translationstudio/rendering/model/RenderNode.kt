@@ -93,3 +93,16 @@ sealed class RenderNode {
 data class NodeAttributes(
     val metadata: Map<String, Any> = emptyMap()
 )
+
+enum class NodeStyle {
+    BOLD,
+    ITALIC,
+    BOLD_CENTER,
+    ITALIC_RIGHT,
+    NORMAL,
+}
+
+enum class NoteStyle {
+    FOOTNOTE,
+    CROSS_REFERENCE,
+}
