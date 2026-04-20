@@ -82,7 +82,7 @@ class PullTargetTranslationTest {
         every { git.pull() }.returns(pullCommand)
         every { git.checkout() }.returns(checkoutCommand)
 
-        every { deleteCommand.setBranchNames(any<Collection<String>>()) }.returns(deleteCommand)
+        every { deleteCommand.setBranchNames(any<String>()) }.returns(deleteCommand)
         every { deleteCommand.setForce(any()) }.returns(deleteCommand)
         every { deleteCommand.call() }.returns(listOf())
 

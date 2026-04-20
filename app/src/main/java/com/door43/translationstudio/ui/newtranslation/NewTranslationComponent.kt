@@ -149,13 +149,17 @@ class DefaultNewTranslationComponent(
             withContext(Dispatchers.IO) {
                 val sourceTranslation = translator.getTargetTranslation(translationId)
                 if (sourceTranslation == null) {
-                    val error = application.getString(R.string.target_translation_not_found, translationId)
-                    onResult(NewTranslationComponent.Result.Error(error))
+                    withContext(Dispatchers.Main) {
+                        val error = application.getString(R.string.target_translation_not_found, translationId)
+                        onResult(NewTranslationComponent.Result.Error(error))
+                    }
                     return@withContext
                 }
 
                 if (targetLanguage.slug == sourceTranslation.targetLanguage.slug) {
-                    onResult(NewTranslationComponent.Result.Success)
+                    withContext(Dispatchers.Main) {
+                        onResult(NewTranslationComponent.Result.Success)
+                    }
                     return@withContext
                 }
 
@@ -186,7 +190,9 @@ class DefaultNewTranslationComponent(
                     sourceTranslation.normalizePath()
                     val newId = sourceTranslation.id
                     moveTargetTranslationAppSettings(originalId, newId)
-                    onResult(NewTranslationComponent.Result.Success)
+                    withContext(Dispatchers.Main) {
+                        onResult(NewTranslationComponent.Result.Success)
+                    }
                 }
             }
         }

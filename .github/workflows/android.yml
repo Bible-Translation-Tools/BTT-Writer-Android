@@ -32,8 +32,8 @@ jobs:
       run: |
         if [ -f containers.zip ]; then rm ./app/src/main/assets/containers.zip && mv ./containers.zip ./app/src/main/assets/containers.zip; fi
         if [ -f index.sqlite ]; then rm ./app/src/main/assets/index.sqlite && mv ./index.sqlite ./app/src/main/assets/index.sqlite; fi
-    - name: android 28 env
-      run:  echo "ANDROID_TARGET=android-28" >> $GITHUB_ENV
+    - name: android 36 env
+      run:  echo "ANDROID_TARGET=android-36" >> $GITHUB_ENV
     - name: Test with Gradle
       run: ./gradlew test --stacktrace
     - name: Assemble with Gradle
@@ -107,8 +107,8 @@ jobs:
         run: |
           if [ -f containers.zip ]; then rm ./app/src/main/assets/containers.zip && mv ./containers.zip ./app/src/main/assets/containers.zip; fi
           if [ -f index.sqlite ]; then rm ./app/src/main/assets/index.sqlite && mv ./index.sqlite ./app/src/main/assets/index.sqlite; fi
-      - name: android 28 env
-        run: echo "ANDROID_TARGET=android-28" >> $GITHUB_ENV
+      - name: android 36 env
+        run: echo "ANDROID_TARGET=android-36" >> $GITHUB_ENV
       - name: Test with Gradle
         run: ./gradlew test --stacktrace
       - name: Assemble with Gradle
@@ -180,7 +180,7 @@ jobs:
       - name: Run connected tests
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 33
+          api-level: 36
           arch: x86_64
           ram-size: 8192M
           heap-size: 512M

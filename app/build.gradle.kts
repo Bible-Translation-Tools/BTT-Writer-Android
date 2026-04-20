@@ -26,7 +26,7 @@ android {
     }
     defaultConfig {
         applicationId = "org.bibletranslationtools.writer.android"
-        minSdk = 23
+        minSdk = 26
         compileSdk = 36
         targetSdk = 36
         versionCode = 45
@@ -70,11 +70,10 @@ android {
         disable += listOf("MissingTranslation", "ExtraTranslation")
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     buildFeatures {
-        viewBinding = true
         buildConfig = true
         compose = true
     }
@@ -103,12 +102,8 @@ androidComponents {
 
 kotlin {
     compilerOptions {
-        jvmTarget.set(JvmTarget.JVM_21)
+        jvmTarget.set(JvmTarget.JVM_17)
     }
-}
-
-composeCompiler {
-    includeComposeMappingFile.set(false)
 }
 
 configurations {
