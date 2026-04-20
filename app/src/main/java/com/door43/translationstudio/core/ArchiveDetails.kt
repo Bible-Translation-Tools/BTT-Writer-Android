@@ -2,8 +2,6 @@ package com.door43.translationstudio.core
 
 import android.content.Context
 import android.util.Log
-import androidx.compose.animation.core.animateIntAsState
-import androidx.documentfile.provider.DocumentFile
 import com.door43.data.IDirectoryProvider
 import com.door43.util.FileUtilities.copyInputStreamToFile
 import com.door43.util.Zip
@@ -45,7 +43,6 @@ class ArchiveDetails private constructor(
     ) {
         private var archiveStream: InputStream? = null
         private var archiveFile: File? = null
-        private var archiveDocument: DocumentFile? = null
 
         private var preferredLocale: String? = null
 
@@ -78,23 +75,6 @@ class ArchiveDetails private constructor(
             preferredLocale: String
         ): Builder {
             this.archiveFile = archive
-            this.preferredLocale = preferredLocale
-            return this
-        }
-
-        /**
-         * Reads the details from a translationStudio archive
-         * @param archive
-         * @param preferredLocale
-         * @return
-         * @throws IOException
-         */
-        @Throws(Exception::class)
-        fun fromDocument(
-            archive: DocumentFile,
-            preferredLocale: String
-        ): Builder {
-            this.archiveDocument = archive
             this.preferredLocale = preferredLocale
             return this
         }
@@ -141,34 +121,6 @@ class ArchiveDetails private constructor(
                                 json,
                                 preferredLocale
                             )
-                        }
-                    }
-                }
-            }
-            return null
-        }
-
-        private fun processDocument(
-            archive: DocumentFile,
-            preferredLocale: String
-        ): ArchiveDetails? {
-            if (archive.exists()) {
-                context.contentResolver.openInputStream(archive.uri)?.let { ais ->
-                    val rawManifest = Zip.readInputStream(ais, MANIFEST_JSON)
-                    if (rawManifest != null) {
-                        val json = JSONObject(rawManifest)
-                        if (json.has(PACKAGE_VERSION)) {
-                            val manifestVersion = json.getInt(PACKAGE_VERSION)
-                            when (manifestVersion) {
-                                1 -> return parseV1Manifest(json)
-                                2 -> context.contentResolver.openInputStream(archive.uri)?.let {
-                                    return parseV2Manifest(
-                                        it,
-                                        json,
-                                        preferredLocale
-                                    )
-                                }
-                            }
                         }
                     }
                 }
@@ -285,7 +237,6 @@ class ArchiveDetails private constructor(
                 when {
                     archiveStream != null -> processInputStream(archiveStream!!, preferredLocale!!)
                     archiveFile != null -> processFile(archiveFile!!, preferredLocale!!)
-                    archiveDocument != null -> processDocument(archiveDocument!!, preferredLocale!!)
                     else -> null
                 }
             } catch (e: Exception) {

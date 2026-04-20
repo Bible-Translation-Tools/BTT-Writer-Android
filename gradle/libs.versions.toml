@@ -1,25 +1,18 @@
 [versions]
 # Build Plugins
-agp = "8.7.2"
-kotlin = "2.1.0"
+agp = "9.1.1"
+kotlin = "2.2.10"
 dexcount = "4.0.0"
 composeBom = "2026.02.01"
-activityCompose = "1.9.3"
 decompose = "3.5.0"
 kotlinxSerialization = "1.7.3"
 
 # AndroidX Core
 koin-bom = "4.1.1"
 ktx = "1.15.0"
-appcompat = "1.7.0"
-legacy-support-v4 = "1.0.0"
-legacy-support-v13 = "1.0.0"
-cardview = "1.0.0"
-recyclerview = "1.4.0"
 core-splashscreen = "1.0.1"
 preference-ktx = "1.2.1"
-fragment-ktx = "1.8.6"
-lifecycleRuntime = "2.8.7"
+documentfile = "1.0.1"
 
 # Material Design
 material = "1.13.0"
@@ -27,24 +20,17 @@ material = "1.13.0"
 # Third-party Libraries
 jgit = "3.7.1.201504261725-r"
 jsch = "0.1.55"
-universal-image-loader = "1.9.5"
-materialtabstrip = "1.1.1"
-progresspieview = "1.0.4"
-layouts = "1.10"
 itextg = "5.5.10"
-rebound = "0.3.8"
 gogs-client = "1.7.5"
-task-manager = "1.5.3"
 resource-container = "0.7.19"
-logger-version = "2.3.1"
+logger = "2.3.1"
 http-tools = "2.5.0"
-event-buffer = "1.0.2"
 foreground = "0.1.0"
 firebase-appindexing = "20.0.0"
 okhttp = "4.12.0"
 markdownj = "0.4"
 commons-io = "2.8.0"
-ktorVersion = "3.0.0"
+ktor = "3.0.0"
 
 # Testing
 junit = "4.13.2"
@@ -65,14 +51,9 @@ jsonVersion = "20251224"
 [libraries]
 # AndroidX Core
 androidx-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "ktx" }
-androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
-androidx-legacy-support-v4 = { group = "androidx.legacy", name = "legacy-support-v4", version.ref = "legacy-support-v4" }
-androidx-legacy-support-v13 = { group = "androidx.legacy", name = "legacy-support-v13", version.ref = "legacy-support-v13" }
-androidx-cardview = { group = "androidx.cardview", name = "cardview", version.ref = "cardview" }
-androidx-recyclerview = { group = "androidx.recyclerview", name = "recyclerview", version.ref = "recyclerview" }
 androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "core-splashscreen" }
 androidx-preference-ktx = { group = "androidx.preference", name = "preference-ktx", version.ref = "preference-ktx" }
-androidx-fragment-ktx = { group = "androidx.fragment", name = "fragment-ktx", version.ref = "fragment-ktx" }
+androidx-documentfile = { group = "androidx.documentfile", name = "documentfile", version.ref = "documentfile" }
 
 # Material Design
 json = { module = "org.json:json", version.ref = "jsonVersion" }
@@ -85,8 +66,6 @@ androidx-compose-material3 = { group = "androidx.compose.material3", name = "mat
 androidx-compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
 androidx-compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
 androidx-compose-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" }
-androidx-lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "lifecycleRuntime" }
-androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
 
 # Decompose
 decompose = { group = "com.arkivanov.decompose", name = "decompose", version.ref = "decompose" }
@@ -106,25 +85,14 @@ koin-androidx-compose = { group = "io.insert-koin", name = "koin-androidx-compos
 jgit = { group = "org.eclipse.jgit", name = "org.eclipse.jgit", version.ref = "jgit" }
 jsch = { group = "com.jcraft", name = "jsch", version.ref = "jsch" }
 
-# Image Loading
-universal-image-loader = { group = "com.nostra13.universalimageloader", name = "universal-image-loader", version.ref = "universal-image-loader" }
-
-# UI Components
-materialtabstrip = { group = "com.jpardogo.materialtabstrip", name = "library", version.ref = "materialtabstrip" }
-progresspieview = { group = "com.github.filippudak.progresspieview", name = "library", version.ref = "progresspieview" }
-layouts = { group = "org.apmem.tools", name = "layouts", version.ref = "layouts" }
-rebound = { group = "com.facebook.rebound", name = "rebound", version.ref = "rebound" }
-
 # PDF
 itextg = { group = "com.itextpdf", name = "itextg", version.ref = "itextg" }
 
 # Bible Translation Tools
 gogs-client = { group = "org.bibletranslationtools", name = "gogs-client", version.ref = "gogs-client" }
-task-manager = { group = "org.unfoldingword.tools", name = "task-manager", version.ref = "task-manager" }
 resource-container = { group = "org.unfoldingword.tools", name = "resource-container", version.ref = "resource-container" }
-bible-logger = { group = "org.bibletranslationtools", name = "logger", version.ref = "logger-version" }
+bible-logger = { group = "org.bibletranslationtools", name = "logger", version.ref = "logger" }
 http-tools = { group = "org.unfoldingword.tools", name = "http", version.ref = "http-tools" }
-event-buffer = { group = "org.unfoldingword.tools", name = "event-buffer", version.ref = "event-buffer" }
 foreground = { group = "org.unfoldingword.tools", name = "foreground", version.ref = "foreground" }
 
 # Firebase
@@ -133,8 +101,8 @@ firebase-appindexing = { group = "com.google.firebase", name = "firebase-appinde
 # Networking
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
 mockwebserver = { group = "com.squareup.okhttp3", name = "mockwebserver", version.ref = "mockwebserver" }
-ktor-core = { group = "io.ktor", name = "ktor-client-core", version.ref = "ktorVersion"}
-ktor-client-okhttp = { group = "io.ktor", name = "ktor-client-okhttp", version.ref = "ktorVersion" }
+ktor-core = { group = "io.ktor", name = "ktor-client-core", version.ref = "ktor"}
+ktor-client-okhttp = { group = "io.ktor", name = "ktor-client-okhttp", version.ref = "ktor" }
 
 # Markdown
 markdownj = { group = "org.markdownj", name = "markdownj-core", version.ref = "markdownj" }
@@ -170,7 +138,6 @@ koin-android-test = { group = "io.insert-koin", name = "koin-android-test", vers
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 android-library = { id = "com.android.library", version.ref = "agp" }
-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 dexcount = { id = "com.getkeepsafe.dexcount", version.ref = "dexcount" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }

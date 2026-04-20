@@ -48,7 +48,7 @@ jobs:
       run: |
         for aapt_path in ${ANDROID_HOME}/build-tools/*/; do break; done
         export PATH="$PATH:${aapt_path}"
-        APK_PATH="./app/build/outputs/apk/release/release.apk"
+        APK_PATH="./app/build/outputs/apk/release/app-release.apk"
         versionName=$(aapt dump badging $APK_PATH | grep versionName | awk '{print $4}' | sed s/versionName=//g | sed s/\'//g)
         versionCode=$(aapt dump badging $APK_PATH | grep versionCode | awk '{print $3}' | sed s/versionCode=//g | sed s/\'//g)
         APK_NAME="btt-writer-${versionName}+${GITHUB_RUN_NUMBER}-v${versionCode}.apk"
@@ -123,7 +123,7 @@ jobs:
         run: |
           for aapt_path in ${ANDROID_HOME}/build-tools/*/; do break; done
           export PATH="$PATH:${aapt_path}"
-          APK_PATH="./app/build/outputs/apk/release/release.apk"
+          APK_PATH="./app/build/outputs/apk/release/app-release.apk"
           versionName=$(aapt dump badging $APK_PATH | grep versionName | awk '{print $4}' | sed s/versionName=//g | sed s/\'//g)
           versionCode=$(aapt dump badging $APK_PATH | grep versionCode | awk '{print $3}' | sed s/versionCode=//g | sed s/\'//g)
           APK_NAME="btt-writer-en-${versionName}+${GITHUB_RUN_NUMBER}-v${versionCode}.apk"
