@@ -18,7 +18,7 @@ documentfile = "1.1.0"
 material = "1.13.0"
 
 # Third-party Libraries
-jgit = "3.7.1.201504261725-r"
+jgit = "7.6.0.202603022253-r"
 jsch = "0.1.55"
 itextg = "5.5.10"
 gogs-client = "1.7.6"
@@ -80,6 +80,7 @@ koin-androidx-compose = { group = "io.insert-koin", name = "koin-androidx-compos
 
 # Git/SSH
 jgit = { group = "org.eclipse.jgit", name = "org.eclipse.jgit", version.ref = "jgit" }
+jgit-ssh-jsch = { group = "org.eclipse.jgit", name = "org.eclipse.jgit.ssh.jsch", version.ref = "jgit" }
 jsch = { group = "com.jcraft", name = "jsch", version.ref = "jsch" }
 
 # PDF

@@ -622,7 +622,7 @@ class TargetTranslation private constructor(
         // perform merge
         val merge = repo.git.merge()
         merge.setFastForward(MergeCommand.FastForwardMode.NO_FF)
-        merge.include(repo.git.repository.getRef("new"))
+        merge.include(repo.git.repository.findRef("new"))
         val result = merge.call()
 
         // merge manifests

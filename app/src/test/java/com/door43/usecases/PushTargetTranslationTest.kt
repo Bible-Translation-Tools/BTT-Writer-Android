@@ -77,7 +77,7 @@ class PushTargetTranslationTest {
         every { repo.git }.returns(git)
         every { git.branchDelete() }.returns(deleteCommand)
         every { git.branchCreate() }.returns(createCommand)
-        every { deleteCommand.setBranchNames(any()) }.returns(deleteCommand)
+        every { deleteCommand.setBranchNames(any<Collection<String>>()) }.returns(deleteCommand)
         every { deleteCommand.setForce(any()) }.returns(deleteCommand)
         every { deleteCommand.call() }.returns(listOf())
 

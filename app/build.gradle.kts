@@ -119,6 +119,7 @@ dependencies {
     implementation(libs.material)
     implementation(libs.androidx.core.splashscreen)
     implementation(libs.jgit)
+    implementation(libs.jgit.ssh.jsch)
     implementation(libs.jsch)
     implementation(libs.itextg)
     implementation(libs.gogs.client)

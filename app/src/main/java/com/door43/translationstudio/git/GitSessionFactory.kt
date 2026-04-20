@@ -3,8 +3,8 @@ package com.door43.translationstudio.git
 import com.door43.data.IDirectoryProvider
 import com.jcraft.jsch.JSch
 import com.jcraft.jsch.Session
-import org.eclipse.jgit.transport.JschConfigSessionFactory
-import org.eclipse.jgit.transport.OpenSshConfig
+import org.eclipse.jgit.transport.ssh.jsch.JschConfigSessionFactory
+import org.eclipse.jgit.transport.ssh.jsch.OpenSshConfig
 import org.eclipse.jgit.util.FS
 
 /**
