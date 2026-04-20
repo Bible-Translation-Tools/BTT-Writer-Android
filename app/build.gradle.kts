@@ -132,15 +132,12 @@ dependencies {
     implementation(libs.androidx.junit.ext)
     implementation(libs.androidx.ktx)
     implementation(libs.androidx.preference.ktx)
-    implementation(libs.commons.io) // Do not upgrade, unless increase android sdk api version
+    implementation(libs.commons.io)
 
     androidTestImplementation(libs.material)
     androidTestImplementation(libs.hamcrest)
     androidTestImplementation(libs.androidx.test.runner)
     androidTestImplementation(libs.androidx.test.rules)
-    androidTestImplementation(libs.androidx.test.espresso.core)
-    androidTestImplementation(libs.androidx.test.espresso.contrib)
-    androidTestImplementation(libs.androidx.test.espresso.intents)
     androidTestImplementation(libs.androidx.test.uiautomator)
 
     // Compose
