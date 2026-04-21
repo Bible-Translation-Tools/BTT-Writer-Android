@@ -98,6 +98,10 @@ fun ScrollBindingEffect(
     val pendingScroll by coordinator.pendingScroll.collectAsStateWithLifecycle()
     val dominantIndex by coordinator.dominantIndex
 
+    LaunchedEffect(lastFocusChapterId, lastFocusFrameId) {
+        hasDoneInitialLoad = false
+    }
+
     LaunchedEffect(items, lastFocusChapterId) {
         if (!hasDoneInitialLoad && items.isNotEmpty() && lastFocusChapterId != null) {
             var targetIndex = items.indexOfFirst {

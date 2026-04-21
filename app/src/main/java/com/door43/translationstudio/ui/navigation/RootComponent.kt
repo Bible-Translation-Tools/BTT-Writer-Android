@@ -269,21 +269,25 @@ class DefaultRootComponent(
         when (result) {
             is NewTranslationComponent.Result.NavigateBack -> navigation.pop()
             is NewTranslationComponent.Result.Success -> {
-                navigation.pop()
-                _sharedFlow.tryEmit(RootComponent.SharedEvent.LoadProjects)
+                navigation.pop {
+                    _sharedFlow.tryEmit(RootComponent.SharedEvent.LoadProjects)
+                }
             }
             is NewTranslationComponent.Result.Error -> {
-                navigation.pop()
-                _sharedFlow.tryEmit(RootComponent.SharedEvent.SnackbarMessage(result.text))
+                navigation.pop {
+                    _sharedFlow.tryEmit(RootComponent.SharedEvent.SnackbarMessage(result.text))
+                }
             }
             is NewTranslationComponent.Result.Duplicate -> {
-                navigation.pop()
-                _sharedFlow.tryEmit(RootComponent.SharedEvent.DuplicateProject(result.translationId))
+                navigation.pop {
+                    _sharedFlow.tryEmit(RootComponent.SharedEvent.DuplicateProject(result.translationId))
+                }
             }
             is NewTranslationComponent.Result.MergeConflict -> {
                 _sharedFlow.tryEmit(RootComponent.SharedEvent.LoadProjects)
-                navigation.pop()
-                openTranslate(result.translationId, true)
+                navigation.pop {
+                    openTranslate(result.translationId, true)
+                }
             }
         }
     }
@@ -346,8 +350,9 @@ class DefaultRootComponent(
                         Config.Translate(result.translationId, false)
                     )
                 } else {
-                    navigation.pop()
-                    openTranslate(result.translationId, false)
+                    navigation.pop {
+                        openTranslate(result.translationId, false)
+                    }
                 }
             }
             is PublishComponent.Result.Login -> openProfile(true)
@@ -380,8 +385,9 @@ class DefaultRootComponent(
     }
 
     private fun exitAndShowError(error: String) {
-        navigation.pop()
-        _sharedFlow.tryEmit(RootComponent.SharedEvent.SnackbarMessage(error))
+        navigation.pop {
+            _sharedFlow.tryEmit(RootComponent.SharedEvent.SnackbarMessage(error))
+        }
     }
 
     private fun openHome(withUpdate: Boolean = false) {

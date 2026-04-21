@@ -17,6 +17,7 @@ import com.arkivanov.decompose.value.operator.map
 import com.arkivanov.essenty.instancekeeper.InstanceKeeper
 import com.arkivanov.essenty.instancekeeper.getOrCreate
 import com.arkivanov.essenty.lifecycle.doOnDestroy
+import com.arkivanov.essenty.lifecycle.doOnResume
 import com.door43.data.AssetsProvider
 import com.door43.data.IPreferenceRepository
 import com.door43.translationstudio.App.Companion.deviceLanguageCode
@@ -288,7 +289,6 @@ class DefaultTranslateComponent(
 
             launchWithProgress {
                 ContainerCache.empty()
-                initLastFocus()
                 openUsedSourceTranslations()
                 refreshSelectedResourceContainer()
             }
@@ -315,6 +315,10 @@ class DefaultTranslateComponent(
 
         lifecycle.doOnDestroy {
             coroutineScope.cancel()
+        }
+
+        lifecycle.doOnResume {
+            refreshLastFocus()
         }
     }
 
@@ -494,7 +498,7 @@ class DefaultTranslateComponent(
         ).any { it.resource.slug != "udb" }
     }
 
-    private fun initLastFocus() {
+    private fun refreshLastFocus() {
         val chapter = translator.getLastFocusChapterId(targetTranslation.id)
         val frame = translator.getLastFocusFrameId(targetTranslation.id)
         _state.update { it.copy(lastFocusChapterId = chapter, lastFocusFrameId = frame) }
