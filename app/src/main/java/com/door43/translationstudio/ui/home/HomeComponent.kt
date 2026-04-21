@@ -109,6 +109,7 @@ interface HomeComponent {
     fun changeBookSort(sort: BookSort)
     fun showProjectInfo(item: TranslationItem)
     fun importProject(uri: Uri)
+    fun loadProjects()
     fun loadWithProgress(translationIds: List<String>)
     fun hideProjectInfo()
     fun requestUpdateLibrary()
@@ -350,6 +351,26 @@ class DefaultHomeComponent(
         showImportDialog(uri)
     }
 
+    override fun loadProjects() {
+        launchWithProgress(
+            application.getString(R.string.loading)
+        ) {
+            val existingProgress = _state.value.translations.associate {
+                it.translation.id to it.progress
+            }
+            val items = withContext(Dispatchers.IO) {
+                translator.targetTranslations.map {
+                    TranslationItem(
+                        name = getProject(it)?.name ?: "Unknown",
+                        translation = it,
+                        progress = existingProgress[it.id] ?: calculateProgress.execute(it)
+                    )
+                }
+            }
+            _state.update { it.copy(translations = items) }
+        }
+    }
+
     override fun loadWithProgress(translationIds: List<String>) {
         coroutineScope.launch {
             val newUpdates = translationIds.mapNotNull { id ->
@@ -477,26 +498,6 @@ class DefaultHomeComponent(
             disabledLanguages = disabledLanguages,
             translationId = translationId
         ))
-    }
-
-    private fun loadProjects() {
-        launchWithProgress(
-            application.getString(R.string.loading)
-        ) {
-            val existingProgress = _state.value.translations.associate {
-                it.translation.id to it.progress
-            }
-            val items = withContext(Dispatchers.IO) {
-                translator.targetTranslations.map {
-                    TranslationItem(
-                        name = getProject(it)?.name ?: "Unknown",
-                        translation = it,
-                        progress = existingProgress[it.id] ?: calculateProgress.execute(it)
-                    )
-                }
-            }
-            _state.update { it.copy(translations = items) }
-        }
     }
 
     private suspend fun sortTranslations(projectSort: ProjectSort, bookSort: BookSort) {

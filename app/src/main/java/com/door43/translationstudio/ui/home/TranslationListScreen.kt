@@ -22,6 +22,7 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -48,6 +49,7 @@ fun TranslationListScreen(
 ) {
     val typography: Typography = koinInject()
     val state by component.state.collectAsStateWithLifecycle()
+    val progress by component.progress.collectAsStateWithLifecycle()
 
     val listState = rememberLazyListState()
 
@@ -108,7 +110,6 @@ fun TranslationListScreen(
                 Spacer(modifier = Modifier.weight(1f))
 
                 Text(stringResource(R.string.progress))
-
             }
         }
 
@@ -118,25 +119,30 @@ fun TranslationListScreen(
             }
         }
 
-        LazyColumn(
-            state = listState,
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.fillMaxWidth()
+        PullToRefreshBox(
+            isRefreshing = progress != null,
+            onRefresh = component::loadProjects
         ) {
-            items(state.translations, key = { it.translation.id }) { project ->
-                ProjectCard(
-                    item = project,
-                    typography = typography,
-                    onItemClick = { onProjectSelected(project) },
-                    onInfoClick = {
-                        component.showProjectInfo(project)
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
+            LazyColumn(
+                state = listState,
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                items(state.translations, key = { it.translation.id }) { project ->
+                    ProjectCard(
+                        item = project,
+                        typography = typography,
+                        onItemClick = { onProjectSelected(project) },
+                        onInfoClick = {
+                            component.showProjectInfo(project)
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
 
-            item {
-                Spacer(modifier = Modifier.height(50.dp))
+                item {
+                    Spacer(modifier = Modifier.height(50.dp))
+                }
             }
         }
     }
