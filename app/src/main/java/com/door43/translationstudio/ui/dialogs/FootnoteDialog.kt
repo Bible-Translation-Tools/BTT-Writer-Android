@@ -41,7 +41,9 @@ fun FootnoteDialog(
     ) { dismissWithKeyboard ->
 
         var showEditor by rememberSaveable { mutableStateOf(false) }
-        val textFieldState = remember { TextFieldState(text) }
+        val textFieldState = rememberSaveable(saver = TextFieldState.Saver) {
+            TextFieldState(text)
+        }
         val focusRequester = remember { FocusRequester() }
 
         LaunchedEffect(showEditor) {
