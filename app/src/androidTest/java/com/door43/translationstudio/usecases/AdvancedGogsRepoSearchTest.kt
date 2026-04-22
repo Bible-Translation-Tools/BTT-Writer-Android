@@ -117,13 +117,16 @@ class AdvancedGogsRepoSearchTest : KoinAndroidTest() {
             }
         """.trimIndent()
 
-        return MockResponse().setBody(body).setResponseCode(200)
+        return MockResponse()
+            .setBody(body)
+            .addHeader("Content-Type", "application/json")
+            .setResponseCode(200)
     }
 
     private fun createReposResponse(): MockResponse {
         val body = """
             {
-                data: [
+                "data": [
                     {
                         "id": 111,
                         "name": "fr_gen_text_reg",
@@ -134,13 +137,16 @@ class AdvancedGogsRepoSearchTest : KoinAndroidTest() {
             }
         """.trimIndent()
 
-        return MockResponse().setBody(body).setResponseCode(200)
+        return MockResponse()
+            .setBody(body)
+            .addHeader("Content-Type", "application/json")
+            .setResponseCode(200)
     }
 
     private fun createUsersResponse(): MockResponse {
         val body = """
             {
-                data: [
+                "data": [
                     {
                         "id": 111,
                         "full_name": "Test",
@@ -152,17 +158,23 @@ class AdvancedGogsRepoSearchTest : KoinAndroidTest() {
             }
         """.trimIndent()
 
-        return MockResponse().setBody(body).setResponseCode(200)
+        return MockResponse()
+            .setBody(body)
+            .addHeader("Content-Type", "application/json")
+            .setResponseCode(200)
     }
 
     private fun createEmptyDataResponse(): MockResponse {
         val body = """
             {
-                data: [],
+                "data": [],
                 "ok": true
             }
         """.trimIndent()
 
-        return MockResponse().setBody(body).setResponseCode(200)
+        return MockResponse()
+            .setBody(body)
+            .addHeader("Content-Type", "application/json")
+            .setResponseCode(200)
     }
 }

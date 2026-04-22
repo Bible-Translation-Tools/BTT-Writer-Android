@@ -55,7 +55,10 @@ class SearchGogsRepositoriesTest : KoinAndroidTest() {
                 "ok": true
             }
         """.trimIndent()
-        server.enqueue(MockResponse().setBody(userResponse).setResponseCode(200))
+        server.enqueue(MockResponse()
+            .setBody(userResponse)
+            .addHeader("Content-Type", "application/json")
+            .setResponseCode(200))
 
         val user = "test"
         val gogsUser = searchGogsUsers.execute(user, 1).singleOrNull()
@@ -64,7 +67,7 @@ class SearchGogsRepositoriesTest : KoinAndroidTest() {
         assertEquals("Gogs user id should match", gogsUser?.id, 222)
         assertEquals("Gogs username should match", gogsUser?.username, user)
 
-        val owner = gogsUser?.let { JsonLenient.encodeToString(it) }?.let { "owner: $it" } ?: ""
+        val owner = gogsUser?.let { JsonLenient.encodeToString(it) }?.let { "\"owner\": $it" } ?: ""
         val repoResponse = """
             {
                 "id": 222,
@@ -84,8 +87,14 @@ class SearchGogsRepositoriesTest : KoinAndroidTest() {
             }
         """.trimIndent()
 
-        server.enqueue(MockResponse().setBody(reposResponse).setResponseCode(200))
-        server.enqueue(MockResponse().setBody(repoResponse).setResponseCode(200))
+        server.enqueue(MockResponse()
+            .setBody(reposResponse)
+            .addHeader("Content-Type", "application/json")
+            .setResponseCode(200))
+        server.enqueue(MockResponse()
+            .setBody(repoResponse)
+            .addHeader("Content-Type", "application/json")
+            .setResponseCode(200))
 
         var progressMessage: String? = null
         val progressListener = OnProgressListener { _, message ->
@@ -142,9 +151,18 @@ class SearchGogsRepositoriesTest : KoinAndroidTest() {
         // There should be 3 request done
         // First request is to fetch repos by query
         // Second and third requests are to fetch additional data for found repos in the first request
-        server.enqueue(MockResponse().setBody(reposResponse).setResponseCode(200))
-        server.enqueue(MockResponse().setBody(repo1Response).setResponseCode(200))
-        server.enqueue(MockResponse().setBody(repo2Response).setResponseCode(200))
+        server.enqueue(MockResponse()
+            .setBody(reposResponse)
+            .addHeader("Content-Type", "application/json")
+            .setResponseCode(200))
+        server.enqueue(MockResponse()
+            .setBody(repo1Response)
+            .addHeader("Content-Type", "application/json")
+            .setResponseCode(200))
+        server.enqueue(MockResponse()
+            .setBody(repo2Response)
+            .addHeader("Content-Type", "application/json")
+            .setResponseCode(200))
 
         val query = "_gen_"
         val repos = searchGogsRepositories.execute(0, query, 3)
@@ -163,7 +181,10 @@ class SearchGogsRepositoriesTest : KoinAndroidTest() {
                 "ok": true
             }
         """.trimIndent()
-        server.enqueue(MockResponse().setBody(reposResponse).setResponseCode(200))
+        server.enqueue(MockResponse()
+            .setBody(reposResponse)
+            .addHeader("Content-Type", "application/json")
+            .setResponseCode(200))
 
         val query = "non-existent-repo"
         val repos = searchGogsRepositories.execute(0, query, 3)

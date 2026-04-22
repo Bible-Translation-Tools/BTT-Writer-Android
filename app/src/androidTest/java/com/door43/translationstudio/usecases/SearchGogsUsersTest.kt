@@ -65,7 +65,10 @@ class SearchGogsUsersTest : KoinAndroidTest() {
                 "ok": true
             }
         """.trimIndent()
-        server.enqueue(MockResponse().setBody(successResponse).setResponseCode(200))
+        server.enqueue(MockResponse()
+            .setBody(successResponse)
+            .addHeader("Content-Type", "application/json")
+            .setResponseCode(200))
 
         val gogsUser = searchGogsUsers.execute(user, 1, progressListener).singleOrNull()
 
@@ -96,7 +99,10 @@ class SearchGogsUsersTest : KoinAndroidTest() {
                 "ok": true
             }
         """.trimIndent()
-        server.enqueue(MockResponse().setBody(successResponse).setResponseCode(200))
+        server.enqueue(MockResponse()
+            .setBody(successResponse)
+            .addHeader("Content-Type", "application/json")
+            .setResponseCode(200))
 
         val userQuery = "test"
         val gogsUsers = searchGogsUsers.execute(userQuery, 3)
@@ -115,7 +121,10 @@ class SearchGogsUsersTest : KoinAndroidTest() {
                 "ok": true
             }
         """.trimIndent()
-        server.enqueue(MockResponse().setBody(successResponse).setResponseCode(200))
+        server.enqueue(MockResponse()
+            .setBody(successResponse)
+            .addHeader("Content-Type", "application/json")
+            .setResponseCode(200))
 
         val userQuery = "non-existent-user"
         val gogsUsers = searchGogsUsers.execute(userQuery, 3)

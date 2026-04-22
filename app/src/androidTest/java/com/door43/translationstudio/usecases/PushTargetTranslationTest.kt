@@ -486,7 +486,11 @@ class PushTargetTranslationTest : KoinAndroidTest() {
         """.trimIndent()
 
         server.enqueue(MockResponse()) // create repo response
-        server.enqueue(MockResponse().setBody(reposResponse)) // fetch repos response
-        server.enqueue(MockResponse().setBody(repoResponse)) // fetch extra repo
+        server.enqueue(MockResponse()
+            .setBody(reposResponse)
+            .addHeader("Content-Type", "application/json")) // fetch repos response
+        server.enqueue(MockResponse()
+            .setBody(repoResponse)
+            .addHeader("Content-Type", "application/json")) // fetch extra repo
     }
 }

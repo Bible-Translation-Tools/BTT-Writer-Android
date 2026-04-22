@@ -139,7 +139,10 @@ class RegisterSSHKeysTest : KoinAndroidTest() {
                     }
                 ]
                 """.trimIndent()
-                MockResponse().setBody(body).setResponseCode(200)
+                MockResponse()
+                    .setBody(body)
+                    .addHeader("Content-Type", "application/json")
+                    .setResponseCode(200)
             }
             "delete_key" -> MockResponse().setResponseCode(204)
             "create_key" -> {
@@ -149,7 +152,10 @@ class RegisterSSHKeysTest : KoinAndroidTest() {
                     "key": "test_key_1"
                 }
                 """.trimIndent()
-                MockResponse().setBody(body).setResponseCode(201)
+                MockResponse()
+                    .setBody(body)
+                    .addHeader("Content-Type", "application/json")
+                    .setResponseCode(201)
             }
             else -> MockResponse().setResponseCode(404)
         }

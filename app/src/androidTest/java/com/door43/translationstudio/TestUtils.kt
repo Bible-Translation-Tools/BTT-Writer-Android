@@ -21,6 +21,7 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.unfoldingword.door43client.Door43Client
 import java.lang.reflect.Field
+import java.util.UUID
 
 /**
  * Created by joel on 2/25/2015.
@@ -176,7 +177,7 @@ object TestUtils {
     }
 
     fun generateHash(): String {
-        return App.udid()
+        return UUID.randomUUID().toString()
     }
 
     private fun createLoginResponse(username: String, fullName: String? = null): MockResponse {
@@ -184,7 +185,10 @@ object TestUtils {
             {"id": 1, "username": "$username", "full_name": "${fullName ?: ""}"}
         """.trimIndent()
 
-        return MockResponse().setBody(body).setResponseCode(200)
+        return MockResponse()
+            .setBody(body)
+            .addHeader("Content-Type", "application/json")
+            .setResponseCode(200)
     }
 
     private fun createGetTokenResponse(context: Context): MockResponse {
@@ -192,7 +196,10 @@ object TestUtils {
             [{"id": 1, "name": "${getTokenStub(context)}", "sha1": "${generateHash()}"}]
         """.trimIndent()
 
-        return MockResponse().setBody(body).setResponseCode(200)
+        return MockResponse()
+            .setBody(body)
+            .addHeader("Content-Type", "application/json")
+            .setResponseCode(200)
     }
 
     private fun createTokenResponse(context: Context): MockResponse {
@@ -200,6 +207,9 @@ object TestUtils {
             {"id": 1, "name": "${getTokenStub(context)}", "sha1": "${generateHash()}"}
         """.trimIndent()
 
-        return MockResponse().setBody(body).setResponseCode(201)
+        return MockResponse()
+            .setBody(body)
+            .addHeader("Content-Type", "application/json")
+            .setResponseCode(201)
     }
 }

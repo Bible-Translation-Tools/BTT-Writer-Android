@@ -15,7 +15,6 @@ import com.door43.translationstudio.core.Translator
 import com.door43.usecases.GetRepository
 import com.door43.usecases.GogsLogin
 import com.door43.usecases.ImportProjects
-import com.door43.usecases.SearchGogsUsers
 import kotlinx.coroutines.test.runTest
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -40,7 +39,6 @@ class GetRepositoryTest : KoinAndroidTest() {
     private val profile: Profile by inject()
     private val assetsProvider: AssetsProvider by inject()
     private val getRepository: GetRepository by inject()
-    private val searchGogsUsers: SearchGogsUsers by inject()
     private val gogsLogin: GogsLogin by inject()
     private val prefRepository: IPreferenceRepository by inject()
     private val importProjects: ImportProjects by inject()
@@ -126,7 +124,13 @@ class GetRepositoryTest : KoinAndroidTest() {
         """.trimIndent()
 
         server.enqueue(MockResponse()) // create repo response
-        server.enqueue(MockResponse().setBody(reposResponse)) // fetch repos response
-        server.enqueue(MockResponse().setBody(repoResponse)) // fetch extra repo
+        server.enqueue(MockResponse()
+            .setBody(reposResponse)
+            .addHeader("Content-Type", "application/json")
+        ) // fetch repos response
+        server.enqueue(MockResponse()
+            .setBody(repoResponse)
+            .addHeader("Content-Type", "application/json")
+        ) // fetch extra repo
     }
 }

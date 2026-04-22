@@ -16,8 +16,6 @@ import com.door43.translationstudio.core.Translator
 import com.door43.usecases.GogsLogin
 import com.door43.usecases.ImportProjects
 import com.door43.usecases.PullTargetTranslation
-import com.door43.usecases.RegisterSSHKeys
-import com.door43.usecases.SearchGogsUsers
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkConstructor
@@ -55,9 +53,7 @@ class PullTargetTranslationTest : KoinAndroidTest() {
     private val importProjects: ImportProjects by inject()
     private val translator: Translator by inject()
     private val pullTargetTranslation: PullTargetTranslation by inject()
-    private val searchGogsUsers: SearchGogsUsers by inject()
     private val gogsLogin: GogsLogin by inject()
-    private val registerSSHKeys: RegisterSSHKeys by inject()
     private val prefRepo: IPreferenceRepository by inject()
 
     private val server = MockWebServer()
@@ -408,7 +404,11 @@ class PullTargetTranslationTest : KoinAndroidTest() {
         """.trimIndent()
 
         server.enqueue(MockResponse()) // create repo response
-        server.enqueue(MockResponse().setBody(reposResponse)) // fetch repos response
-        server.enqueue(MockResponse().setBody(repoResponse)) // fetch extra repo
+        server.enqueue(MockResponse()
+            .setBody(reposResponse)
+            .addHeader("Content-Type", "application/json")) // fetch repos response
+        server.enqueue(MockResponse()
+            .setBody(repoResponse)
+            .addHeader("Content-Type", "application/json")) // fetch extra repo
     }
 }

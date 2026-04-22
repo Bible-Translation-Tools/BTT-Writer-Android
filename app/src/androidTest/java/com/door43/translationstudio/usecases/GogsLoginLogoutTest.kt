@@ -79,6 +79,9 @@ class GogsLoginLogoutTest : KoinAndroidTest() {
 
         val userAfter = loginUserWithPassword()
 
+        println(userBefore.token)
+        println(userAfter.token)
+
         assertFalse(
             "Token should be updated after logout",
             userBefore.token == userAfter.token
@@ -110,7 +113,10 @@ class GogsLoginLogoutTest : KoinAndroidTest() {
             {"id": 1, "username": "$username", "full_name": "${fullName ?: ""}"}
         """.trimIndent()
 
-        return MockResponse().setBody(body).setResponseCode(200)
+        return MockResponse()
+            .setBody(body)
+            .addHeader("Content-Type", "application/json")
+            .setResponseCode(200)
     }
 
     private fun createGetTokenResponse(): MockResponse {
@@ -118,7 +124,10 @@ class GogsLoginLogoutTest : KoinAndroidTest() {
             [{"id": 1, "name": "${getTokenStub(appContext)}", "sha1": "${TestUtils.generateHash()}"}]
         """.trimIndent()
 
-        return MockResponse().setBody(body).setResponseCode(200)
+        return MockResponse()
+            .setBody(body)
+            .addHeader("Content-Type", "application/json")
+            .setResponseCode(200)
     }
 
     private fun createTokenResponse(): MockResponse {
@@ -126,6 +135,9 @@ class GogsLoginLogoutTest : KoinAndroidTest() {
             {"id": 1, "name": "${getTokenStub(appContext)}", "sha1": "${TestUtils.generateHash()}"}
         """.trimIndent()
 
-        return MockResponse().setBody(body).setResponseCode(201)
+        return MockResponse()
+            .setBody(body)
+            .addHeader("Content-Type", "application/json")
+            .setResponseCode(201)
     }
 }
