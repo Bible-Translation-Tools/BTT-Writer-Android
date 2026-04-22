@@ -26,9 +26,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
+import org.bibletranslationtools.logger.Logger
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import org.bibletranslationtools.logger.Logger
 
 interface CrashComponent {
 
@@ -45,7 +45,8 @@ interface CrashComponent {
     fun flushAndRestart()
 
     data class CrashState(
-        val notes: String = ""
+        val notes: String = "",
+        val success: Boolean = false
     )
 
     sealed interface Event {
@@ -121,7 +122,7 @@ class DefaultCrashComponent(
                 uploadCrashReport.execute(notes)
             }
             if (uploaded) {
-
+                _state.update { it.copy(success = true) }
             } else {
                 _event.trySend(CrashComponent.Event.UploadError)
             }

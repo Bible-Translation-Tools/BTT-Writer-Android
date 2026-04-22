@@ -153,6 +153,23 @@ fun FeedbackDialog(
         )
     }
 
+    if (state.success) {
+        BaseDialog(
+            title = stringResource(R.string.success),
+            message = stringResource(R.string.upload_complete),
+            onDismiss = onDismiss
+        ) { onDismiss ->
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                TextButton(onClick = onDismiss) {
+                    Text(stringResource(R.string.label_close))
+                }
+            }
+        }
+    }
+
     progress?.let {
         ProgressDialog(
             message = it.message,

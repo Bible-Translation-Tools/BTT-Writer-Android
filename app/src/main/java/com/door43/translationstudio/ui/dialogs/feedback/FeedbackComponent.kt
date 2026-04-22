@@ -45,7 +45,8 @@ interface FeedbackComponent {
     data class FeedbackState(
         val message: String = "",
         val release: CheckForLatestRelease.Release? = null,
-        val uploadError: String? = null
+        val uploadError: String? = null,
+        val success: Boolean = false
     )
 
     sealed interface FeedbackEvent {
@@ -146,8 +147,7 @@ class DefaultFeedbackComponent(
             uploadFeedback.execute(message)
         }
         if (success) {
-            val msg = application.getString(R.string.success)
-            _event.trySend(FeedbackComponent.FeedbackEvent.SnackbarMessage(msg))
+            _state.update { it.copy(success = true) }
         } else {
             val msg = if (App.isNetworkAvailable) {
                 application.getString(R.string.upload_feedback_failed)

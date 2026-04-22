@@ -20,10 +20,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -42,6 +46,9 @@ fun CrashReporterScreen(
 
     val state by component.state.collectAsStateWithLifecycle()
     val progress by component.progress.collectAsStateWithLifecycle()
+
+    val focusRequester = remember { FocusRequester() }
+    val focusManager = LocalFocusManager.current
 
     LaunchedEffect(component) {
         component.event.collect { event ->
@@ -80,6 +87,7 @@ fun CrashReporterScreen(
                     .fillMaxWidth()
                     .weight(1f)
                     .padding(bottom = 8.dp)
+                    .focusRequester(focusRequester)
             )
 
             Row(
@@ -100,7 +108,10 @@ fun CrashReporterScreen(
                 }
 
                 Button(
-                    onClick = { showConfirmDialog = true },
+                    onClick = {
+                        focusManager.clearFocus()
+                        showConfirmDialog = true
+                    },
                     modifier = Modifier
                         .weight(1f)
                         .padding(start = 4.dp)
@@ -177,6 +188,23 @@ fun CrashReporterScreen(
         ) {
             Button(onClick = { showUploadErrorDialog = false }) {
                 Text(stringResource(R.string.label_ok))
+            }
+        }
+    }
+
+    if (state.success) {
+        BaseDialog(
+            title = stringResource(R.string.success),
+            message = stringResource(R.string.upload_complete),
+            onDismiss = component::flushAndRestart
+        ) { onDismiss ->
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                TextButton(onClick = onDismiss) {
+                    Text(stringResource(R.string.label_close))
+                }
             }
         }
     }
