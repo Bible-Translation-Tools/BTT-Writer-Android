@@ -4,7 +4,7 @@ import com.door43.OnProgressListener
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TargetTranslation
 import org.unfoldingword.gogsclient.Repository
-import org.unfoldingword.tools.logger.Logger
+import org.bibletranslationtools.logger.Logger
 
 class GetRepository(
     private val createRepository: CreateRepository,

@@ -32,7 +32,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import org.unfoldingword.tools.logger.Logger
+import org.bibletranslationtools.logger.Logger
 
 interface SplashComponent {
     val state: StateFlow<State>

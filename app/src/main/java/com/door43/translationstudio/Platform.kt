@@ -17,7 +17,7 @@ import com.door43.translationstudio.Platform.Companion.TB
 import com.door43.translationstudio.services.BackupService
 import com.door43.util.FileUtilities
 import com.door43.util.RuntimeWrapper
-import org.unfoldingword.tools.logger.Logger
+import org.bibletranslationtools.logger.Logger
 import java.io.File
 import java.io.RandomAccessFile
 import java.text.DecimalFormat

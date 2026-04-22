@@ -25,7 +25,7 @@ import androidx.compose.ui.unit.dp
 import com.door43.translationstudio.R
 import com.door43.translationstudio.ui.dialogs.BaseDialog
 import com.door43.translationstudio.ui.dialogs.OverlayDialog
-import org.unfoldingword.tools.logger.LogEntry
+import org.bibletranslationtools.logger.LogEntry
 
 @Composable
 fun ErrorLogDialog(
@@ -48,7 +48,7 @@ fun ErrorLogDialog(
             LazyColumn(modifier = Modifier.weight(1f)) {
                 items(logs) { log ->
                     LogItemRow(log = log) {
-                        if (!log.details.isNullOrEmpty()) {
+                        if (log.details.isNotEmpty()) {
                             selectedLogDetails = log.details
                         }
                     }

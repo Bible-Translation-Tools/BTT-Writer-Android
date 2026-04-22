@@ -1,9 +1,9 @@
 package com.door43.translationstudio.core
 
+import org.bibletranslationtools.logger.Logger
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
-import org.unfoldingword.tools.logger.Logger
 
 /**
  * Created by blm on 4/14/16.

@@ -10,7 +10,7 @@ import com.door43.translationstudio.tasks.io.RequestAPI
 import org.json.JSONArray
 import org.json.JSONException
 import org.unfoldingword.gogsclient.User
-import org.unfoldingword.tools.logger.Logger
+import org.bibletranslationtools.logger.Logger
 
 class GogsLogout(
     private val context: Context,

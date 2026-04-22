@@ -21,7 +21,7 @@ import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import org.unfoldingword.tools.http.Request
 import org.unfoldingword.tools.logger.GithubReporter
-import org.unfoldingword.tools.logger.Logger
+import org.bibletranslationtools.logger.Logger
 import java.io.File
 import java.io.IOException
 

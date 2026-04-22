@@ -2,7 +2,7 @@ package com.door43.usecases
 
 import com.door43.OnProgressListener
 import org.unfoldingword.door43client.Door43Client
-import org.unfoldingword.tools.logger.Logger
+import org.bibletranslationtools.logger.Logger
 
 class UpdateCatalogs(
     private val library: Door43Client

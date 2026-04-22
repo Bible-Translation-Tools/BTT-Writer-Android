@@ -61,7 +61,7 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.resourcecontainer.ResourceContainer
-import org.unfoldingword.tools.logger.Logger
+import org.bibletranslationtools.logger.Logger
 import java.util.Locale
 import java.util.regex.Pattern
 
@@ -287,7 +287,7 @@ class DefaultReviewModeComponent(
                         marked++
                     } catch (e: Exception) {
                         Logger.e(
-                            this::class.simpleName,
+                            this::javaClass.name,
                             "Error marking chunk done: ${item.id}",
                             e
                         )
@@ -300,7 +300,7 @@ class DefaultReviewModeComponent(
                         items.value.firstOrNull()?.chunk?.target?.commit()
                     } catch (e: Exception) {
                         Logger.e(
-                            this::class.simpleName,
+                            this::javaClass.name,
                             "Failed to commit translation",
                             e
                         )
@@ -976,14 +976,14 @@ class DefaultReviewModeComponent(
                     history.read(commit)
                 } catch (e: IllegalStateException) {
                     Logger.w(
-                        this@DefaultReviewModeComponent::class.simpleName,
+                        this@DefaultReviewModeComponent::javaClass.name,
                         "History navigation past end of file history",
                         e
                     )
                     ""
                 } catch (e: Exception) {
                     Logger.w(
-                        this@DefaultReviewModeComponent::class.simpleName,
+                        this@DefaultReviewModeComponent::javaClass.name,
                         "History read exception",
                         e
                     )

@@ -1,7 +1,7 @@
 package com.door43.usecases
 
 import com.door43.translationstudio.core.MergeConflictsHandler
-import org.unfoldingword.tools.logger.Logger
+import org.bibletranslationtools.logger.Logger
 import java.util.regex.Pattern
 
 object ParseMergeConflicts {

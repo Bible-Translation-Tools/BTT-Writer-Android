@@ -14,7 +14,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.koin.test.KoinTest
 import org.koin.test.inject
-import org.unfoldingword.tools.logger.Logger
+import org.bibletranslationtools.logger.Logger
 import java.io.IOException
 
 // End-to-end integration tests that verify the full rendering pipeline:

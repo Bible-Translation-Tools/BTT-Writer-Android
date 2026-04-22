@@ -11,7 +11,7 @@ import com.door43.translationstudio.core.Profile
 import com.door43.util.FileUtilities
 import org.unfoldingword.gogsclient.GogsAPI
 import org.unfoldingword.gogsclient.PublicKey
-import org.unfoldingword.tools.logger.Logger
+import org.bibletranslationtools.logger.Logger
 import java.io.IOException
 
 class RegisterSSHKeys(

@@ -1,5 +1,5 @@
 package com.door43.translationstudio.rendering.spannables
-import org.unfoldingword.tools.logger.Logger
+import org.bibletranslationtools.logger.Logger
 import java.util.regex.Pattern
 
 class PassageLinkSpan(

@@ -16,7 +16,7 @@ import org.eclipse.jgit.api.errors.TransportException
 import org.eclipse.jgit.errors.NoRemoteRepositoryException
 import org.eclipse.jgit.transport.RefSpec
 import org.eclipse.jgit.transport.RemoteRefUpdate
-import org.unfoldingword.tools.logger.Logger
+import org.bibletranslationtools.logger.Logger
 import java.io.IOException
 
 class PushTargetTranslation(
@@ -115,7 +115,7 @@ class PushTargetTranslation(
             // give back the response message
             return Result(status, response.toString())
         } catch (e: TransportException) {
-            Logger.e(this.javaClass.name, e.message, e)
+            Logger.e(this.javaClass.name, e.message ?: "Error", e)
             val cause = e.cause
             if (cause != null) {
                 val subException = cause.cause
@@ -132,14 +132,14 @@ class PushTargetTranslation(
             }
             return Result(status, null)
         } catch (e: OutOfMemoryError) {
-            Logger.e(this.javaClass.name, e.message, e)
+            Logger.e(this.javaClass.name, e.message ?: "Error", e)
             status = Status.OUT_OF_MEMORY
             return Result(status, null)
         } catch (e: java.lang.Exception) {
-            Logger.e(this.javaClass.name, e.message, e)
+            Logger.e(this.javaClass.name, e.message ?: "Error", e)
             return Result(status, null)
         } catch (e: Throwable) {
-            Logger.e(this.javaClass.name, e.message, e)
+            Logger.e(this.javaClass.name, e.message ?: "Error", e)
             return Result(status, null)
         }
     }

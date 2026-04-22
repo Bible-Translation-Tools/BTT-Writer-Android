@@ -6,7 +6,7 @@ import com.door43.translationstudio.core.Util
 import com.door43.translationstudio.ui.translate.TranslationHelp
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.resourcecontainer.Link
-import org.unfoldingword.tools.logger.Logger
+import org.bibletranslationtools.logger.Logger
 import java.util.regex.Pattern
 
 class RenderHelps(
@@ -68,7 +68,7 @@ class RenderHelps(
                     )
                 }
             } catch (e: Exception) {
-                Logger.e(RenderHelps::class.java.simpleName, e.message, e)
+                Logger.e(RenderHelps::class.java.simpleName, e.message ?: "error", e)
             }
         }
         return links
@@ -116,7 +116,7 @@ class RenderHelps(
                     )
                 }
             } catch (e: Exception) {
-                Logger.e(RenderHelps::class.java.simpleName, e.message, e);
+                Logger.e(RenderHelps::class.java.simpleName, e.message ?: "Error", e);
             }
         }
 
@@ -153,7 +153,7 @@ class RenderHelps(
                     )
                 }
             } catch (e: java.lang.Exception) {
-                Logger.e(RenderHelps::class.java.simpleName, e.message, e)
+                Logger.e(RenderHelps::class.java.simpleName, e.message ?: "Error", e)
             }
         }
         return translationNotes

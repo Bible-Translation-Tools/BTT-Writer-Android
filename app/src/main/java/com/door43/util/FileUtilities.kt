@@ -7,7 +7,7 @@ import android.provider.DocumentsContract
 import android.provider.OpenableColumns
 import androidx.documentfile.provider.DocumentFile
 import androidx.core.net.toFile
-import org.unfoldingword.tools.logger.Logger
+import org.bibletranslationtools.logger.Logger
 import java.io.Closeable
 import java.io.File
 import java.io.FileFilter

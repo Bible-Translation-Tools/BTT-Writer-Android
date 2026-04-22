@@ -21,7 +21,7 @@ import com.door43.util.RepoUtils
 import org.eclipse.jgit.api.errors.JGitInternalException
 import org.koin.android.ext.android.inject
 import org.unfoldingword.tools.foreground.Foreground
-import org.unfoldingword.tools.logger.Logger
+import org.bibletranslationtools.logger.Logger
 import java.util.Timer
 import java.util.TimerTask
 import kotlin.getValue

@@ -20,7 +20,7 @@ import com.door43.util.FileUtilities
 import kotlinx.io.IOException
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.resourcecontainer.ResourceContainer
-import org.unfoldingword.tools.logger.Logger
+import org.bibletranslationtools.logger.Logger
 import java.io.File
 
 class UpdateApp(

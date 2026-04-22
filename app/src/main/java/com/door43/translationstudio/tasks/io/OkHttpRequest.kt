@@ -3,7 +3,7 @@ package com.door43.translationstudio.tasks.io
 import android.util.Base64
 import org.unfoldingword.gogsclient.Response
 import org.unfoldingword.gogsclient.User
-import org.unfoldingword.tools.logger.Logger
+import org.bibletranslationtools.logger.Logger
 import java.io.IOException
 import java.io.UnsupportedEncodingException
 import java.util.concurrent.TimeUnit

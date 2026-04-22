@@ -15,7 +15,7 @@ import com.door43.util.FileUtilities.safeDelete
 import com.door43.util.Zip
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.resourcecontainer.ResourceContainer
-import org.unfoldingword.tools.logger.Logger
+import org.bibletranslationtools.logger.Logger
 import java.io.File
 import java.io.FileInputStream
 import java.io.InputStream
@@ -144,7 +144,7 @@ class ImportProjects(
                             conflictingTargetTranslation.merge(project, null)
                             conflictingTargetTranslations.add(conflictingTargetTranslation)
                         } catch (e: Exception) {
-                            Logger.e(this::class.simpleName, "Failed to merge import folder $project", e)
+                            Logger.e(this::javaClass.name, "Failed to merge import folder $project", e)
                             success = false
                             continue
                         }
@@ -163,7 +163,7 @@ class ImportProjects(
 
             progressListener?.onProgress(1f, "Completed!")
         } catch (e: Exception) {
-            Logger.e(this::class.simpleName, "Failed to import folder $projects", e)
+            Logger.e(this::javaClass.name, "Failed to import folder $projects", e)
             success = false
         }
 
@@ -182,7 +182,7 @@ class ImportProjects(
         val externalContainer = try {
             ResourceContainer.load(tempDir)
         } catch (e: Exception) {
-            Logger.e(this::class.simpleName, "Could not import RC", e)
+            Logger.e(this::javaClass.name, "Could not import RC", e)
             return ImportSourceResult(
                 success = false,
                 hasConflict = false,
@@ -223,7 +223,7 @@ class ImportProjects(
                 hasConflict = false
             )
         } catch (e: Exception) {
-            Logger.e(this::class.simpleName, "Could not import RC", e)
+            Logger.e(this::javaClass.name, "Could not import RC", e)
             ImportSourceResult(
                 success = false,
                 hasConflict = false,

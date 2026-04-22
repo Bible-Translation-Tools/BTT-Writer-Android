@@ -5,7 +5,7 @@ import com.door43.translationstudio.App
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.door43client.models.Translation
 import org.unfoldingword.resourcecontainer.ResourceContainer
-import org.unfoldingword.tools.logger.Logger
+import org.bibletranslationtools.logger.Logger
 
 class DownloadResourceContainers(
     private val library: Door43Client

@@ -1,6 +1,6 @@
 package com.door43.translationstudio.rendering.spannables
 
-import org.unfoldingword.tools.logger.Logger
+import org.bibletranslationtools.logger.Logger
 import org.w3c.dom.Element
 import org.w3c.dom.Node
 import java.io.ByteArrayOutputStream

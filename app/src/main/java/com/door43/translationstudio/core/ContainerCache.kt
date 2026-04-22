@@ -1,12 +1,12 @@
 package com.door43.translationstudio.core
 
+import org.bibletranslationtools.logger.Logger
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.resourcecontainer.ContainerTools
 import org.unfoldingword.resourcecontainer.Language
 import org.unfoldingword.resourcecontainer.Link
 import org.unfoldingword.resourcecontainer.ResourceContainer
 import org.unfoldingword.resourcecontainer.errors.InvalidRCException
-import org.unfoldingword.tools.logger.Logger
 import java.util.Collections
 import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap

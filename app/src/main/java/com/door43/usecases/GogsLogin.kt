@@ -13,7 +13,7 @@ import org.json.JSONException
 import org.unfoldingword.gogsclient.GogsAPI
 import org.unfoldingword.gogsclient.Token
 import org.unfoldingword.gogsclient.User
-import org.unfoldingword.tools.logger.Logger
+import org.bibletranslationtools.logger.Logger
 
 class GogsLogin(
     private val context: Context,

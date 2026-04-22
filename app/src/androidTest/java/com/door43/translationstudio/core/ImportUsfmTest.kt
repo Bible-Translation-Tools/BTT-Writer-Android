@@ -21,7 +21,7 @@ import org.koin.test.inject
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.door43client.models.ChunkMarker
 import org.unfoldingword.door43client.models.TargetLanguage
-import org.unfoldingword.tools.logger.Logger
+import org.bibletranslationtools.logger.Logger
 import java.io.File
 import java.io.IOException
 import java.util.regex.Pattern

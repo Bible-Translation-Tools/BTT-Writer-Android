@@ -12,7 +12,7 @@ import com.door43.util.sortNumerically
 import org.json.JSONException
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.resourcecontainer.ResourceContainer
-import org.unfoldingword.tools.logger.Logger
+import org.bibletranslationtools.logger.Logger
 
 class ValidateProject(
     private val context: Context,

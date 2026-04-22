@@ -17,14 +17,14 @@ import com.door43.di.prodDataModule
 import com.door43.usecases.BackupRC
 import com.door43.util.FileUtilities
 import com.door43.util.RuntimeWrapper
+import org.bibletranslationtools.logger.LogLevel
+import org.bibletranslationtools.logger.Logger
 import org.koin.android.ext.android.inject
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.startKoin
 import org.koin.core.logger.Level
 import org.unfoldingword.tools.foreground.Foreground
-import org.unfoldingword.tools.logger.LogLevel
-import org.unfoldingword.tools.logger.Logger
 import java.io.File
 import java.io.IOException
 import java.util.Locale

@@ -13,7 +13,7 @@ import com.door43.translationstudio.R
 import org.koin.android.ext.android.inject
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.tools.foreground.Foreground
-import org.unfoldingword.tools.logger.Logger
+import org.bibletranslationtools.logger.Logger
 
 /**
  * This should be extended by all activities in the app so that we can perform verification on

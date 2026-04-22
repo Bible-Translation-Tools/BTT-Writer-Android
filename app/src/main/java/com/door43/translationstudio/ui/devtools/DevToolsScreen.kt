@@ -44,7 +44,7 @@ import com.door43.translationstudio.R
 import com.door43.translationstudio.ui.dialogs.BaseDialog
 import com.door43.translationstudio.ui.dialogs.ProgressDialog
 import kotlinx.coroutines.launch
-import org.unfoldingword.tools.logger.Logger
+import org.bibletranslationtools.logger.Logger
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

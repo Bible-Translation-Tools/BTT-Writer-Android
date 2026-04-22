@@ -11,7 +11,7 @@ import com.door43.util.FileUtilities.deleteQuietly
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.errors.TransportException
 import org.eclipse.jgit.errors.NoRemoteRepositoryException
-import org.unfoldingword.tools.logger.Logger
+import org.bibletranslationtools.logger.Logger
 import java.io.File
 
 class CloneRepository(
@@ -43,7 +43,7 @@ class CloneRepository(
                 cloneResult.repository.close()
                 status = Status.SUCCESS
             } catch (e: TransportException) {
-                Logger.e(this.javaClass.name, e.message, e)
+                Logger.e(this.javaClass.name, e.message ?: "Error", e)
                 val cause = e.cause
                 if (cause != null) {
                     val subException = cause.cause
@@ -64,10 +64,10 @@ class CloneRepository(
                     }
                 }
             } catch (e: OutOfMemoryError) {
-                Logger.e(this.javaClass.name, e.message, e)
+                Logger.e(this.javaClass.name, e.message ?: "Error", e)
                 status = Status.OUT_OF_MEMORY
             } catch (e: Throwable) {
-                Logger.e(this.javaClass.name, e.message, e)
+                Logger.e(this.javaClass.name, e.message ?: "Error", e)
             }
         } catch (e: Exception) {
             Logger.e(

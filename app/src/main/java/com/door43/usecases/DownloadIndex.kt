@@ -8,7 +8,7 @@ import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
 import com.door43.translationstudio.R
 import org.unfoldingword.door43client.Door43Client
-import org.unfoldingword.tools.logger.Logger
+import org.bibletranslationtools.logger.Logger
 import java.net.HttpURLConnection
 import java.net.URL
 

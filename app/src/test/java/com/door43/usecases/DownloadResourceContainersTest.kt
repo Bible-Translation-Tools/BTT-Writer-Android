@@ -31,7 +31,7 @@ import org.unfoldingword.resourcecontainer.Language
 import org.unfoldingword.resourcecontainer.Project
 import org.unfoldingword.resourcecontainer.Resource
 import org.unfoldingword.resourcecontainer.ResourceContainer
-import org.unfoldingword.tools.logger.Logger
+import org.bibletranslationtools.logger.Logger
 
 class DownloadResourceContainersTest {
 

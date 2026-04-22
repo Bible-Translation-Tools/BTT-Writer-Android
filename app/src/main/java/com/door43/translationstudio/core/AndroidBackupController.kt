@@ -3,7 +3,7 @@ package com.door43.translationstudio.core
 import android.content.Context
 import android.content.Intent
 import com.door43.translationstudio.services.BackupService
-import org.unfoldingword.tools.logger.Logger
+import org.bibletranslationtools.logger.Logger
 
 class AndroidBackupController(private val context: Context) : BackupController {
     override fun restartServiceIfRunning() {

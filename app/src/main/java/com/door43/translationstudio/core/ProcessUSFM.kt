@@ -16,11 +16,11 @@ import com.door43.util.FileUtilities
 import com.door43.util.Zip
 import com.door43.util.sortNumerically
 import com.door43.util.sortNumericallyComparator
+import org.bibletranslationtools.logger.Logger
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.door43client.models.ChunkMarker
 import org.unfoldingword.door43client.models.TargetLanguage
 import org.unfoldingword.resourcecontainer.Resource
-import org.unfoldingword.tools.logger.Logger
 import java.io.File
 import java.io.FileInputStream
 import java.io.InputStream

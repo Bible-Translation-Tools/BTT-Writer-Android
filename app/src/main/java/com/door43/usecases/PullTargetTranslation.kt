@@ -17,7 +17,7 @@ import org.eclipse.jgit.api.errors.CheckoutConflictException
 import org.eclipse.jgit.api.errors.TransportException
 import org.eclipse.jgit.errors.NoRemoteRepositoryException
 import org.eclipse.jgit.merge.MergeStrategy
-import org.unfoldingword.tools.logger.Logger
+import org.bibletranslationtools.logger.Logger
 import java.io.IOException
 
 class PullTargetTranslation(
@@ -157,7 +157,7 @@ class PullTargetTranslation(
             }
             return Result(status, "Pulled Successfully!")
         } catch (e: TransportException) {
-            Logger.e(this.javaClass.name, e.message, e)
+            Logger.e(this.javaClass.name, e.message ?: "Error", e)
             val cause = e.cause
             if (cause != null) {
                 val subException = cause.cause
@@ -172,7 +172,7 @@ class PullTargetTranslation(
             }
             return Result(status, null)
         } catch (e: OutOfMemoryError) {
-            Logger.e(this.javaClass.name, e.message, e)
+            Logger.e(this.javaClass.name, e.message ?: "Error", e)
             status = Status.OUT_OF_MEMORY
             return Result(status, null)
         } catch (e: Exception) {
@@ -180,10 +180,10 @@ class PullTargetTranslation(
             if (cause is NoRemoteRepositoryException) {
                 status = Status.NO_REMOTE_REPO
             }
-            Logger.e(this.javaClass.name, e.message, e)
+            Logger.e(this.javaClass.name, e.message ?: "Error", e)
             return Result(status, null)
         } catch (e: Throwable) {
-            Logger.e(this.javaClass.name, e.message, e)
+            Logger.e(this.javaClass.name, e.message ?: "Error", e)
             return Result(status, null)
         }
     }

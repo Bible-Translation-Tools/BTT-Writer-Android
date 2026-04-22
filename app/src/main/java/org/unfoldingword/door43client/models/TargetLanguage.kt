@@ -24,26 +24,4 @@ class TargetLanguage(
         json.put("is_gateway_language", isGatewayLanguage)
         return json
     }
-
-    companion object {
-        /**
-         * Creates a target language from JSON
-         * @param json
-         * @return
-         * @throws JSONException
-         */
-        @Throws(JSONException::class)
-        fun fromJSON(json: JSONObject): TargetLanguage {
-            val l = Language.fromJSON(json)
-            // TODO: 9/29/16  parse other info
-            return TargetLanguage(
-                l.slug,
-                l.name,
-                json.getString("anglicized_name"),
-                l.direction,
-                json.getString("region"),
-                json.getBoolean("is_gateway_language")
-            )
-        }
-    }
 }

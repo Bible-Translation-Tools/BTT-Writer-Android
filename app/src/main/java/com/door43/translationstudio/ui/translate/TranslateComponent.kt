@@ -75,7 +75,7 @@ import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.door43client.models.Translation
 import org.unfoldingword.resourcecontainer.Project
 import org.unfoldingword.resourcecontainer.ResourceContainer
-import org.unfoldingword.tools.logger.Logger
+import org.bibletranslationtools.logger.Logger
 import java.util.Locale
 import java.util.Timer
 import java.util.TimerTask
@@ -294,7 +294,7 @@ class DefaultTranslateComponent(
             }
         } ?: run {
             Logger.e(
-                this::class.simpleName,
+                this::javaClass.name,
                 "A valid target translation id is required. " +
                         "Received $translationId but the translation could not be found"
             )
@@ -799,7 +799,7 @@ class DefaultTranslateComponent(
                         targetTranslation.commit()
                     } catch (e: Exception) {
                         Logger.e(
-                            this::class.simpleName,
+                            this::javaClass.name,
                             "Failed to commit the latest translation of " +
                                     targetTranslation.id,
                             e
@@ -816,7 +816,7 @@ class DefaultTranslateComponent(
                 targetTranslation.commit()
             } catch (e: Exception) {
                 Logger.e(
-                    this::class.simpleName,
+                    this::javaClass.name,
                     "Failed to commit changes before closing translation",
                     e
                 )

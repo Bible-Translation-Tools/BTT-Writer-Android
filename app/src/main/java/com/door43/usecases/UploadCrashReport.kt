@@ -3,9 +3,8 @@ package com.door43.usecases
 import android.content.Context
 import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
-import org.unfoldingword.tools.http.Request
-import org.unfoldingword.tools.logger.GithubReporter
-import org.unfoldingword.tools.logger.Logger
+import org.bibletranslationtools.logger.GithubReporter
+import org.bibletranslationtools.logger.Logger
 import java.io.IOException
 
 class UploadCrashReport(
@@ -13,8 +12,8 @@ class UploadCrashReport(
     private val directoryProvider: IDirectoryProvider,
     private val prefRepository: IPreferenceRepository
 ) {
-    fun execute(message: String): Boolean {
-        var responseCode = -1
+    suspend fun execute(message: String): Boolean {
+        var uploaded = false
 
         val logFile = directoryProvider.logFile
         val githubTokenIdentifier = context.resources.getIdentifier(
@@ -27,24 +26,23 @@ class UploadCrashReport(
         // TRICKY: make sure the github_oauth2 token has been set
         if (githubTokenIdentifier != 0) {
             val reporter = GithubReporter(
-                context,
-                githubUrl,
-                context.resources.getString(githubTokenIdentifier)
+                context = context,
+                repositoryUrl = githubUrl,
+                githubOauth2Token = context.resources.getString(githubTokenIdentifier)
             )
             val stackTraces = Logger.listStacktraces()
             if (stackTraces.isNotEmpty()) {
                 try {
                     // upload most recent stacktrace
-                    val request: Request = reporter.reportCrash(message, stackTraces[0], logFile)
-                    responseCode = request.responseCode
+                    uploaded = reporter.reportCrash(message, stackTraces[0], logFile)
                 } catch (e: IOException) {
                     e.printStackTrace()
                 }
 
-                if (!isSuccess(responseCode)) {
+                if (!uploaded) {
                     Logger.e(
                         this::class.java.simpleName,
-                        "Failed to upload crash report. Code: $responseCode"
+                        "Failed to upload crash report."
                     )
                 } else { // success
                     // empty the log
@@ -53,10 +51,6 @@ class UploadCrashReport(
             }
         }
 
-        return isSuccess(responseCode)
-    }
-
-    private fun isSuccess(responseCode: Int): Boolean {
-        return responseCode in 200..202
+        return uploaded
     }
 }

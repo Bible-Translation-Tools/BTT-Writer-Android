@@ -6,7 +6,7 @@ import com.door43.data.IPreferenceRepository
 import com.door43.translationstudio.network.GetRequest
 import org.json.JSONException
 import org.json.JSONObject
-import org.unfoldingword.tools.logger.Logger
+import org.bibletranslationtools.logger.Logger
 import java.io.IOException
 
 class CheckForLatestRelease(

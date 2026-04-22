@@ -8,7 +8,7 @@ import com.door43.util.FileUtilities
 import com.door43.util.Zip
 import com.jcraft.jsch.JSch
 import com.jcraft.jsch.KeyPair
-import org.unfoldingword.tools.logger.Logger
+import org.bibletranslationtools.logger.Logger
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
