@@ -16,6 +16,7 @@ import io.mockk.mockkStatic
 import io.mockk.spyk
 import junit.framework.TestCase.assertFalse
 import junit.framework.TestCase.assertTrue
+import kotlinx.coroutines.test.runTest
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
@@ -23,7 +24,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.koin.core.component.inject
-import org.unfoldingword.tools.logger.LogLevel
+import org.bibletranslationtools.logger.LogLevel
 import org.bibletranslationtools.logger.Logger
 
 @RunWith(AndroidJUnit4::class)
@@ -73,7 +74,7 @@ class UploadFeedbackTest : KoinAndroidTest() {
     }
 
     @Test
-    fun testUploadFeedback() {
+    fun testUploadFeedback() = runTest {
         server.enqueue(MockResponse().setBody("{success: true}").setResponseCode(200))
 
         // create some logs
@@ -120,7 +121,7 @@ class UploadFeedbackTest : KoinAndroidTest() {
     }
 
     @Test
-    fun testUploadFailsOnServerDown() {
+    fun testUploadFailsOnServerDown() = runTest {
         server.enqueue(MockResponse().setBody("{success: true}").setResponseCode(500))
 
         // create some logs

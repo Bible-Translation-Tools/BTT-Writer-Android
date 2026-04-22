@@ -16,6 +16,7 @@ import io.mockk.mockkStatic
 import io.mockk.spyk
 import junit.framework.TestCase.assertFalse
 import junit.framework.TestCase.assertTrue
+import kotlinx.coroutines.test.runTest
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
@@ -75,7 +76,7 @@ class UploadCrashReportTest : KoinAndroidTest() {
     }
 
     @Test
-    fun testUploadCrashReport() {
+    fun testUploadCrashReport() = runTest {
         createStackTraces()
 
         server.enqueue(MockResponse().setBody("{success: true}").setResponseCode(200))
@@ -108,7 +109,7 @@ class UploadCrashReportTest : KoinAndroidTest() {
     }
 
     @Test
-    fun crashReportFailsWhenNoCrashes() {
+    fun crashReportFailsWhenNoCrashes() = runTest {
         deleteStackTraces()
 
         server.enqueue(MockResponse().setBody("{success: true}").setResponseCode(200))
@@ -121,7 +122,7 @@ class UploadCrashReportTest : KoinAndroidTest() {
     }
 
     @Test
-    fun testUploadCrashServerDown() {
+    fun testUploadCrashServerDown() = runTest {
         createStackTraces()
 
         server.enqueue(MockResponse().setResponseCode(500))

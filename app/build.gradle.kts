@@ -175,6 +175,9 @@ dependencies {
     testImplementation(libs.junit)
     androidTestUtil(libs.androidx.test.orchestrator)
 
+    testImplementation(libs.kotlinx.coroutines.test)
+    androidTestImplementation(libs.kotlinx.coroutines.test)
+
     // Mockk
     testImplementation(libs.mockk)
     testImplementation(libs.mockk.agent)
