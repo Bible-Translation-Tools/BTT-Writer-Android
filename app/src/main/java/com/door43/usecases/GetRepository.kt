@@ -3,7 +3,7 @@ package com.door43.usecases
 import com.door43.OnProgressListener
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TargetTranslation
-import org.unfoldingword.gogsclient.Repository
+import org.bibletranslationtools.gogsclient.Repository
 import org.bibletranslationtools.logger.Logger
 
 class GetRepository(
@@ -11,13 +11,13 @@ class GetRepository(
     private val searchRepository: SearchGogsRepositories,
     private val profile: Profile
 ) {
-    fun execute(
+    suspend fun execute(
         translation: TargetTranslation,
         progressListener: OnProgressListener? = null
     ): Repository? {
         progressListener?.onProgress(-1f, "Getting repository")
 
-        if (profile.gogsUser == null) {
+        val user = profile.gogsUser ?: run {
             Logger.e(this.javaClass.name, "Gogs user is not set")
             return null
         }
@@ -31,21 +31,15 @@ class GetRepository(
         // For example: en_ulb_mat_txt, custom_en_ulb_mat_text, en_ulb_mat_text_l3, etc.
         // Setting limit to 100 should be enough to cover most of the cases.
         val repositories = searchRepository.execute(
-            profile.gogsUser!!.id,
+            user.id,
             translation.id,
             100,
             progressListener
         )
 
-        if (repositories.isNotEmpty()) {
-            for (repo in repositories) {
-                // Filter repos to have exact user and repo name
-                if (repo.owner.username == profile.gogsUser!!.username && repo.name == translation.id) {
-                    return repo
-                }
-            }
-        }
+        return repositories.find {
+            it.owner?.username == user.username && it.name == translation.id
 
-        return null
+        }
     }
 }

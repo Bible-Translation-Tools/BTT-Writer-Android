@@ -7,6 +7,7 @@ import com.door43.data.setDefaultPref
 import com.door43.translationstudio.IntegrationTest
 import com.door43.translationstudio.KoinAndroidTest
 import com.door43.usecases.SearchGogsUsers
+import kotlinx.coroutines.test.runTest
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
@@ -44,7 +45,7 @@ class SearchGogsUsersTest : KoinAndroidTest() {
     }
 
     @Test
-    fun searchParticularUser() {
+    fun searchParticularUser() = runTest {
         val user = "test"
         var progressMessage: String? = null
         val progressListener = OnProgressListener { _, message ->
@@ -75,7 +76,7 @@ class SearchGogsUsersTest : KoinAndroidTest() {
     }
 
     @Test
-    fun searchMultipleUsersByQuery() {
+    fun searchMultipleUsersByQuery() = runTest {
         val successResponse = """
             {
                 "data": [
@@ -107,7 +108,7 @@ class SearchGogsUsersTest : KoinAndroidTest() {
     }
 
     @Test
-    fun searchNonExistentUsers() {
+    fun searchNonExistentUsers() = runTest {
         val successResponse = """
             {
                 "data": [],

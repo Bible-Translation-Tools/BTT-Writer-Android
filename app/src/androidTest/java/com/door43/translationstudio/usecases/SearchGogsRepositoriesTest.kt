@@ -8,6 +8,8 @@ import com.door43.translationstudio.IntegrationTest
 import com.door43.translationstudio.KoinAndroidTest
 import com.door43.usecases.SearchGogsRepositories
 import com.door43.usecases.SearchGogsUsers
+import com.door43.util.JsonLenient
+import kotlinx.coroutines.test.runTest
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.Assert.assertEquals
@@ -39,7 +41,7 @@ class SearchGogsRepositoriesTest : KoinAndroidTest() {
     }
 
     @Test
-    fun searchReposByUser() {
+    fun searchReposByUser() = runTest {
         val userResponse = """
             {
                 "data": [
@@ -62,7 +64,7 @@ class SearchGogsRepositoriesTest : KoinAndroidTest() {
         assertEquals("Gogs user id should match", gogsUser?.id, 222)
         assertEquals("Gogs username should match", gogsUser?.username, user)
 
-        val owner = gogsUser?.toJSON()?.toString()?.let { "owner: $it" } ?: ""
+        val owner = gogsUser?.let { JsonLenient.encodeToString(it) }?.let { "owner: $it" } ?: ""
         val repoResponse = """
             {
                 "id": 222,
@@ -100,11 +102,11 @@ class SearchGogsRepositoriesTest : KoinAndroidTest() {
         assertEquals("Repo cloneUrl should match","http://example.com/test_repo.git", repo.cloneUrl)
         assertEquals("Repo sshUrl should match","ssh://example.com/test_repo.git", repo.sshUrl)
         assertFalse("Repo should not be private", repo.isPrivate)
-        assertEquals("Repo owner should match", gogsUser.username, repo.owner.username)
+        assertEquals("Repo owner should match", gogsUser.username, repo.owner?.username)
     }
 
     @Test
-    fun searchReposByRepoName() {
+    fun searchReposByRepoName() = runTest {
         val repo1Response = """
             {
                 "id": 111,
@@ -154,7 +156,7 @@ class SearchGogsRepositoriesTest : KoinAndroidTest() {
     }
 
     @Test
-    fun searchNonExistentRepo() {
+    fun searchNonExistentRepo() = runTest {
         val reposResponse = """
             {
                 "data": [],

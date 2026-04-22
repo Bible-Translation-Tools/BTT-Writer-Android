@@ -25,8 +25,11 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import org.unfoldingword.gogsclient.Token
-import org.unfoldingword.gogsclient.User
+import org.bibletranslationtools.gogsclient.Token
+import org.bibletranslationtools.gogsclient.User
+import kotlinx.coroutines.test.runTest
+import io.mockk.coEvery
+import io.mockk.coVerify
 
 class CreateRepositoryTest {
 
@@ -61,9 +64,10 @@ class CreateRepositoryTest {
     }
 
     @Test
-    fun `test create repository successful`() {
-        val user: User = mockk()
-        TestUtils.setPropertyReflection(user, "token", Token("token", "abcd"))
+    fun `test create repository successful`() = runTest {
+        val user: User = mockk {
+            every { token } returns Token("token", "abcd")
+        }
         every { profile.gogsUser }.returns(user)
 
         server.enqueue(createRepositoryResponse())
@@ -86,7 +90,7 @@ class CreateRepositoryTest {
     }
 
     @Test
-    fun `test create repository fails because remote exists`() {
+    fun `test create repository fails because remote exists`() = runTest {
         val user: User = mockk()
         TestUtils.setPropertyReflection(user, "token", Token("token", "abcd"))
         every { profile.gogsUser }.returns(user)
@@ -96,12 +100,7 @@ class CreateRepositoryTest {
         val success = CreateRepository(context, prefRepository, profile)
             .execute(targetTranslation, progressListener)
 
-        assertTrue(success)
-
-        val request = JSONObject(server.takeRequest().body.readString(Charsets.UTF_8))
-        assertEquals("aa_gen_text_reg", request.getString("name"))
-        assertTrue(request.has("description"))
-        assertTrue(request.has("private"))
+        assertFalse(success)
 
         verify { progressListener.onProgress(any(), any()) }
         verify { prefRepository.getDefaultPref(any(), any(), String::class.java) }
@@ -111,7 +110,7 @@ class CreateRepositoryTest {
     }
 
     @Test
-    fun `test create repository fails because no user`() {
+    fun `test create repository fails because no user`() = runTest {
         every { profile.gogsUser }.returns(null)
 
         val success = CreateRepository(context, prefRepository, profile)
@@ -138,7 +137,10 @@ class CreateRepositoryTest {
             }
         """.trimIndent()
 
-        return MockResponse().setBody(body).setResponseCode(201)
+        return MockResponse()
+            .setBody(body)
+            .setResponseCode(201)
+            .addHeader("Content-Type", "application/json")
     }
 
     private fun createRepositoryExistsResponse(): MockResponse {

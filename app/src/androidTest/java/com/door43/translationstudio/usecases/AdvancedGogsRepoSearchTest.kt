@@ -7,6 +7,7 @@ import com.door43.data.setDefaultPref
 import com.door43.translationstudio.IntegrationTest
 import com.door43.translationstudio.KoinAndroidTest
 import com.door43.usecases.AdvancedGogsRepoSearch
+import kotlinx.coroutines.test.runTest
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
@@ -43,7 +44,7 @@ class AdvancedGogsRepoSearchTest : KoinAndroidTest() {
     }
 
     @Test
-    fun searchReposByUser() {
+    fun searchReposByUser() = runTest {
         val user = "test"
 
         server.enqueue(createUsersResponse())
@@ -61,7 +62,7 @@ class AdvancedGogsRepoSearchTest : KoinAndroidTest() {
     }
 
     @Test
-    fun searchReposByRepoName() {
+    fun searchReposByRepoName() = runTest {
         val repo = "_gen_"
 
         server.enqueue(createReposResponse())
@@ -72,7 +73,7 @@ class AdvancedGogsRepoSearchTest : KoinAndroidTest() {
     }
 
     @Test
-    fun searchReposByUserAndRepoName() {
+    fun searchReposByUserAndRepoName() = runTest {
         val user = "mxaln"
         val repo = "_gen_"
 
@@ -85,7 +86,7 @@ class AdvancedGogsRepoSearchTest : KoinAndroidTest() {
     }
 
     @Test
-    fun searchNonExistentUser() {
+    fun searchNonExistentUser() = runTest {
         val user = "non-existent-user"
 
         server.enqueue(createEmptyDataResponse())
@@ -95,7 +96,7 @@ class AdvancedGogsRepoSearchTest : KoinAndroidTest() {
     }
 
     @Test
-    fun searchNonExistentRepo() {
+    fun searchNonExistentRepo() = runTest {
         val repo = "non-existent-repo"
 
         server.enqueue(createEmptyDataResponse())

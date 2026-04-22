@@ -14,12 +14,12 @@ import com.door43.util.FileUtilities.readStreamToString
 import junit.framework.TestCase
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
+import org.bibletranslationtools.gogsclient.User
 import org.json.JSONArray
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.unfoldingword.door43client.Door43Client
-import org.unfoldingword.gogsclient.User
 import java.lang.reflect.Field
 
 /**
@@ -139,7 +139,7 @@ object TestUtils {
         return translator.getTargetTranslation(result!!.importedSlug!!)
     }
 
-    fun simulateLoginGogsUser(
+    suspend fun simulateLoginGogsUser(
         context: Context,
         server: MockWebServer,
         gogsLogin: GogsLogin,
@@ -161,7 +161,7 @@ object TestUtils {
         TestCase.assertNotNull("Token should not be null", user.token)
         TestCase.assertTrue(
             "Token name should contain build model",
-            user.token.name.contains(App.udid())
+            user.token?.name?.contains(App.udid()) == true
         )
 
         return user

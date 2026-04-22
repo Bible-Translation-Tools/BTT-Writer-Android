@@ -17,6 +17,10 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
+import kotlinx.coroutines.test.runTest
+import io.mockk.coEvery
+import io.mockk.coVerify
+
 
 class SearchGogsUsersTest {
 
@@ -45,7 +49,7 @@ class SearchGogsUsersTest {
     }
 
     @Test
-    fun `test search by user query`() {
+    fun `test search by user query`() = runTest {
         val userQuery = "test"
         val limit = 1
 
@@ -62,7 +66,7 @@ class SearchGogsUsersTest {
     }
 
     @Test
-    fun `test search users with empty query`() {
+    fun `test search users with empty query`() = runTest {
         val userQuery = ""
         val limit = 1
 
@@ -91,6 +95,9 @@ class SearchGogsUsersTest {
             }
         """.trimIndent()
 
-        return MockResponse().setBody(body).setResponseCode(200)
+        return MockResponse()
+            .setBody(body)
+            .setResponseCode(200)
+            .addHeader("Content-Type", "application/json")
     }
 }

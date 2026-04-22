@@ -73,7 +73,7 @@ fun ImportFromServerDialog(
         maxWidth = 1000.dp,
         maxHeight = 1000.dp,
         snackbarHostState = snackbarHostState,
-    ) { dismissWithKeyboard ->
+    ) {
         Column(
             verticalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier
@@ -110,9 +110,7 @@ fun ImportFromServerDialog(
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                         keyboardActions = KeyboardActions(
                             onDone = {
-                                dismissWithKeyboard {
-                                    onSearch(username, translationId)
-                                }
+                                onSearch(username, translationId)
                                 searchButtonFocus.requestFocus()
                             }
                         )
@@ -121,9 +119,7 @@ fun ImportFromServerDialog(
 
                 Button(
                     onClick = {
-                        dismissWithKeyboard {
-                            onSearch(username, translationId)
-                        }
+                        onSearch(username, translationId)
                     },
                     modifier = Modifier
                         .align(Alignment.CenterHorizontally)

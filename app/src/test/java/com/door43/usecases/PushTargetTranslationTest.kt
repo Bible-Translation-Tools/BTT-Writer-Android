@@ -34,8 +34,11 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import org.unfoldingword.gogsclient.Repository
+import org.bibletranslationtools.gogsclient.Repository
 import java.io.IOException
+import kotlinx.coroutines.test.runTest
+import io.mockk.coEvery
+import io.mockk.coVerify
 
 class PushTargetTranslationTest {
 
@@ -70,7 +73,7 @@ class PushTargetTranslationTest {
 
         every { progressListener.onProgress(any(), any()) }.just(runs)
         every { repository.sshUrl }.returns("ssh://repo.git")
-        every { getRepository.execute(targetTranslation, progressListener) }.returns(repository)
+        coEvery { getRepository.execute(targetTranslation, progressListener) }.returns(repository)
 
         every { targetTranslation.commitSync() }.returns(true)
         every { targetTranslation.repo }.returns(repo)
@@ -104,7 +107,7 @@ class PushTargetTranslationTest {
     }
 
     @Test
-    fun `test push target translation authorized`() {
+    fun `test push target translation authorized`() = runTest {
         every { profile.gogsUser }.returns(mockk())
 
         val pushResult: PushResult = mockk()
@@ -137,7 +140,7 @@ class PushTargetTranslationTest {
     }
 
     @Test
-    fun `test push target translation not authorized`() {
+    fun `test push target translation not authorized`() = runTest {
         every { profile.gogsUser }.returns(null)
 
         val result = PushTargetTranslation(
@@ -156,14 +159,14 @@ class PushTargetTranslationTest {
         verify(exactly = 0) { pushCommand.call() }
         verify(exactly = 0) { progressListener.onProgress(any(), any()) }
         verify(exactly = 0) { repository.sshUrl }
-        verify(exactly = 0) { getRepository.execute(targetTranslation, progressListener) }
+        coVerify(exactly = 0) { getRepository.execute(targetTranslation, progressListener) }
     }
 
     @Test
-    fun `test push target translation, remote repo not found and not created`() {
+    fun `test push target translation, remote repo not found and not created`() = runTest {
         every { profile.gogsUser }.returns(mockk())
 
-        every { getRepository.execute(any(), any()) }.returns(null)
+        coEvery { getRepository.execute(any(), any()) }.returns(null)
 
         val result = PushTargetTranslation(
             context,
@@ -180,14 +183,14 @@ class PushTargetTranslationTest {
         verify { profile.gogsUser }
         verify(exactly = 0) { pushCommand.call() }
         verify(exactly = 0) { repository.sshUrl }
-        verify { getRepository.execute(targetTranslation, progressListener) }
+        coVerify { getRepository.execute(targetTranslation, progressListener) }
     }
 
     @Test
-    fun `test push target translation, translation commit failed`() {
+    fun `test push target translation, translation commit failed`() = runTest {
         every { profile.gogsUser }.returns(mockk())
 
-        every { getRepository.execute(any(), any()) }.returns(null)
+        coEvery { getRepository.execute(any(), any()) }.returns(null)
         every { targetTranslation.commitSync() }.throws(Exception("Error committing translation"))
 
         val result = PushTargetTranslation(
@@ -205,11 +208,11 @@ class PushTargetTranslationTest {
         verify { profile.gogsUser }
         verify(exactly = 0) { pushCommand.call() }
         verify(exactly = 0) { repository.sshUrl }
-        verify { getRepository.execute(targetTranslation, progressListener) }
+        coVerify { getRepository.execute(targetTranslation, progressListener) }
     }
 
     @Test
-    fun `test push target translation, delete origin failed`() {
+    fun `test push target translation, delete origin failed`() = runTest {
         every { profile.gogsUser }.returns(mockk())
 
         every { repo.deleteRemote(any()) }.throws(IOException("Error deleting remote"))
@@ -232,11 +235,11 @@ class PushTargetTranslationTest {
         verify(exactly = 0) { repo.setRemote(any(), any()) }
         verify { progressListener.onProgress(any(), any()) }
         verify { repository.sshUrl }
-        verify { getRepository.execute(targetTranslation, progressListener) }
+        coVerify { getRepository.execute(targetTranslation, progressListener) }
     }
 
     @Test
-    fun `test push target translation, rejected non-fast-forward`() {
+    fun `test push target translation, rejected non-fast-forward`() = runTest {
         every { profile.gogsUser }.returns(mockk())
 
         val pushResult: PushResult = mockk()
@@ -269,7 +272,7 @@ class PushTargetTranslationTest {
     }
 
     @Test
-    fun `test push target translation, rejected non-delete`() {
+    fun `test push target translation, rejected non-delete`() = runTest {
         every { profile.gogsUser }.returns(mockk())
 
         val pushResult: PushResult = mockk()
@@ -302,7 +305,7 @@ class PushTargetTranslationTest {
     }
 
     @Test
-    fun `test push target translation, rejected remote changed`() {
+    fun `test push target translation, rejected remote changed`() = runTest {
         every { profile.gogsUser }.returns(mockk())
 
         val pushResult: PushResult = mockk()
@@ -335,7 +338,7 @@ class PushTargetTranslationTest {
     }
 
     @Test
-    fun `test push target translation, rejected other reason`() {
+    fun `test push target translation, rejected other reason`() = runTest {
         every { profile.gogsUser }.returns(mockk())
 
         val pushResult: PushResult = mockk()
@@ -369,7 +372,7 @@ class PushTargetTranslationTest {
     }
 
     @Test
-    fun `test push target translation, auth failed`() {
+    fun `test push target translation, auth failed`() = runTest {
         every { profile.gogsUser }.returns(mockk())
 
         val exception = TransportException(
@@ -396,7 +399,7 @@ class PushTargetTranslationTest {
     }
 
     @Test
-    fun `test push target translation, remote repo not found`() {
+    fun `test push target translation, remote repo not found`() = runTest {
         every { profile.gogsUser }.returns(mockk())
 
         val exception = TransportException(
@@ -421,7 +424,7 @@ class PushTargetTranslationTest {
     }
 
     @Test
-    fun `test push target translation, push to private repo fails`() {
+    fun `test push target translation, push to private repo fails`() = runTest {
         every { profile.gogsUser }.returns(mockk())
 
         val exception = TransportException(
@@ -446,7 +449,7 @@ class PushTargetTranslationTest {
     }
 
     @Test
-    fun `test push target translation, unknown transport exception`() {
+    fun `test push target translation, unknown transport exception`() = runTest {
         every { profile.gogsUser }.returns(mockk())
 
         every { pushCommand.call() }.throws(TransportException("An error occurred."))
@@ -467,7 +470,7 @@ class PushTargetTranslationTest {
     }
 
     @Test
-    fun `test push target translation, out of memory error`() {
+    fun `test push target translation, out of memory error`() = runTest {
         every { profile.gogsUser }.returns(mockk())
 
         every { pushCommand.call() }.throws(OutOfMemoryError("Out of memory"))
@@ -488,7 +491,7 @@ class PushTargetTranslationTest {
     }
 
     @Test
-    fun `test push target translation, generic exception`() {
+    fun `test push target translation, generic exception`() = runTest {
         every { profile.gogsUser }.returns(mockk())
 
         every { pushCommand.call() }.throws(Exception("An error occurred."))
@@ -509,7 +512,7 @@ class PushTargetTranslationTest {
     }
 
     @Test
-    fun `test push target translation, base exception`() {
+    fun `test push target translation, base exception`() = runTest {
         every { profile.gogsUser }.returns(mockk())
 
         every { pushCommand.call() }.throws(Throwable("An error occurred."))
@@ -544,7 +547,7 @@ class PushTargetTranslationTest {
         verify { repo.setRemote(any(), any()) }
         verify { progressListener.onProgress(any(), any()) }
         verify { repository.sshUrl }
-        verify { getRepository.execute(targetTranslation, progressListener) }
+        coVerify { getRepository.execute(targetTranslation, progressListener) }
     }
 
     private fun mockResources() {

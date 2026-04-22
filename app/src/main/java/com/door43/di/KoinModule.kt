@@ -51,7 +51,6 @@ import com.door43.usecases.UpdateSource
 import com.door43.usecases.UploadCrashReport
 import com.door43.usecases.UploadFeedback
 import com.door43.usecases.ValidateProject
-import org.json.JSONObject
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.bind
 import org.koin.dsl.module
@@ -71,7 +70,7 @@ val appModule = module {
         val dir: IDirectoryProvider = get()
         try {
             val profileString = pref.getDefaultPref<String>("profile")
-            Profile.fromJSON(pref, dir, profileString?.let { JSONObject(it) })
+            Profile.fromJSON(pref, dir, profileString)
         } catch (e: Exception) {
             throw e
         }

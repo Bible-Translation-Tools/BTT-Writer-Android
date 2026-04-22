@@ -17,6 +17,7 @@ import com.door43.usecases.CreateRepository
 import com.door43.usecases.GogsLogin
 import com.door43.usecases.ImportProjects
 import com.door43.usecases.SearchGogsUsers
+import kotlinx.coroutines.test.runTest
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
@@ -75,7 +76,7 @@ class CreateRepositoryTest : KoinAndroidTest() {
     }
 
     @Test
-    fun createRepositoryWithAuthenticationSucceeds() {
+    fun createRepositoryWithAuthenticationSucceeds() = runTest {
         loginGogsUser()
 
         createRepoResponse(201)
@@ -86,7 +87,7 @@ class CreateRepositoryTest : KoinAndroidTest() {
     }
 
     @Test
-    fun createRepositoryThatAlreadyExistsSucceeds() {
+    fun createRepositoryThatAlreadyExistsSucceeds() = runTest {
         loginGogsUser()
 
         createRepoResponse(409)
@@ -97,7 +98,7 @@ class CreateRepositoryTest : KoinAndroidTest() {
     }
 
     @Test
-    fun createRepositoryServerError() {
+    fun createRepositoryServerError() = runTest {
         loginGogsUser()
 
         createRepoResponse(500)
@@ -108,7 +109,7 @@ class CreateRepositoryTest : KoinAndroidTest() {
     }
 
     @Test
-    fun createRepositoryWithoutAuthenticationFails() {
+    fun createRepositoryWithoutAuthenticationFails() = runTest {
         var progressMessage: String? = null
         val progressListener = OnProgressListener { _, message ->
             progressMessage = message
@@ -119,7 +120,7 @@ class CreateRepositoryTest : KoinAndroidTest() {
         assertNotNull("Progress message should not be null", progressMessage)
     }
 
-    private fun loginGogsUser() {
+    private fun loginGogsUser()  = runTest{
         profile.gogsUser = TestUtils.simulateLoginGogsUser(
             appContext,
             server,

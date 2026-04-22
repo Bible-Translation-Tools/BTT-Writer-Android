@@ -17,13 +17,14 @@ import junit.framework.TestCase.assertFalse
 import junit.framework.TestCase.assertNotNull
 import junit.framework.TestCase.assertNull
 import junit.framework.TestCase.assertTrue
+import kotlinx.coroutines.test.runTest
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
+import org.bibletranslationtools.gogsclient.User
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.koin.core.component.inject
-import org.unfoldingword.gogsclient.User
 
 
 @RunWith(AndroidJUnit4::class)
@@ -46,19 +47,19 @@ class GogsLoginLogoutTest : KoinAndroidTest() {
     }
 
     @Test
-    fun testGogsLogin() {
+    fun testGogsLogin() = runTest {
         val user = loginUserWithPassword("Test User")
         assertEquals("Test User", user.fullName)
     }
 
     @Test
-    fun testGogsLoginWithoutFullName() {
+    fun testGogsLoginWithoutFullName() = runTest {
         val user = loginUserWithPassword()
         assertEquals("", user.fullName)
     }
 
     @Test
-    fun testGogsLoginWithWrongCredentials() {
+    fun testGogsLoginWithWrongCredentials() = runTest {
         val result = gogsLogin.execute(
             "btt-test",
             "incorrect_password"
@@ -68,7 +69,7 @@ class GogsLoginLogoutTest : KoinAndroidTest() {
     }
 
     @Test
-    fun testGogsLogout() {
+    fun testGogsLogout() = runTest {
         val userBefore = loginUserWithPassword()
         profile.gogsUser = userBefore
 
@@ -85,7 +86,7 @@ class GogsLoginLogoutTest : KoinAndroidTest() {
         assertEquals("User should be the same", userBefore.username, userAfter.username)
     }
 
-    private fun loginUserWithPassword(fullName: String? = null): User {
+    private suspend fun loginUserWithPassword(fullName: String? = null): User {
         server.enqueue(createLoginResponse(fullName))
         server.enqueue(createGetTokenResponse())
         server.enqueue(MockResponse().setResponseCode(204)) // Delete token response
@@ -95,13 +96,13 @@ class GogsLoginLogoutTest : KoinAndroidTest() {
 
         assertNotNull("User should not be null", result.user)
         assertEquals(username, result.user!!.username)
-        assertNotNull("Token should not be null", result.user!!.token)
+        assertNotNull("Token should not be null", result.user.token)
         assertTrue(
             "Token name should contain build model",
-            result.user!!.token.name.contains(App.udid())
+            result.user.token?.name?.contains(App.udid()) == true
         )
 
-        return result.user!!
+        return result.user
     }
 
     private fun createLoginResponse(fullName: String? = null): MockResponse {

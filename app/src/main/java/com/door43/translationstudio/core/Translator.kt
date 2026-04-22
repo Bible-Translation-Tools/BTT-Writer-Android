@@ -176,11 +176,11 @@ class Translator (
 
     private fun setTargetTranslationAuthor(targetTranslation: TargetTranslation?) {
         if (profile.loggedIn && targetTranslation != null) {
-            var name = profile.fullName ?: ""
+            var name = profile.fullName
             var email = ""
             profile.gogsUser?.let {
-                name = it.fullName
-                email = it.email
+                name = it.fullName ?: ""
+                email = it.email ?: ""
             }
             targetTranslation.setAuthor(name, email)
         }

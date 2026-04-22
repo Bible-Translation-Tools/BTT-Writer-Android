@@ -5,83 +5,54 @@ import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Profile
-import com.door43.translationstudio.tasks.io.OkHttpRequest
-import com.door43.translationstudio.tasks.io.RequestAPI
-import org.json.JSONArray
-import org.json.JSONException
-import org.unfoldingword.gogsclient.User
+import org.bibletranslationtools.gogsclient.GogsAPI
+import org.bibletranslationtools.gogsclient.User
 import org.bibletranslationtools.logger.Logger
+import kotlin.code
 
 class GogsLogout(
-    private val context: Context,
-    private val profile: Profile,
-    private val prefs: IPreferenceRepository
+    context: Context,
+    prefs: IPreferenceRepository,
+    private val profile: Profile
 ) {
-    fun execute() {
+    private val apiUrl = prefs.getDefaultPref(
+        IPreferenceRepository.KEY_PREF_GOGS_API,
+        context.resources.getString(R.string.pref_default_gogs_api)
+    )
+    private val api = GogsAPI(
+        apiUrl = apiUrl,
+        userAgent = context.getString(R.string.gogs_user_agent)
+    )
+
+    suspend fun execute() {
         // local user (non-server account)
-        val user = profile.gogsUser ?: return
+        var user = profile.gogsUser ?: return
         val token = user.token ?: return
 
         val tokenName = token.name
         val tokenSha1 = token.toString()
 
         // uses Basic authorization scheme, token should be null
-        user.password = tokenSha1
-        user.token = null
+        user = user.copy(password = tokenSha1, token = null)
 
-        val apiUrl = prefs.getDefaultPref(
-            IPreferenceRepository.KEY_PREF_GOGS_API,
-            context.resources.getString(R.string.pref_default_gogs_api)
-        )
-        val requester = OkHttpRequest(apiUrl)
-        val tokenId = getTokenId(user, requester, tokenName)
-        if (tokenId < 0) {
-            return
-        }
-        deleteToken(user, tokenId, requester)
+        val tokenId = getTokenId(user, tokenName)
+        if (tokenId < 0) return
+        deleteToken(user, tokenId)
     }
 
-    private fun getTokenId(
-        user: User,
-        requester: RequestAPI,
-        tokenName: String
-    ): Int {
-        var tokenId = -1
-        val requestPath = String.format("/users/%s/tokens", user.username)
-
-        val tokenResponse = requester.get(requestPath, user)
-        if (tokenResponse.code == 200) {
-            try {
-                val data = JSONArray(tokenResponse.data)
-                for (i in 0 until data.length()) {
-                    val tkName = data.getJSONObject(i).getString("name")
-
-                    if (tkName == tokenName) {
-                        tokenId = data.getJSONObject(i).getInt("id")
-                        break
-                    }
-                }
-            } catch (e: JSONException) {
-                e.printStackTrace()
-            }
-        }
-
-        return tokenId
+    private suspend fun getTokenId(user: User, tokenName: String): Int {
+        return api.listTokens(user)
+            .find { it.name == tokenName }
+            ?.id ?: -1
     }
 
-    private fun deleteToken(
-        user: User,
-        tokenId: Int,
-        requester: RequestAPI
-    ) {
-        val path = String.format("/users/%s/tokens/%s", user.username, tokenId)
-        val response = requester.delete(path, user)
-
-        if (response.code != 200 || response.code != 204) {
+    private suspend fun deleteToken(user: User, tokenId: Int) {
+        val deleted = api.deleteToken(tokenId, user)
+        if (!deleted) {
+            val response = api.getLastResponse()
             Logger.w(
-                this::class.java.name,
-                "delete access token - gogs api responded with code " + response.code,
-                response.exception
+                GogsLogin::class.java.name,
+                "Delete access token - gogs api responded with code " + response?.code
             )
         }
     }

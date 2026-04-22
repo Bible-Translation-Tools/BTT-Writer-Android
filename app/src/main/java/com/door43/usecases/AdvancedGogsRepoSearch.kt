@@ -1,13 +1,13 @@
 package com.door43.usecases
 
 import com.door43.OnProgressListener
-import org.unfoldingword.gogsclient.Repository
+import org.bibletranslationtools.gogsclient.Repository
 
 class AdvancedGogsRepoSearch(
     private val searchGogsUsers: SearchGogsUsers,
     private val searchGogsRepositories: SearchGogsRepositories
 ) {
-    fun execute(
+    suspend fun execute(
         userQuery: String,
         repoQuery: String,
         limit: Int,

@@ -9,8 +9,8 @@ import com.door43.translationstudio.App
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Profile
 import com.door43.util.FileUtilities
-import org.unfoldingword.gogsclient.GogsAPI
-import org.unfoldingword.gogsclient.PublicKey
+import org.bibletranslationtools.gogsclient.GogsAPI
+import org.bibletranslationtools.gogsclient.PublicKey
 import org.bibletranslationtools.logger.Logger
 import java.io.IOException
 
@@ -20,20 +20,20 @@ class RegisterSSHKeys(
     private val directoryProvider: IDirectoryProvider,
     private val prefRepository: IPreferenceRepository
 ) {
-    fun execute(force: Boolean, progressListener: OnProgressListener? = null): Boolean {
+    suspend fun execute(force: Boolean, progressListener: OnProgressListener? = null): Boolean {
         progressListener?.onProgress(-1f, "Authenticating")
 
         val keyName = context.resources.getString(R.string.gogs_public_key_name) + " " + App.udid()
 
         val api = GogsAPI(
-            prefRepository.getDefaultPref(
+            apiUrl = prefRepository.getDefaultPref(
                 IPreferenceRepository.KEY_PREF_GOGS_API,
                 context.getString(R.string.pref_default_gogs_api)
             ),
-            context.getString(R.string.gogs_user_agent)
+            userAgent = context.getString(R.string.gogs_user_agent)
         )
 
-        if (profile.gogsUser != null) {
+        profile.gogsUser?.let { user ->
             if (!directoryProvider.hasSSHKeys() || force) {
                 directoryProvider.generateSSHKeys()
             }
@@ -46,27 +46,26 @@ class RegisterSSHKeys(
                 return false
             }
 
-            val keyTemplate = PublicKey(keyName, keyString)
+            val keyTemplate = PublicKey(title = keyName, key = keyString)
 
             // delete old key
-            val keys = api.listPublicKeys(profile.gogsUser)
+            val keys = api.listPublicKeys(user)
             for (k in keys) {
                 if (k.title == keyTemplate.title) {
-                    api.deletePublicKey(k, profile.gogsUser)
+                    api.deletePublicKey(k, user)
                     break
                 }
             }
 
             // create new key
-            val key = api.createPublicKey(keyTemplate, profile.gogsUser)
+            val key = api.createPublicKey(keyTemplate, user)
             if (key != null) {
                 return true
             } else {
-                val response = api.lastResponse
+                val response = api.getLastResponse()
                 Logger.w(
                     this.javaClass.name,
-                    "Failed to register the public key. Gogs responded with " + response.code + ": " + response.data,
-                    response.exception
+                    "Failed to register the public key. Gogs responded with " + response?.code + ": " + response?.message
                 )
             }
         }

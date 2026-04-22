@@ -21,7 +21,7 @@ material = "1.13.0"
 jgit = "5.13.5.202508271544-r"
 jsch = "0.1.55"
 itextg = "5.5.10"
-gogs-client = "1.7.6"
+gogs-client = "2.0.1"
 resource-container = "0.7.19"
 logger = "3.0.0"
 http-tools = "2.5.0"
@@ -71,6 +71,7 @@ decompose-extensions-compose = { group = "com.arkivanov.decompose", name = "exte
 
 # Kotlinx Serialization
 kotlinx-serialization-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-core", version.ref = "kotlinxSerialization" }
+kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
 
 # Koin
 koin-android = { module = "io.insert-koin:koin-android" }

@@ -85,12 +85,12 @@ class DefaultLoginOnlineComponent(
                     profile.fullName.takeIf { it.isNotEmpty() }
                 )
             }
-            val user = loginResult.user
+            var user = loginResult.user
             if (user != null) {
                 if (user.fullName.isNullOrEmpty()) {
-                    user.fullName = user.username
+                    user = user.copy(fullName = user.username)
                 }
-                profile.login(user.fullName, user)
+                profile.login(user.fullName!!, user)
                 onResult(LoginOnlineComponent.Result.LoggedIn)
             } else {
                 val errorRes = if (App.isNetworkAvailable) {

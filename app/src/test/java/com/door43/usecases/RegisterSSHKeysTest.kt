@@ -26,10 +26,13 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import org.unfoldingword.gogsclient.GogsAPI
-import org.unfoldingword.gogsclient.PublicKey
-import org.unfoldingword.gogsclient.Response
+import org.bibletranslationtools.gogsclient.GogsAPI
+import org.bibletranslationtools.gogsclient.PublicKey
+import org.bibletranslationtools.gogsclient.Response
 import java.io.IOException
+import kotlinx.coroutines.test.runTest
+import io.mockk.coEvery
+import io.mockk.coVerify
 
 class RegisterSSHKeysTest {
 
@@ -51,9 +54,9 @@ class RegisterSSHKeysTest {
         every { FileUtilities.readFileToString(any()) }.returns("public_key_string")
 
         mockkConstructor(GogsAPI::class)
-        every { anyConstructed<GogsAPI>().listPublicKeys(any()) }.returns(listOf())
-        every { anyConstructed<GogsAPI>().deletePublicKey(any(), any()) }.returns(true)
-        every { anyConstructed<GogsAPI>().createPublicKey(any(), any()) }.returns(mockk())
+        coEvery { anyConstructed<GogsAPI>().listPublicKeys(any()) }.returns(listOf())
+        coEvery { anyConstructed<GogsAPI>().deletePublicKey(any(), any()) }.returns(true)
+        coEvery { anyConstructed<GogsAPI>().createPublicKey(any(), any()) }.returns(mockk())
 
         every { context.resources }.returns(resources)
         every { progressListener.onProgress(any(), any()) }.just(runs)
@@ -75,7 +78,7 @@ class RegisterSSHKeysTest {
     }
 
     @Test
-    fun `test register ssh keys authorized, no force`() {
+    fun `test register ssh keys authorized, no force`() = runTest {
         every { profile.gogsUser }.returns(mockk())
         every { directoryProvider.hasSSHKeys() }.returns(true)
 
@@ -90,13 +93,13 @@ class RegisterSSHKeysTest {
 
         verifyCommonCalls()
 
-        verify(exactly = 0) { anyConstructed<GogsAPI>().deletePublicKey(any(), any()) }
-        verify(exactly = 0) { anyConstructed<GogsAPI>().lastResponse }
+        coVerify(exactly = 0) { anyConstructed<GogsAPI>().deletePublicKey(any(), any()) }
+        verify(exactly = 0) { anyConstructed<GogsAPI>().getLastResponse() }
         verify(exactly = 0) { directoryProvider.generateSSHKeys() }
     }
 
     @Test
-    fun `test register ssh keys not authorized`() {
+    fun `test register ssh keys not authorized`() = runTest {
         every { profile.gogsUser }.returns(null)
 
         val success = RegisterSSHKeys(
@@ -112,12 +115,12 @@ class RegisterSSHKeysTest {
         verify { App.udid() }
         verify { progressListener.onProgress(any(), "Authenticating") }
 
-        verify(exactly = 0) { anyConstructed<GogsAPI>().listPublicKeys(any()) }
+        coVerify(exactly = 0) { anyConstructed<GogsAPI>().listPublicKeys(any()) }
         verify(exactly = 0) { directoryProvider.generateSSHKeys() }
     }
 
     @Test
-    fun `test register ssh keys, no ssh keys`() {
+    fun `test register ssh keys, no ssh keys`() = runTest {
         every { profile.gogsUser }.returns(mockk())
         every { directoryProvider.hasSSHKeys() }.returns(false)
 
@@ -133,12 +136,12 @@ class RegisterSSHKeysTest {
         verifyCommonCalls()
 
         verify { directoryProvider.generateSSHKeys() }
-        verify(exactly = 0) { anyConstructed<GogsAPI>().deletePublicKey(any(), any()) }
-        verify(exactly = 0) { anyConstructed<GogsAPI>().lastResponse }
+        coVerify(exactly = 0) { anyConstructed<GogsAPI>().deletePublicKey(any(), any()) }
+        verify(exactly = 0) { anyConstructed<GogsAPI>().getLastResponse() }
     }
 
     @Test
-    fun `test register ssh keys, force generate`() {
+    fun `test register ssh keys, force generate`() = runTest {
         every { profile.gogsUser }.returns(mockk())
         every { directoryProvider.hasSSHKeys() }.returns(true)
 
@@ -154,12 +157,12 @@ class RegisterSSHKeysTest {
         verifyCommonCalls()
 
         verify { directoryProvider.generateSSHKeys() }
-        verify(exactly = 0) { anyConstructed<GogsAPI>().deletePublicKey(any(), any()) }
-        verify(exactly = 0) { anyConstructed<GogsAPI>().lastResponse }
+        coVerify(exactly = 0) { anyConstructed<GogsAPI>().deletePublicKey(any(), any()) }
+        verify(exactly = 0) { anyConstructed<GogsAPI>().getLastResponse() }
     }
 
     @Test
-    fun `test register ssh keys, read key fails`() {
+    fun `test register ssh keys, read key fails`() = runTest {
         every { profile.gogsUser }.returns(mockk())
         every { directoryProvider.hasSSHKeys() }.returns(true)
 
@@ -177,20 +180,20 @@ class RegisterSSHKeysTest {
         verify { profile.gogsUser }
         verify { directoryProvider.hasSSHKeys() }
         verify(exactly = 0) { directoryProvider.generateSSHKeys() }
-        verify(exactly = 0) { anyConstructed<GogsAPI>().listPublicKeys(any()) }
-        verify(exactly = 0) { anyConstructed<GogsAPI>().deletePublicKey(any(), any()) }
-        verify(exactly = 0) { anyConstructed<GogsAPI>().lastResponse }
+        coVerify(exactly = 0) { anyConstructed<GogsAPI>().listPublicKeys(any()) }
+        coVerify(exactly = 0) { anyConstructed<GogsAPI>().deletePublicKey(any(), any()) }
+        verify(exactly = 0) { anyConstructed<GogsAPI>().getLastResponse() }
     }
 
     @Test
-    fun `test register ssh keys, delete app public keys`() {
+    fun `test register ssh keys, delete app public keys`() = runTest {
         every { profile.gogsUser }.returns(mockk())
         every { directoryProvider.hasSSHKeys() }.returns(true)
 
         val publicKey: PublicKey = mockk {
             every { title }.returns("public key ${App.udid()}")
         }
-        every { anyConstructed<GogsAPI>().listPublicKeys(any()) }.returns(listOf(publicKey))
+        coEvery { anyConstructed<GogsAPI>().listPublicKeys(any()) }.returns(listOf(publicKey))
 
         val success = RegisterSSHKeys(
             context,
@@ -203,21 +206,21 @@ class RegisterSSHKeysTest {
 
         verify { profile.gogsUser }
         verify { directoryProvider.hasSSHKeys() }
-        verify { anyConstructed<GogsAPI>().listPublicKeys(any()) }
-        verify { anyConstructed<GogsAPI>().deletePublicKey(any(), any()) }
+        coVerify { anyConstructed<GogsAPI>().listPublicKeys(any()) }
+        coVerify { anyConstructed<GogsAPI>().deletePublicKey(any(), any()) }
         verify(exactly = 0) { directoryProvider.generateSSHKeys() }
-        verify(exactly = 0) { anyConstructed<GogsAPI>().lastResponse }
+        verify(exactly = 0) { anyConstructed<GogsAPI>().getLastResponse() }
     }
 
     @Test
-    fun `test register ssh keys, delete custom public keys fails`() {
+    fun `test register ssh keys, delete custom public keys fails`() = runTest {
         every { profile.gogsUser }.returns(mockk())
         every { directoryProvider.hasSSHKeys() }.returns(true)
 
         val publicKey: PublicKey = mockk {
             every { title }.returns("my personal key")
         }
-        every { anyConstructed<GogsAPI>().listPublicKeys(any()) }.returns(listOf(publicKey))
+        coEvery { anyConstructed<GogsAPI>().listPublicKeys(any()) }.returns(listOf(publicKey))
 
         val success = RegisterSSHKeys(
             context,
@@ -230,22 +233,25 @@ class RegisterSSHKeysTest {
 
         verify { profile.gogsUser }
         verify { directoryProvider.hasSSHKeys() }
-        verify { anyConstructed<GogsAPI>().listPublicKeys(any()) }
-        verify(exactly = 0) { anyConstructed<GogsAPI>().deletePublicKey(any(), any()) }
+        coVerify { anyConstructed<GogsAPI>().listPublicKeys(any()) }
+        coVerify(exactly = 0) { anyConstructed<GogsAPI>().deletePublicKey(any(), any()) }
         verify(exactly = 0) { directoryProvider.generateSSHKeys() }
-        verify(exactly = 0) { anyConstructed<GogsAPI>().lastResponse }
+        verify(exactly = 0) { anyConstructed<GogsAPI>().getLastResponse() }
     }
 
     @Test
-    fun `test register ssh keys, create new key fails`() {
+    fun `test register ssh keys, create new key fails`() = runTest {
         every { profile.gogsUser }.returns(mockk())
         every { directoryProvider.hasSSHKeys() }.returns(true)
 
-        every { anyConstructed<GogsAPI>().createPublicKey(any(), any()) }.returns(null)
+        coEvery { anyConstructed<GogsAPI>().createPublicKey(any(), any()) }.returns(null)
 
-        val response: Response = mockk()
+        val response: Response = mockk {
+            every { code }.returns(500)
+            every { message }.returns("Internal Server Error")
+        }
         TestUtils.setPropertyReflection(response, "exception", Exception("Error!"))
-        every { anyConstructed<GogsAPI>().lastResponse }.returns(response)
+        every { anyConstructed<GogsAPI>().getLastResponse() }.returns(response)
 
         val success = RegisterSSHKeys(
             context,
@@ -258,11 +264,10 @@ class RegisterSSHKeysTest {
 
         verify { profile.gogsUser }
         verify { directoryProvider.hasSSHKeys() }
-        verify { anyConstructed<GogsAPI>().listPublicKeys(any()) }
-        verify { anyConstructed<GogsAPI>().createPublicKey(any(), any()) }
-        verify { anyConstructed<GogsAPI>().lastResponse }
-        verify { anyConstructed<GogsAPI>().lastResponse }
-        verify(exactly = 0) { anyConstructed<GogsAPI>().deletePublicKey(any(), any()) }
+        coVerify { anyConstructed<GogsAPI>().listPublicKeys(any()) }
+        coVerify { anyConstructed<GogsAPI>().createPublicKey(any(), any()) }
+        verify { anyConstructed<GogsAPI>().getLastResponse() }
+        coVerify(exactly = 0) { anyConstructed<GogsAPI>().deletePublicKey(any(), any()) }
         verify(exactly = 0) { directoryProvider.generateSSHKeys() }
     }
 
@@ -271,8 +276,8 @@ class RegisterSSHKeysTest {
         verify { directoryProvider.hasSSHKeys() }
         verify { App.udid() }
         verify { FileUtilities.readFileToString(any()) }
-        verify { anyConstructed<GogsAPI>().listPublicKeys(any()) }
-        verify { anyConstructed<GogsAPI>().createPublicKey(any(), any()) }
+        coVerify { anyConstructed<GogsAPI>().listPublicKeys(any()) }
+        coVerify { anyConstructed<GogsAPI>().createPublicKey(any(), any()) }
         verify { directoryProvider.publicKey }
         verify { progressListener.onProgress(any(), "Authenticating") }
     }

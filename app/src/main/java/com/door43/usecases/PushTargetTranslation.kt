@@ -10,13 +10,13 @@ import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.git.Repo
 import com.door43.translationstudio.git.TransportCallback
+import org.bibletranslationtools.logger.Logger
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.errors.JGitInternalException
 import org.eclipse.jgit.api.errors.TransportException
 import org.eclipse.jgit.errors.NoRemoteRepositoryException
 import org.eclipse.jgit.transport.RefSpec
 import org.eclipse.jgit.transport.RemoteRefUpdate
-import org.bibletranslationtools.logger.Logger
 import java.io.IOException
 
 class PushTargetTranslation(
@@ -31,7 +31,7 @@ class PushTargetTranslation(
         val message: String?
     )
 
-    fun execute(
+    suspend fun execute(
         targetTranslation: TargetTranslation,
         progressListener: OnProgressListener? = null
     ): Result {

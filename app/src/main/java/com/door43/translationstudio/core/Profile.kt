@@ -4,10 +4,15 @@ import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
 import com.door43.data.setDefaultPref
 import com.door43.util.FileUtilities
-import org.json.JSONException
-import org.json.JSONObject
-import org.unfoldingword.gogsclient.Token
-import org.unfoldingword.gogsclient.User
+import com.door43.util.JsonLenient
+import io.ktor.serialization.JsonConvertException
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonDecodingException
+import org.bibletranslationtools.gogsclient.Token
+import org.bibletranslationtools.gogsclient.User
+import org.bibletranslationtools.logger.Logger
 
 /**
  * Represents a single user profile
@@ -16,6 +21,20 @@ class Profile(
     private val prefs: IPreferenceRepository,
     private val directoryProvider: IDirectoryProvider
 ) {
+    @Serializable
+    data class ProfileInfo(
+        @SerialName("serial_version_uid")
+        val versionUid: Long,
+        @SerialName("full_name")
+        val fullName: String = "",
+        @SerialName("gogs_user")
+        val gogsUser: User? = null,
+        @SerialName("gogs_token")
+        val gogsToken: Token? = null,
+        @SerialName("terms_last_accepted")
+        val termsLastAccepted: Int
+    )
+
     /**
      * Returns the name of the translator.
      * The name from their gogs account will be used if it exists
@@ -57,24 +76,6 @@ class Profile(
     val nativeSpeaker: NativeSpeaker
         get() = NativeSpeaker(fullName)
 
-    /**
-     * Returns the profile represented as a JSON object
-     * @return
-     */
-    @Throws(JSONException::class)
-    fun toJSON(): JSONObject {
-        val json = JSONObject()
-        json.put("serial_version_uid", SERIAL_VERSION_UID)
-        gogsUser?.let {
-            json.put("gogs_user", it.toJSON())
-            json.put("gogs_token", it.token.toJSON())
-        } ?: run {
-            json.put("full_name", fullName)
-        }
-        json.put("terms_last_accepted", termsOfUseLastAccepted)
-        return json
-    }
-
     fun login(name: String, user: User? = null) {
         fullName = name
         gogsUser = user
@@ -95,7 +96,7 @@ class Profile(
      * Save profile to the preferences
      */
     private fun saveProfile() {
-        val profileString = this.toJSON().toString()
+        val profileString = this.toJSON()
         prefs.setDefaultPref("profile", profileString)
     }
 
@@ -107,6 +108,29 @@ class Profile(
         FileUtilities.deleteQuietly(directoryProvider.sshKeysDir)
     }
 
+    /**
+     * Returns the profile represented as a JSON object
+     * @return
+     */
+    @Throws(JsonConvertException::class)
+    fun toJSON(): String {
+        val info = gogsUser?.let {
+            ProfileInfo(
+                versionUid = SERIAL_VERSION_UID,
+                fullName = it.fullName ?: "",
+                gogsUser = it,
+                gogsToken = it.token,
+                termsLastAccepted = termsOfUseLastAccepted
+            )
+        } ?: ProfileInfo(
+            versionUid = SERIAL_VERSION_UID,
+            fullName = fullName,
+            termsLastAccepted = termsOfUseLastAccepted
+        )
+
+        return JsonLenient.encodeToString(info)
+    }
+
     companion object {
         private const val SERIAL_VERSION_UID = 0L
 
@@ -116,39 +140,34 @@ class Profile(
          * @return
          * @throws Exception
          */
+        @OptIn(ExperimentalSerializationApi::class)
         @Throws(Exception::class)
         fun fromJSON(
             prefs: IPreferenceRepository,
             directoryProvider: IDirectoryProvider,
-            json: JSONObject?
+            json: String?
         ): Profile {
             var name = ""
             var user: User? = null
-            var gogsToken: Token? = null
             var termsLastAccepted = 0
 
-            json?.let { jsonString ->
-                val versionUID = jsonString.getLong("serial_version_uid")
-                if (versionUID != SERIAL_VERSION_UID) {
-                    throw Exception("Unsupported profile version $versionUID. Expected $SERIAL_VERSION_UID")
-                }
-                if (jsonString.has("full_name")) {
-                    name = jsonString.getString("full_name")
-                }
-                if (jsonString.has("gogs_user")) {
-                    user = User.fromJSON(jsonString.getJSONObject("gogs_user"))
-                }
-                if (jsonString.has("gogs_token")) {
-                    gogsToken = Token.fromJSON(jsonString.getJSONObject("gogs_token"))
-                }
-                if (jsonString.has("terms_last_accepted")) {
-                    termsLastAccepted = jsonString.getInt("terms_last_accepted")
-                }
-            }
+            try {
+                val info: ProfileInfo? = json?.let { JsonLenient.decodeFromString(it) }
 
-            user?.let {
-                name = it.fullName
-                it.token = gogsToken
+                info?.let {
+                    if (it.versionUid != SERIAL_VERSION_UID) {
+                        throw Exception("Unsupported profile version ${it.versionUid}. Expected $SERIAL_VERSION_UID")
+                    }
+                    user = it.gogsUser
+                    name = it.fullName
+                    termsLastAccepted = it.termsLastAccepted
+                }
+
+                if (user != null) {
+                    user = user.copy(token = user.token)
+                }
+            } catch (e: JsonDecodingException) {
+                Logger.w(this::javaClass.name, "Malformed profile json string", e)
             }
 
             return Profile(prefs, directoryProvider).apply {

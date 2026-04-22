@@ -18,8 +18,12 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
-import org.unfoldingword.gogsclient.Repository
-import org.unfoldingword.gogsclient.User
+import org.bibletranslationtools.gogsclient.Repository
+import org.bibletranslationtools.gogsclient.User
+import kotlinx.coroutines.test.runTest
+import io.mockk.coEvery
+import io.mockk.coVerify
+import com.door43.util.JsonLenient
 
 class GetRepositoryTest {
 
@@ -33,7 +37,7 @@ class GetRepositoryTest {
     fun setup() {
         MockKAnnotations.init(this)
 
-        every { createRepository.execute(any(), any()) }.returns(true)
+        coEvery { createRepository.execute(any(), any()) }.returns(true)
         every { progressListener.onProgress(any(), any()) }.just(runs)
 
         every { targetTranslation.id }.returns("aa_gen_text_reg")
@@ -45,13 +49,13 @@ class GetRepositoryTest {
     }
 
     @Test
-    fun `test get repository successful`() {
+    fun `test get repository successful`() = runTest {
         val user: User = mockk()
         every { user.id }.returns(1)
         every { user.username }.returns("test")
         every { profile.gogsUser }.returns(user)
 
-        every { searchRepository.execute(any(), any(), any(), any()) }
+        coEvery { searchRepository.execute(any(), any(), any(), any()) }
             .returns(getRepositories(user, targetTranslation.id))
 
         val repository = GetRepository(createRepository, searchRepository, profile)
@@ -61,27 +65,27 @@ class GetRepositoryTest {
         requireNotNull(repository)
 
         assertEquals("aa_gen_text_reg", repository.name)
-        assertEquals(1, repository.owner.id)
-        assertEquals("test", repository.owner.username)
+        assertEquals(1, repository.owner?.id)
+        assertEquals("test", repository.owner?.username)
         assertEquals(222, repository.id)
 
         verify { user.id }
         verify { user.username }
         verify { profile.gogsUser }
-        verify { searchRepository.execute(any(), any(), any(), any()) }
-        verify { createRepository.execute(any(), any()) }
+        coVerify { searchRepository.execute(any(), any(), any(), any()) }
+        coVerify { createRepository.execute(any(), any()) }
         verify { progressListener.onProgress(any(), any()) }
         verify { targetTranslation.id }
     }
 
     @Test
-    fun `test get repository not found exact name`() {
+    fun `test get repository not found exact name`() = runTest {
         val user: User = mockk()
         every { user.id }.returns(1)
         every { user.username }.returns("test")
         every { profile.gogsUser }.returns(user)
 
-        every { searchRepository.execute(any(), any(), any(), any()) }
+        coEvery { searchRepository.execute(any(), any(), any(), any()) }
             .returns(getRepositories(user, "aa_gen_text_reg_l2"))
 
         val repository = GetRepository(createRepository, searchRepository, profile)
@@ -92,20 +96,20 @@ class GetRepositoryTest {
         verify { user.id }
         verify { user.username }
         verify { profile.gogsUser }
-        verify { searchRepository.execute(any(), any(), any(), any()) }
-        verify { createRepository.execute(any(), any()) }
+        coVerify { searchRepository.execute(any(), any(), any(), any()) }
+        coVerify { createRepository.execute(any(), any()) }
         verify { progressListener.onProgress(any(), any()) }
         verify { targetTranslation.id }
     }
 
     @Test
-    fun `test get repository found no repos`() {
+    fun `test get repository found no repos`() = runTest {
         val user: User = mockk()
         every { user.id }.returns(1)
         every { user.username }.returns("test")
         every { profile.gogsUser }.returns(user)
 
-        every { searchRepository.execute(any(), any(), any(), any()) }
+        coEvery { searchRepository.execute(any(), any(), any(), any()) }
             .returns(listOf())
 
         val repository = GetRepository(createRepository, searchRepository, profile)
@@ -114,8 +118,8 @@ class GetRepositoryTest {
         assertNull(repository)
 
         verify { profile.gogsUser }
-        verify { searchRepository.execute(any(), any(), any(), any()) }
-        verify { createRepository.execute(any(), any()) }
+        coVerify { searchRepository.execute(any(), any(), any(), any()) }
+        coVerify { createRepository.execute(any(), any()) }
         verify { progressListener.onProgress(any(), any()) }
         verify { targetTranslation.id }
     }
@@ -151,8 +155,8 @@ class GetRepositoryTest {
             }
         """.trimIndent()
         return listOf(
-            Repository.fromJSON(JSONObject(repo1)),
-            Repository.fromJSON(JSONObject(repo2))
+            JsonLenient.decodeFromString(repo1),
+            JsonLenient.decodeFromString(repo2)
         )
     }
 }

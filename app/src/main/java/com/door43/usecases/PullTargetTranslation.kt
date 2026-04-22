@@ -11,13 +11,13 @@ import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.git.Repo
 import com.door43.translationstudio.git.TransportCallback
 import com.door43.util.Manifest
+import org.bibletranslationtools.logger.Logger
 import org.eclipse.jgit.api.CheckoutCommand
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.errors.CheckoutConflictException
 import org.eclipse.jgit.api.errors.TransportException
 import org.eclipse.jgit.errors.NoRemoteRepositoryException
 import org.eclipse.jgit.merge.MergeStrategy
-import org.bibletranslationtools.logger.Logger
 import java.io.IOException
 
 class PullTargetTranslation(
@@ -32,7 +32,7 @@ class PullTargetTranslation(
         val message: String?
     )
 
-    fun execute(
+    suspend fun execute(
         targetTranslation: TargetTranslation,
         mergeStrategy: MergeStrategy,
         sourceURL: String? = null,

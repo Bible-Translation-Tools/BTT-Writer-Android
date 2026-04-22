@@ -14,8 +14,11 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
-import org.unfoldingword.gogsclient.Repository
-import org.unfoldingword.gogsclient.User
+import org.bibletranslationtools.gogsclient.Repository
+import org.bibletranslationtools.gogsclient.User
+import kotlinx.coroutines.test.runTest
+import io.mockk.coEvery
+import io.mockk.coVerify
 
 class AdvancedGogsRepoSearchTest {
 
@@ -36,7 +39,7 @@ class AdvancedGogsRepoSearchTest {
     }
 
     @Test
-    fun `test search by user and repo queries`() {
+    fun `test search by user and repo queries`() = runTest {
         val userQuery = "test"
         val repoQuery = "_gen_"
         val limit = 1
@@ -44,13 +47,13 @@ class AdvancedGogsRepoSearchTest {
         val user: User = mockk()
         every { user.id }.returns(1)
 
-        every { searchGogsUsers.execute(userQuery, limit, progressListener) }
+        coEvery { searchGogsUsers.execute(userQuery, limit, progressListener) }
             .returns(listOf(user))
 
         val repository: Repository = mockk()
         every { repository.name }.returns("aa_gen_text_reg")
 
-        every { searchGogsRepositories.execute(any(), repoQuery, limit, progressListener) }
+        coEvery { searchGogsRepositories.execute(any(), repoQuery, limit, progressListener) }
             .returns(listOf(repository))
 
         val repositories = AdvancedGogsRepoSearch(
@@ -61,13 +64,13 @@ class AdvancedGogsRepoSearchTest {
         assertEquals(1, repositories.size)
 
         verify { user.id }
-        verify { searchGogsUsers.execute(userQuery, limit, progressListener) }
-        verify { searchGogsRepositories.execute(any(), repoQuery, limit, progressListener) }
+        coVerify { searchGogsUsers.execute(userQuery, limit, progressListener) }
+        coVerify { searchGogsRepositories.execute(any(), repoQuery, limit, progressListener) }
         verify { progressListener.onProgress(any(), "Searching for repositories") }
     }
 
     @Test
-    fun `test search by user query only`() {
+    fun `test search by user query only`() = runTest {
         val userQuery = "test"
         val repoQuery = "_"
         val limit = 1
@@ -75,14 +78,14 @@ class AdvancedGogsRepoSearchTest {
         val user: User = mockk()
         every { user.id }.returns(1)
 
-        every { searchGogsUsers.execute(userQuery, limit, progressListener) }
+        coEvery { searchGogsUsers.execute(userQuery, limit, progressListener) }
             .returns(listOf(user))
 
         val repository: Repository = mockk()
         every { repository.name }.returns("aa_gen_text_reg")
 
         val repoQuerySlot = slot<String>()
-        every { searchGogsRepositories.execute(any(), capture(repoQuerySlot), limit, progressListener) }
+        coEvery { searchGogsRepositories.execute(any(), capture(repoQuerySlot), limit, progressListener) }
             .returns(listOf(repository))
 
         val repositories = AdvancedGogsRepoSearch(
@@ -94,20 +97,20 @@ class AdvancedGogsRepoSearchTest {
         assertEquals("Empty repo query should be replaced with _", "_", repoQuerySlot.captured)
 
         verify { user.id }
-        verify { searchGogsUsers.execute(userQuery, limit, progressListener) }
-        verify { searchGogsRepositories.execute(any(), repoQuery, limit, progressListener) }
+        coVerify { searchGogsUsers.execute(userQuery, limit, progressListener) }
+        coVerify { searchGogsRepositories.execute(any(), repoQuery, limit, progressListener) }
         verify { progressListener.onProgress(any(), "Searching for repositories") }
     }
 
     @Test
-    fun `test search by repo query`() {
+    fun `test search by repo query`() = runTest {
         val repoQuery = "_gen_"
         val limit = 1
 
         val repository: Repository = mockk()
         every { repository.name }.returns("aa_gen_text_reg")
 
-        every { searchGogsRepositories.execute(0, repoQuery, limit, progressListener) }
+        coEvery { searchGogsRepositories.execute(0, repoQuery, limit, progressListener) }
             .returns(listOf(repository))
 
         val repositories = AdvancedGogsRepoSearch(
@@ -117,13 +120,13 @@ class AdvancedGogsRepoSearchTest {
 
         assertEquals(1, repositories.size)
 
-        verify(exactly = 0) { searchGogsUsers.execute(any(), limit, progressListener) }
-        verify { searchGogsRepositories.execute(any(), repoQuery, limit, progressListener) }
+        coVerify(exactly = 0) { searchGogsUsers.execute(any(), limit, progressListener) }
+        coVerify { searchGogsRepositories.execute(any(), repoQuery, limit, progressListener) }
         verify { progressListener.onProgress(any(), "Searching for repositories") }
     }
 
     @Test
-    fun `test search with empty queries`() {
+    fun `test search with empty queries`() = runTest {
         val userQuery = ""
         val repoQuery = ""
         val limit = 1
@@ -132,7 +135,7 @@ class AdvancedGogsRepoSearchTest {
         every { repository.name }.returns("aa_gen_text_reg")
 
         val repoQuerySlot = slot<String>()
-        every { searchGogsRepositories.execute(any(), capture(repoQuerySlot), limit, progressListener) }
+        coEvery { searchGogsRepositories.execute(any(), capture(repoQuerySlot), limit, progressListener) }
             .returns(listOf(repository))
 
         val repositories = AdvancedGogsRepoSearch(
@@ -143,8 +146,8 @@ class AdvancedGogsRepoSearchTest {
         assertEquals(1, repositories.size)
         assertEquals("Empty repo query should be replaced with _", "_", repoQuerySlot.captured)
 
-        verify(exactly = 0) { searchGogsUsers.execute(any(), limit, progressListener) }
-        verify { searchGogsRepositories.execute(any(), any(), limit, progressListener) }
+        coVerify(exactly = 0) { searchGogsUsers.execute(any(), limit, progressListener) }
+        coVerify { searchGogsRepositories.execute(any(), any(), limit, progressListener) }
         verify { progressListener.onProgress(any(), "Searching for repositories") }
     }
 }

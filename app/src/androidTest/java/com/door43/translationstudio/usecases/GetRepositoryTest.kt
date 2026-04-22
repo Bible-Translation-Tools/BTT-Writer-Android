@@ -16,6 +16,7 @@ import com.door43.usecases.GetRepository
 import com.door43.usecases.GogsLogin
 import com.door43.usecases.ImportProjects
 import com.door43.usecases.SearchGogsUsers
+import kotlinx.coroutines.test.runTest
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
@@ -73,7 +74,7 @@ class GetRepositoryTest : KoinAndroidTest() {
     }
 
     @Test
-    fun getRepositorySucceeds() {
+    fun getRepositorySucceeds() = runTest {
         loginGogsUser()
         processRepoResponse(targetTranslation.id)
 
@@ -85,7 +86,7 @@ class GetRepositoryTest : KoinAndroidTest() {
     }
 
     @Test
-    fun getRepositoryThatIsNotExactNameFails() {
+    fun getRepositoryThatIsNotExactNameFails() = runTest {
         loginGogsUser()
         processRepoResponse("${targetTranslation.id}_L3")
 
@@ -95,13 +96,13 @@ class GetRepositoryTest : KoinAndroidTest() {
     }
 
     @Test
-    fun getRepositoryNotAuthorizedFails() {
+    fun getRepositoryNotAuthorizedFails() = runTest {
         val repo = getRepository.execute(targetTranslation)
 
         assertNull("Repository should be null", repo)
     }
 
-    private fun loginGogsUser() {
+    private fun loginGogsUser() = runTest {
         profile.gogsUser = TestUtils.simulateLoginGogsUser(
             appContext,
             server,

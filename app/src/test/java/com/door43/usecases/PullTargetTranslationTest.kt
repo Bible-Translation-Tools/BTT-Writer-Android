@@ -35,8 +35,11 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
-import org.unfoldingword.gogsclient.Repository
+import org.bibletranslationtools.gogsclient.Repository
 import java.io.IOException
+import kotlinx.coroutines.test.runTest
+import io.mockk.coEvery
+import io.mockk.coVerify
 
 class PullTargetTranslationTest {
 
@@ -116,13 +119,13 @@ class PullTargetTranslationTest {
     }
 
     @Test
-    fun `test pull target translation repository authorized new repo`() {
+    fun `test pull target translation repository authorized new repo`() = runTest {
         every { profile.gogsUser }.returns(mockk())
 
         val repository: Repository = mockk {
             every { sshUrl }.returns("ssh://repo.git")
         }
-        every { getRepository.execute(any(), any()) }.returns(repository)
+        coEvery { getRepository.execute(any(), any()) }.returns(repository)
 
         every { targetTranslation.repo }.returns(repo)
         every { targetTranslation.path }.returns(mockk())
@@ -152,7 +155,7 @@ class PullTargetTranslationTest {
         verify { progressListener.onProgress(any(), "Downloading updates") }
         verify { profile.gogsUser }
         verify { repository.sshUrl }
-        verify { getRepository.execute(any(), any()) }
+        coVerify { getRepository.execute(any(), any()) }
         verify { targetTranslation.repo }
         verify { targetTranslation.path }
         verify { mergeResult.conflicts }
@@ -161,10 +164,10 @@ class PullTargetTranslationTest {
     }
 
     @Test
-    fun `test pull target translation can't get or create repository`() {
+    fun `test pull target translation can't get or create repository`() = runTest {
         every { profile.gogsUser }.returns(mockk())
 
-        every { getRepository.execute(any(), any()) }.returns(null)
+        coEvery { getRepository.execute(any(), any()) }.returns(null)
 
         every { targetTranslation.repo }.returns(repo)
 
@@ -185,14 +188,14 @@ class PullTargetTranslationTest {
         assertNull(result.message)
 
         verify { profile.gogsUser }
-        verify { getRepository.execute(any(), any()) }
+        coVerify { getRepository.execute(any(), any()) }
         verify { targetTranslation.repo }
         verify(exactly = 0) { targetTranslation.path }
         verify(exactly = 0) { pullCommand.call() }
     }
 
     @Test
-    fun `test pull target translation not authorized`() {
+    fun `test pull target translation not authorized`() = runTest {
         every { profile.gogsUser }.returns(null)
 
         val result = PullTargetTranslation(
@@ -215,20 +218,20 @@ class PullTargetTranslationTest {
         verify(exactly = 0) {
             progressListener.onProgress(any(), "Downloading updates")
         }
-        verify(exactly = 0) { getRepository.execute(any(), any()) }
+        coVerify(exactly = 0) { getRepository.execute(any(), any()) }
         verify(exactly = 0) { targetTranslation.repo }
         verify(exactly = 0) { targetTranslation.path }
         verify(exactly = 0) { pullCommand.call() }
     }
 
     @Test
-    fun `test pull target translation repository update origin failed`() {
+    fun `test pull target translation repository update origin failed`() = runTest {
         every { profile.gogsUser }.returns(mockk())
 
         val repository: Repository = mockk {
             every { sshUrl }.returns("ssh://repo.git")
         }
-        every { getRepository.execute(any(), any()) }.returns(repository)
+        coEvery { getRepository.execute(any(), any()) }.returns(repository)
 
         every { targetTranslation.repo }.returns(repo)
         every { targetTranslation.path }.returns(mockk())
@@ -254,7 +257,7 @@ class PullTargetTranslationTest {
         verify { progressListener.onProgress(any(), "Downloading updates") }
         verify { profile.gogsUser }
         verify { repository.sshUrl }
-        verify { getRepository.execute(any(), any()) }
+        coVerify { getRepository.execute(any(), any()) }
         verify { targetTranslation.repo }
         verify { repo.deleteRemote(any()) }
         verify(exactly = 0) { targetTranslation.path }
@@ -262,13 +265,13 @@ class PullTargetTranslationTest {
     }
 
     @Test
-    fun `test pull target translation repository with merge conflicts`() {
+    fun `test pull target translation repository with merge conflicts`() = runTest {
         every { profile.gogsUser }.returns(mockk())
 
         val repository: Repository = mockk {
             every { sshUrl }.returns("ssh://repo.git")
         }
-        every { getRepository.execute(any(), any()) }.returns(repository)
+        coEvery { getRepository.execute(any(), any()) }.returns(repository)
 
         every { targetTranslation.repo }.returns(repo)
         every { targetTranslation.path }.returns(mockk())
@@ -309,7 +312,7 @@ class PullTargetTranslationTest {
         verify { progressListener.onProgress(any(), "Downloading updates") }
         verify { profile.gogsUser }
         verify { repository.sshUrl }
-        verify { getRepository.execute(any(), any()) }
+        coVerify { getRepository.execute(any(), any()) }
         verify { targetTranslation.repo }
         verify { targetTranslation.path }
         verify { mergeResult.conflicts }
@@ -322,13 +325,13 @@ class PullTargetTranslationTest {
     }
 
     @Test
-    fun `test pull target translation, auth failed`() {
+    fun `test pull target translation, auth failed`() = runTest {
         every { profile.gogsUser }.returns(mockk())
 
         val repository: Repository = mockk {
             every { sshUrl }.returns("ssh://repo.git")
         }
-        every { getRepository.execute(any(), any()) }.returns(repository)
+        coEvery { getRepository.execute(any(), any()) }.returns(repository)
 
         every { targetTranslation.repo }.returns(repo)
         every { targetTranslation.path }.returns(mockk())
@@ -360,20 +363,20 @@ class PullTargetTranslationTest {
         verify { progressListener.onProgress(any(), "Downloading updates") }
         verify { profile.gogsUser }
         verify { repository.sshUrl }
-        verify { getRepository.execute(any(), any()) }
+        coVerify { getRepository.execute(any(), any()) }
         verify { targetTranslation.repo }
         verify { targetTranslation.path }
         verify { pullCommand.call() }
     }
 
     @Test
-    fun `test pull target translation, remote repo not found`() {
+    fun `test pull target translation, remote repo not found`() = runTest {
         every { profile.gogsUser }.returns(mockk())
 
         val repository: Repository = mockk {
             every { sshUrl }.returns("ssh://repo.git")
         }
-        every { getRepository.execute(any(), any()) }.returns(repository)
+        coEvery { getRepository.execute(any(), any()) }.returns(repository)
 
         every { targetTranslation.repo }.returns(repo)
         every { targetTranslation.path }.returns(mockk())
@@ -403,20 +406,20 @@ class PullTargetTranslationTest {
         verify { progressListener.onProgress(any(), "Downloading updates") }
         verify { profile.gogsUser }
         verify { repository.sshUrl }
-        verify { getRepository.execute(any(), any()) }
+        coVerify { getRepository.execute(any(), any()) }
         verify { targetTranslation.repo }
         verify { targetTranslation.path }
         verify { pullCommand.call() }
     }
 
     @Test
-    fun `test pull target translation, remote repo not found 2`() {
+    fun `test pull target translation, remote repo not found 2`() = runTest {
         every { profile.gogsUser }.returns(mockk())
 
         val repository: Repository = mockk {
             every { sshUrl }.returns("ssh://repo.git")
         }
-        every { getRepository.execute(any(), any()) }.returns(repository)
+        coEvery { getRepository.execute(any(), any()) }.returns(repository)
 
         every { targetTranslation.repo }.returns(repo)
         every { targetTranslation.path }.returns(mockk())
@@ -445,20 +448,20 @@ class PullTargetTranslationTest {
         verify { progressListener.onProgress(any(), "Downloading updates") }
         verify { profile.gogsUser }
         verify { repository.sshUrl }
-        verify { getRepository.execute(any(), any()) }
-        verify { targetTranslation.repo }
+        coVerify { getRepository.execute(any(), any()) }
+        coVerify { targetTranslation.repo }
         verify { targetTranslation.path }
         verify { pullCommand.call() }
     }
 
     @Test
-    fun `test pull target translation, out of memory error`() {
+    fun `test pull target translation, out of memory error`() = runTest {
         every { profile.gogsUser }.returns(mockk())
 
         val repository: Repository = mockk {
             every { sshUrl }.returns("ssh://repo.git")
         }
-        every { getRepository.execute(any(), any()) }.returns(repository)
+        coEvery { getRepository.execute(any(), any()) }.returns(repository)
 
         every { targetTranslation.repo }.returns(repo)
         every { targetTranslation.path }.returns(mockk())
@@ -484,20 +487,20 @@ class PullTargetTranslationTest {
         verify { progressListener.onProgress(any(), "Downloading updates") }
         verify { profile.gogsUser }
         verify { repository.sshUrl }
-        verify { getRepository.execute(any(), any()) }
+        coVerify { getRepository.execute(any(), any()) }
         verify { targetTranslation.repo }
         verify { targetTranslation.path }
         verify { pullCommand.call() }
     }
 
     @Test
-    fun `test pull target translation, generic error`() {
+    fun `test pull target translation, generic error`() = runTest {
         every { profile.gogsUser }.returns(mockk())
 
         val repository: Repository = mockk {
             every { sshUrl }.returns("ssh://repo.git")
         }
-        every { getRepository.execute(any(), any()) }.returns(repository)
+        coEvery { getRepository.execute(any(), any()) }.returns(repository)
 
         every { targetTranslation.repo }.returns(repo)
         every { targetTranslation.path }.returns(mockk())
@@ -523,7 +526,7 @@ class PullTargetTranslationTest {
         verify { progressListener.onProgress(any(), "Downloading updates") }
         verify { profile.gogsUser }
         verify { repository.sshUrl }
-        verify { getRepository.execute(any(), any()) }
+        coVerify { getRepository.execute(any(), any()) }
         verify { targetTranslation.repo }
         verify { targetTranslation.path }
         verify { pullCommand.call() }

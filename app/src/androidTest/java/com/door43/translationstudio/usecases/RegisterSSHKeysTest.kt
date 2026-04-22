@@ -13,16 +13,17 @@ import com.door43.util.FileUtilities
 import junit.framework.TestCase.assertFalse
 import junit.framework.TestCase.assertNotNull
 import junit.framework.TestCase.assertTrue
+import kotlinx.coroutines.test.runTest
 import okhttp3.mockwebserver.Dispatcher
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.mockwebserver.RecordedRequest
+import org.bibletranslationtools.gogsclient.User
 import org.junit.Assert.assertNotEquals
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.koin.core.component.inject
-import org.unfoldingword.gogsclient.User
 
 @RunWith(AndroidJUnit4::class)
 @IntegrationTest
@@ -59,7 +60,7 @@ class RegisterSSHKeysTest : KoinAndroidTest() {
     }
 
     @Test
-    fun testRegisterSSHKeys() {
+    fun testRegisterSSHKeys() = runTest {
         loginGogsUser()
 
         var progressMessage: String? = null
@@ -97,7 +98,7 @@ class RegisterSSHKeysTest : KoinAndroidTest() {
     }
 
     @Test
-    fun testRegisterSSHKeys_noUser() {
+    fun testRegisterSSHKeys_noUser() = runTest {
         var progressMessage: String? = null
         val progressListener = OnProgressListener { _, message ->
             progressMessage = message
@@ -110,7 +111,7 @@ class RegisterSSHKeysTest : KoinAndroidTest() {
     }
 
     private fun loginGogsUser() {
-        val user = User("test", "test")
+        val user = User(username = "test", password = "test")
         profile.gogsUser = user
     }
 

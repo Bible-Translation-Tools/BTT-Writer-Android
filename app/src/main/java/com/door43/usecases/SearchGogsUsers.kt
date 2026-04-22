@@ -5,14 +5,14 @@ import com.door43.OnProgressListener
 import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
 import com.door43.translationstudio.R
-import org.unfoldingword.gogsclient.GogsAPI
-import org.unfoldingword.gogsclient.User
+import org.bibletranslationtools.gogsclient.GogsAPI
+import org.bibletranslationtools.gogsclient.User
 
 class SearchGogsUsers(
     private val context: Context,
     private val prefRepository: IPreferenceRepository
 ) {
-    fun execute(
+    suspend fun execute(
         userQuery: String,
         limit: Int,
         progressListener: OnProgressListener? = null
@@ -20,11 +20,11 @@ class SearchGogsUsers(
         progressListener?.onProgress(-1f, "Searching for users")
 
         val api = GogsAPI(
-            prefRepository.getDefaultPref(
+            apiUrl = prefRepository.getDefaultPref(
                 IPreferenceRepository.KEY_PREF_GOGS_API,
                 context.getString(R.string.pref_default_gogs_api)
             ),
-            context.getString(R.string.gogs_user_agent)
+            userAgent = context.getString(R.string.gogs_user_agent)
         )
         return api.searchUsers(userQuery, limit, null)
     }

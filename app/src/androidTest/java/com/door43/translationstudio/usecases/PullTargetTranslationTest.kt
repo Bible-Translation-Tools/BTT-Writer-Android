@@ -24,6 +24,7 @@ import io.mockk.mockkConstructor
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertNotNull
 import junit.framework.TestCase.assertNull
+import kotlinx.coroutines.test.runTest
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.eclipse.jgit.api.MergeResult
@@ -92,7 +93,7 @@ class PullTargetTranslationTest : KoinAndroidTest() {
     }
 
     @Test
-    fun testPullTargetTranslationAuthorizedNewRepo() {
+    fun testPullTargetTranslationAuthorizedNewRepo() = runTest {
         loginGogsUser()
 
         var progressMessage: String? = null
@@ -122,7 +123,7 @@ class PullTargetTranslationTest : KoinAndroidTest() {
     }
 
     @Test
-    fun testPullTargetTranslationAuthorizedExistingRepo() {
+    fun testPullTargetTranslationAuthorizedExistingRepo() = runTest {
         loginGogsUser()
 
         var progressMessage: String? = null
@@ -159,7 +160,7 @@ class PullTargetTranslationTest : KoinAndroidTest() {
     }
 
     @Test
-    fun testPullTargetTranslationAuthorizedExistingRepoNoMergeConflicts() {
+    fun testPullTargetTranslationAuthorizedExistingRepoNoMergeConflicts() = runTest {
         loginGogsUser()
 
         var progressMessage: String? = null
@@ -193,7 +194,7 @@ class PullTargetTranslationTest : KoinAndroidTest() {
     }
 
     @Test
-    fun testPullTargetTranslationAuthorizedConflicts() {
+    fun testPullTargetTranslationAuthorizedConflicts() = runTest {
         loginGogsUser()
 
         var progressMessage: String? = null
@@ -231,7 +232,7 @@ class PullTargetTranslationTest : KoinAndroidTest() {
     }
 
     @Test
-    fun testPullTargetTranslationUnAuthorizedFails() {
+    fun testPullTargetTranslationUnAuthorizedFails() = runTest {
         var progressMessage: String? = null
         val progressListener = OnProgressListener { _, message ->
             progressMessage = message
@@ -254,7 +255,7 @@ class PullTargetTranslationTest : KoinAndroidTest() {
     }
 
     @Test
-    fun testPullTargetTranslationAuthorizationFailed() {
+    fun testPullTargetTranslationAuthorizationFailed() = runTest {
         loginGogsUser()
 
         var progressMessage: String? = null
@@ -290,7 +291,7 @@ class PullTargetTranslationTest : KoinAndroidTest() {
     }
 
     @Test
-    fun testPullTargetTranslationRemoteNotFound() {
+    fun testPullTargetTranslationRemoteNotFound() = runTest {
         loginGogsUser()
 
         var progressMessage: String? = null
@@ -324,7 +325,7 @@ class PullTargetTranslationTest : KoinAndroidTest() {
     }
 
     @Test
-    fun testPullTargetTranslationUnknownTransportException() {
+    fun testPullTargetTranslationUnknownTransportException() = runTest {
         loginGogsUser()
 
         var progressMessage: String? = null
@@ -354,7 +355,7 @@ class PullTargetTranslationTest : KoinAndroidTest() {
     }
 
     @Test
-    fun testPullTargetTranslationOutOfMemoryError() {
+    fun testPullTargetTranslationOutOfMemoryError() = runTest {
         loginGogsUser()
 
         var progressMessage: String? = null
@@ -383,7 +384,7 @@ class PullTargetTranslationTest : KoinAndroidTest() {
         assertNotNull("Progress message should not be null", progressMessage)
     }
 
-    private fun loginGogsUser() {
+    private fun loginGogsUser() = runTest {
         profile.gogsUser = TestUtils.simulateLoginGogsUser(
             appContext,
             server,

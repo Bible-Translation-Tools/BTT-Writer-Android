@@ -6,67 +6,64 @@ import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
 import com.door43.translationstudio.App
 import com.door43.translationstudio.R
-import com.door43.translationstudio.tasks.io.OkHttpRequest
-import com.door43.translationstudio.tasks.io.RequestAPI
-import org.json.JSONArray
-import org.json.JSONException
-import org.unfoldingword.gogsclient.GogsAPI
-import org.unfoldingword.gogsclient.Token
-import org.unfoldingword.gogsclient.User
+import org.bibletranslationtools.gogsclient.GogsAPI
+import org.bibletranslationtools.gogsclient.Token
+import org.bibletranslationtools.gogsclient.User
 import org.bibletranslationtools.logger.Logger
 
 class GogsLogin(
     private val context: Context,
-    private val prefRepository: IPreferenceRepository
+    prefRepository: IPreferenceRepository
 ) {
-    fun execute(
+    private val apiUrl = prefRepository.getDefaultPref(
+        IPreferenceRepository.KEY_PREF_GOGS_API,
+        context.getString(R.string.pref_default_gogs_api)
+    )
+    private val api = GogsAPI(
+        apiUrl = apiUrl,
+        userAgent = context.getString(R.string.gogs_user_agent)
+    )
+
+    suspend fun execute(
         username: String,
         password: String,
         fullName: String? = null
     ): LoginResult {
-        val apiUrl = prefRepository.getDefaultPref(
-            IPreferenceRepository.KEY_PREF_GOGS_API,
-            context.getString(R.string.pref_default_gogs_api)
-        )
-        val api = GogsAPI(apiUrl, context.getString(R.string.gogs_user_agent))
-        val authUser = User(username, password)
+        val authUser = User(username = username, password = password)
         val tokenName = getTokenStub()
 
         // get user
-        val user = api.getUser(authUser, authUser)
+        var user = api.getUser(authUser, authUser)
         if (user != null) {
-            val customRequester: RequestAPI = OkHttpRequest(apiUrl)
-            val tokenId = getTokenId(tokenName, authUser, customRequester)
+            val tokenId = getTokenId(tokenName, authUser)
             if (tokenId != -1) {
                 // Delete (if exists) matching token for this device on server
-                deleteToken(tokenId, authUser, customRequester)
+                deleteToken(tokenId, authUser)
             }
 
             // Create a new token
-            val t = Token(tokenName, arrayOf("write:repository", "write:user"))
-            user.token = api.createToken(t, authUser)
+            val t = Token(name = tokenName, scopes = listOf("write:repository", "write:user"), id = 0)
+            user = user.copy(token = api.createToken(t, authUser))
 
             // validate access token
             if (user.token == null) {
-                val response = api.lastResponse
+                val response = api.getLastResponse()
                 Logger.w(
                     GogsLogin::class.java.name,
-                    "gogs api responded with " + response.code + ": " + response.toString(),
-                    response.exception
+                    "gogs api responded with " + response?.code + ": " + response?.message
                 )
                 return LoginResult(null)
             }
 
             // set missing full_name
             if (user.fullName.isNullOrEmpty() && !fullName.isNullOrEmpty()) {
-                user.fullName = fullName
+                user = user.copy(fullName = fullName)
                 val updatedUser = api.editUser(user, authUser)
                 if (updatedUser == null) {
-                    val response = api.lastResponse
+                    val response = api.getLastResponse()
                     Logger.w(
                         GogsLogin::class.java.name,
-                        "The full_name could not be updated gogs api responded with " + response.code + ": " + response.toString(),
-                        response.exception
+                        "The full_name could not be updated gogs api responded with " + response?.code + ": " + response?.message
                     )
                 }
             }
@@ -83,39 +80,19 @@ class GogsLogin(
         return (defaultTokenName + "__" + tokenSuffix).replace(" ", "_")
     }
 
-    private fun getTokenId(tokenName: String, userAuth: User, requester: RequestAPI): Int {
-        var tokenId = -1
-        val urlPath = String.format("/users/%s/tokens", userAuth.username)
-        val tokenResponse = requester.get(urlPath, userAuth)
-
-        if (tokenResponse.code == 200) {
-            try {
-                val data = JSONArray(tokenResponse.data)
-                for (i in 0 until data.length()) {
-                    val tkName = data.getJSONObject(i).getString("name")
-
-                    if (tkName == tokenName) {
-                        tokenId = data.getJSONObject(i).getInt("id")
-                        break
-                    }
-                }
-            } catch (e: JSONException) {
-                e.printStackTrace()
-            }
-        }
-
-        return tokenId
+    private suspend fun getTokenId(tokenName: String, user: User): Int {
+        return api.listTokens(user)
+            .find { it.name == tokenName }
+            ?.id ?: -1
     }
 
-    private fun deleteToken(tokenId: Int, userAuth: User, requester: RequestAPI) {
-        val urlPath = String.format("/users/%s/tokens/%s", userAuth.username, tokenId)
-        val response = requester.delete(urlPath, userAuth)
-
-        if (response.code != 204) {
+    private suspend fun deleteToken(tokenId: Int, user: User) {
+        val deleted = api.deleteToken(tokenId, user)
+        if (!deleted) {
+            val response = api.getLastResponse()
             Logger.w(
                 GogsLogin::class.java.name,
-                "delete access token - gogs api responded with code " + response.code,
-                response.exception
+                "Delete access token - gogs api responded with code " + response?.code
             )
         }
     }

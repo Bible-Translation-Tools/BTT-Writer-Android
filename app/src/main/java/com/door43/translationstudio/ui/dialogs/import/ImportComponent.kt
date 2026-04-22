@@ -35,14 +35,15 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.bibletranslationtools.gogsclient.Repository
+import org.bibletranslationtools.logger.Logger
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.unfoldingword.door43client.Door43Client
-import org.unfoldingword.gogsclient.Repository
-import org.bibletranslationtools.logger.Logger
 import java.io.File
 import java.io.IOException
 import java.security.InvalidParameterException
+import kotlin.collections.map
 
 data class MergeConflict(
     val translation: TargetTranslation,

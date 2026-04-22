@@ -18,8 +18,11 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
-import org.unfoldingword.gogsclient.Repository
-import org.unfoldingword.gogsclient.User
+import org.bibletranslationtools.gogsclient.Repository
+import org.bibletranslationtools.gogsclient.User
+import kotlinx.coroutines.test.runTest
+import io.mockk.coEvery
+import io.mockk.coVerify
 
 class SearchGogsRepositoriesTest {
 
@@ -48,7 +51,7 @@ class SearchGogsRepositoriesTest {
     }
 
     @Test
-    fun `test search with default user`() {
+    fun `test search with default user`() = runTest {
         val repoQuery = "_gen_"
         val limit = 1
 
@@ -69,7 +72,7 @@ class SearchGogsRepositoriesTest {
     }
 
     @Test
-    fun `test search with auth user`() {
+    fun `test search with auth user`() = runTest {
         val repoQuery = "_gen_"
         val limit = 1
 
@@ -94,7 +97,7 @@ class SearchGogsRepositoriesTest {
     }
 
     @Test
-    fun `test search with empty query`() {
+    fun `test search with empty query`() = runTest {
         val repoQuery = ""
         val limit = 1
 
@@ -125,7 +128,10 @@ class SearchGogsRepositoriesTest {
                 "isPrivate": false
             }
         """.trimIndent()
-        return MockResponse().setBody(body).setResponseCode(200)
+        return MockResponse()
+            .setBody(body)
+            .setResponseCode(200)
+            .addHeader("Content-Type", "application/json")
     }
 
     private fun createReposResponse(): MockResponse {
@@ -141,6 +147,9 @@ class SearchGogsRepositoriesTest {
                 "ok": true
             }
         """.trimIndent()
-        return MockResponse().setBody(body).setResponseCode(200)
+        return MockResponse()
+            .setBody(body)
+            .setResponseCode(200)
+            .addHeader("Content-Type", "application/json")
     }
 }
