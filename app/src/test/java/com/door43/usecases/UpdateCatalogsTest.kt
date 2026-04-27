@@ -1,7 +1,5 @@
 package com.door43.usecases
 
-import com.door43.OnProgressListener
-import com.door43.TestUtils
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -12,7 +10,7 @@ import io.mockk.mockk
 import io.mockk.runs
 import io.mockk.unmockkAll
 import io.mockk.verify
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -26,15 +24,16 @@ import org.unfoldingword.door43client.models.TargetLanguage
 class UpdateCatalogsTest {
 
     @MockK private lateinit var library: Door43Client
-    @MockK private lateinit var progressListener: OnProgressListener
     @MockK private lateinit var index: Index
+
+    val onProgress = mockk<(Float, String?) -> Unit>(relaxed = true)
 
     @Before
     fun setup() {
         MockKAnnotations.init(this)
 
         every { library.index } returns index
-        every { progressListener.onProgress(any(), any()) }.just(runs)
+        every { onProgress(any(), any()) }.just(runs)
         coEvery { library.updateCatalogs(any(), any()) }.just(runs)
     }
 
@@ -44,16 +43,15 @@ class UpdateCatalogsTest {
     }
 
     @Test
-    fun `test update catalogs, nothing new`() {
-        val targetLanguage: TargetLanguage = mockk()
-        TestUtils.setPropertyReflection(targetLanguage, "slug", "en")
+    fun `test update catalogs, nothing new`() = runTest {
+        val targetLanguage: TargetLanguage = mockk {
+            every { slug }.returns("en")
+        }
 
         every { index.getTargetLanguages() }.returns(listOf(targetLanguage))
 
-        val result = runBlocking {
-            UpdateCatalogs(library)
-                .execute(false, progressListener)
-        }
+        val result = UpdateCatalogs(library)
+            .execute(false, onProgress)
 
         assertTrue(result.success)
         assertEquals(0, result.addedCount)
@@ -63,11 +61,13 @@ class UpdateCatalogsTest {
     }
 
     @Test
-    fun `test update catalogs, new language`() {
-        val targetLanguage: TargetLanguage = mockk()
-        TestUtils.setPropertyReflection(targetLanguage, "slug", "en")
-        val newLanguage: TargetLanguage = mockk()
-        TestUtils.setPropertyReflection(targetLanguage, "slug", "fr")
+    fun `test update catalogs, new language`() = runTest  {
+        val targetLanguage: TargetLanguage = mockk {
+            every { slug }.returns("en")
+        }
+        val newLanguage: TargetLanguage = mockk {
+            every { slug }.returns("fr")
+        }
 
         var calls = 0
         every { index.getTargetLanguages() }.answers {
@@ -80,10 +80,8 @@ class UpdateCatalogsTest {
             }
         }
 
-        val result = runBlocking {
-            UpdateCatalogs(library)
-                .execute(false, progressListener)
-        }
+        val result = UpdateCatalogs(library)
+            .execute(false, onProgress)
 
         assertTrue(result.success)
         assertEquals(1, result.addedCount)
@@ -93,13 +91,11 @@ class UpdateCatalogsTest {
     }
 
     @Test
-    fun `test update catalogs, force update`() {
+    fun `test update catalogs, force update`() = runTest  {
         every { index.getTargetLanguages() }.returns(listOf())
 
-        val result = runBlocking {
-            UpdateCatalogs(library)
-                .execute(true, progressListener)
-        }
+        val result = UpdateCatalogs(library)
+            .execute(true, onProgress)
 
         assertTrue(result.success)
         assertEquals(0, result.addedCount)
@@ -109,14 +105,12 @@ class UpdateCatalogsTest {
     }
 
     @Test
-    fun `test update catalogs, throws exception`() {
+    fun `test update catalogs, throws exception`() = runTest  {
         every { index.getTargetLanguages() }.returns(listOf())
         coEvery { library.updateCatalogs(any(), any()) }.throws(Exception("An error occurred."))
 
-        val result = runBlocking {
-            UpdateCatalogs(library)
-                .execute(true, progressListener)
-        }
+        val result = UpdateCatalogs(library)
+            .execute(true, onProgress)
 
         assertFalse(result.success)
         assertEquals(0, result.addedCount)

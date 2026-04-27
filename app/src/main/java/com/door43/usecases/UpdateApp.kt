@@ -10,7 +10,7 @@ import com.door43.data.getPrivatePref
 import com.door43.data.setDefaultPref
 import com.door43.data.setPrivatePref
 import com.door43.translationstudio.App
-import com.door43.translationstudio.BuildConfig
+import com.door43.translationstudio.Platform
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.TargetTranslationMigrator
 import com.door43.translationstudio.core.Translator
@@ -28,7 +28,8 @@ class UpdateApp(
     private val library: Door43Client,
     private val backupRC: BackupRC,
     private val translator: Translator,
-    private val migrator: TargetTranslationMigrator
+    private val migrator: TargetTranslationMigrator,
+    private val platform: Platform
 ) {
     private var updateLibrary = true
 
@@ -40,13 +41,13 @@ class UpdateApp(
         val newInstall = lastVersionCode == 0
 
         // use current version if fresh install
-        lastVersionCode = if (lastVersionCode == 0) BuildConfig.VERSION_CODE else lastVersionCode
+        lastVersionCode = if (lastVersionCode == 0) platform.info.versionCode else lastVersionCode
 
         // record latest version
-        prefRepository.setPrivatePref("last_version_code", BuildConfig.VERSION_CODE)
+        prefRepository.setPrivatePref("last_version_code", platform.info.versionCode)
 
         // check if update is possible
-        if (BuildConfig.VERSION_CODE > lastVersionCode) {
+        if (platform.info.versionCode > lastVersionCode) {
             performUpdates(lastVersionCode, onProgress)
         } else {
             // update if not deployed or if a fresh install
@@ -200,7 +201,7 @@ class UpdateApp(
     private fun updateBuildNumbers() {
         for (tt in translator.targetTranslations) {
             try {
-                tt.updateGenerator(BuildConfig.VERSION_CODE.toString())
+                tt.updateGenerator(platform.info.versionCode.toString())
             } catch (_: java.lang.Exception) {
                 Logger.e(
                     this.javaClass.name,

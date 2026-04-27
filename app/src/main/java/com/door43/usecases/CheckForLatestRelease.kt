@@ -1,9 +1,8 @@
 package com.door43.usecases
 
-import android.content.Context
 import android.content.pm.PackageManager
 import com.door43.data.IPreferenceRepository
-import com.door43.translationstudio.BuildConfig
+import com.door43.translationstudio.Platform
 import com.door43.translationstudio.network.GetRequest
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -12,8 +11,8 @@ import org.bibletranslationtools.logger.Logger
 import java.io.IOException
 
 class CheckForLatestRelease(
-    private val context: Context,
-    private val prefRepository: IPreferenceRepository
+    private val prefRepository: IPreferenceRepository,
+    private val platform: Platform
 ) {
     data class Result(val release: Release?)
 
@@ -22,7 +21,6 @@ class CheckForLatestRelease(
     }
 
     suspend fun execute(): Result {
-
 
         var release: Release? = null
 
@@ -49,7 +47,7 @@ class CheckForLatestRelease(
                 if (tagParts.size == 2) {
                     val build = tagParts[1].toInt()
                     try {
-                        if (build > BuildConfig.VERSION_CODE) {
+                        if (build > platform.info.versionCode) {
                             releaseInfo.assets.firstOrNull()?.let { asset ->
                                 release = Release(
                                     releaseInfo.name,

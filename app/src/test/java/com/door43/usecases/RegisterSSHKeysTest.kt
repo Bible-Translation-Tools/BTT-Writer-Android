@@ -2,7 +2,6 @@ package com.door43.usecases
 
 import android.content.Context
 import android.content.res.Resources
-import com.door43.OnProgressListener
 import com.door43.TestUtils
 import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
@@ -11,28 +10,27 @@ import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Profile
 import com.door43.util.FileUtilities
 import io.mockk.MockKAnnotations
+import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.mockkConstructor
 import io.mockk.mockkObject
-import io.mockk.mockkStatic
 import io.mockk.runs
 import io.mockk.unmockkAll
 import io.mockk.verify
+import kotlinx.coroutines.test.runTest
+import org.bibletranslationtools.gogsclient.GogsAPI
+import org.bibletranslationtools.gogsclient.PublicKey
+import org.bibletranslationtools.gogsclient.Response
 import org.junit.After
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import org.bibletranslationtools.gogsclient.GogsAPI
-import org.bibletranslationtools.gogsclient.PublicKey
-import org.bibletranslationtools.gogsclient.Response
 import java.io.IOException
-import kotlinx.coroutines.test.runTest
-import io.mockk.coEvery
-import io.mockk.coVerify
 
 class RegisterSSHKeysTest {
 
@@ -40,8 +38,9 @@ class RegisterSSHKeysTest {
     @MockK private lateinit var profile: Profile
     @MockK private lateinit var directoryProvider: IDirectoryProvider
     @MockK private lateinit var prefRepository: IPreferenceRepository
-    @MockK private lateinit var progressListener: OnProgressListener
     @MockK private lateinit var resources: Resources
+
+    val onProgress = mockk<(Float, String?) -> Unit>(relaxed = true)
 
     @Before
     fun setup() {
@@ -59,7 +58,7 @@ class RegisterSSHKeysTest {
         coEvery { anyConstructed<GogsAPI>().createPublicKey(any(), any()) }.returns(mockk())
 
         every { context.resources }.returns(resources)
-        every { progressListener.onProgress(any(), any()) }.just(runs)
+        every { onProgress(any(), any()) }.just(runs)
         every { directoryProvider.generateSSHKeys() }.just(runs)
         every { directoryProvider.publicKey }.returns(mockk())
 
@@ -87,7 +86,7 @@ class RegisterSSHKeysTest {
             profile,
             directoryProvider,
             prefRepository
-        ).execute(false, progressListener)
+        ).execute(false, onProgress)
 
         assertTrue(success)
 
@@ -107,13 +106,13 @@ class RegisterSSHKeysTest {
             profile,
             directoryProvider,
             prefRepository
-        ).execute(false, progressListener)
+        ).execute(false, onProgress)
 
         assertFalse(success)
 
         verify { profile.gogsUser }
         verify { App.udid() }
-        verify { progressListener.onProgress(any(), "Authenticating") }
+        verify { onProgress(any(), "Authenticating") }
 
         coVerify(exactly = 0) { anyConstructed<GogsAPI>().listPublicKeys(any()) }
         verify(exactly = 0) { directoryProvider.generateSSHKeys() }
@@ -129,7 +128,7 @@ class RegisterSSHKeysTest {
             profile,
             directoryProvider,
             prefRepository
-        ).execute(false, progressListener)
+        ).execute(false, onProgress)
 
         assertTrue(success)
 
@@ -150,7 +149,7 @@ class RegisterSSHKeysTest {
             profile,
             directoryProvider,
             prefRepository
-        ).execute(true, progressListener)
+        ).execute(true, onProgress)
 
         assertTrue(success)
 
@@ -173,7 +172,7 @@ class RegisterSSHKeysTest {
             profile,
             directoryProvider,
             prefRepository
-        ).execute(false, progressListener)
+        ).execute(false, onProgress)
 
         assertFalse(success)
 
@@ -200,7 +199,7 @@ class RegisterSSHKeysTest {
             profile,
             directoryProvider,
             prefRepository
-        ).execute(false, progressListener)
+        ).execute(false, onProgress)
 
         assertTrue(success)
 
@@ -227,7 +226,7 @@ class RegisterSSHKeysTest {
             profile,
             directoryProvider,
             prefRepository
-        ).execute(false, progressListener)
+        ).execute(false, onProgress)
 
         assertTrue(success)
 
@@ -258,7 +257,7 @@ class RegisterSSHKeysTest {
             profile,
             directoryProvider,
             prefRepository
-        ).execute(false, progressListener)
+        ).execute(false, onProgress)
 
         assertFalse(success)
 
@@ -279,6 +278,6 @@ class RegisterSSHKeysTest {
         coVerify { anyConstructed<GogsAPI>().listPublicKeys(any()) }
         coVerify { anyConstructed<GogsAPI>().createPublicKey(any(), any()) }
         verify { directoryProvider.publicKey }
-        verify { progressListener.onProgress(any(), "Authenticating") }
+        verify { onProgress(any(), "Authenticating") }
     }
 }

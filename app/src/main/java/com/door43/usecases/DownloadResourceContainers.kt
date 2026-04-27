@@ -50,7 +50,8 @@ class DownloadResourceContainers(
 
         if (success) {
             // also download helps
-            if (translation.resource.slug != "tw" && translation.resource.slug != "tn" && translation.resource.slug != "tq") {
+            val isHelp = translation.resource.slug in setOf("tw", "tn", "tq")
+            if (!isHelp) {
                 // TODO: 11/2/16 only download these if there is an update
                 try {
                     if (translation.project.slug == "obs") {

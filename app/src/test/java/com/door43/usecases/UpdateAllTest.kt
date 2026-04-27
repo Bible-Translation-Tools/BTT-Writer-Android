@@ -2,7 +2,6 @@ package com.door43.usecases
 
 import android.content.Context
 import android.content.res.Resources
-import com.door43.OnProgressListener
 import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
 import com.door43.translationstudio.R
@@ -12,10 +11,11 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.just
+import io.mockk.mockk
 import io.mockk.runs
 import io.mockk.unmockkAll
 import io.mockk.verify
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -28,15 +28,16 @@ class UpdateAllTest {
     @MockK private lateinit var context: Context
     @MockK private lateinit var prefRepository: IPreferenceRepository
     @MockK private lateinit var library: Door43Client
-    @MockK private lateinit var progressListener: OnProgressListener
     @MockK private lateinit var resources: Resources
+
+    val onProgress = mockk<(Float, String?) -> Unit>(relaxed = true)
 
     @Before
     fun setup() {
         MockKAnnotations.init(this)
 
         every { context.resources }.returns(resources)
-        every { progressListener.onProgress(any(), any()) }.just(runs)
+        every { onProgress(any(), any()) }.just(runs)
 
         every { prefRepository.getRootCatalogApi() }.returns("/api")
         every { prefRepository.getDefaultPref(
@@ -58,11 +59,9 @@ class UpdateAllTest {
     }
 
     @Test
-    fun `test update all, force catalogs`() {
-        val result = runBlocking {
-            UpdateAll(context, prefRepository, library)
-                .execute(true, progressListener)
-        }
+    fun `test update all, force catalogs`() = runTest {
+        val result = UpdateAll(context, prefRepository, library)
+            .execute(true, onProgress)
 
         assertTrue(result.success)
 
@@ -70,15 +69,13 @@ class UpdateAllTest {
         coVerify { library.updateSources(any(), any()) }
         coVerify { library.updateCatalogs(true, any()) }
         coVerify { library.updateChunks(any()) }
-        verify(exactly = 3) { progressListener.onProgress(any(), any()) }
+        verify(exactly = 3) { onProgress(any(), any()) }
     }
 
     @Test
-    fun `test update all, don't force catalogs`() {
-        val result = runBlocking {
-            UpdateAll(context, prefRepository, library)
-                .execute(false, progressListener)
-        }
+    fun `test update all, don't force catalogs`() = runTest {
+        val result = UpdateAll(context, prefRepository, library)
+            .execute(false, onProgress)
 
         assertTrue(result.success)
 
@@ -86,17 +83,15 @@ class UpdateAllTest {
         coVerify { library.updateSources(any(), any()) }
         coVerify { library.updateChunks(any()) }
         coVerify { library.updateCatalogs(false, any()) }
-        verify(exactly = 3) { progressListener.onProgress(any(), any()) }
+        verify(exactly = 3) { onProgress(any(), any()) }
     }
 
     @Test
-    fun `test update all failed if one of the updated fails`() {
+    fun `test update all failed if one of the updated fails`() = runTest {
         coEvery { library.updateChunks(any()) }.throws(Exception("chunks updated failed"))
 
-        val result = runBlocking {
-            UpdateAll(context, prefRepository, library)
-                .execute(false, progressListener)
-        }
+        val result = UpdateAll(context, prefRepository, library)
+            .execute(false, onProgress)
 
         assertFalse(result.success)
 
@@ -104,6 +99,6 @@ class UpdateAllTest {
         coVerify { library.updateSources(any(), any()) }
         coVerify { library.updateChunks(any()) }
         coVerify { library.updateCatalogs(false, any()) }
-        verify(exactly = 3) { progressListener.onProgress(any(), any()) }
+        verify(exactly = 3) { onProgress(any(), any()) }
     }
 }

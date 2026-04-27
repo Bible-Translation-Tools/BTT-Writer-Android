@@ -10,7 +10,6 @@ import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.App
-import com.door43.translationstudio.BuildConfig
 import com.door43.translationstudio.Platform
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.ComponentScope
@@ -33,10 +32,10 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.bibletranslationtools.logger.LogEntry
+import org.bibletranslationtools.logger.Logger
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.unfoldingword.door43client.Door43Client
-import org.bibletranslationtools.logger.Logger
 
 interface DevToolsComponent {
 
@@ -97,8 +96,8 @@ class DefaultDevToolsComponent(
     private val _event = Channel<DevToolsComponent.Event>()
     override val event = _event.receiveAsFlow()
 
-    override val versionName = BuildConfig.VERSION_NAME
-    override val versionCode = BuildConfig.VERSION_CODE
+    override val versionName = App.info.versionName
+    override val versionCode = App.info.versionCode
     override val udid: String get() = App.udid()
 
     init {

@@ -1,7 +1,7 @@
 package com.door43.translationstudio.core
 
 import android.content.Context
-import com.door43.translationstudio.BuildConfig
+import com.door43.translationstudio.App
 import com.door43.translationstudio.core.entity.SourceTranslation
 import com.door43.translationstudio.core.entity.toSourceTranslation
 import com.door43.translationstudio.core.manifest.Manifest
@@ -776,7 +776,7 @@ class TargetTranslation private constructor(
             val manifest = buildManifest {
                 packageVersion(PACKAGE_VERSION)
                 format(translationFormat.title)
-                generator(APPLICATION_NAME, BuildConfig.VERSION_CODE.toString())
+                generator(APPLICATION_NAME, App.info.versionCode.toString())
                 targetLanguage(targetLanguage)
                 project(projectId, "")
                 type(resourceType)

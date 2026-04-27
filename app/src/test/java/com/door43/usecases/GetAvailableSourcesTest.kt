@@ -1,7 +1,5 @@
 package com.door43.usecases
 
-import com.door43.OnProgressListener
-import com.door43.TestUtils
 import io.mockk.MockKAnnotations
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
@@ -10,6 +8,9 @@ import io.mockk.mockk
 import io.mockk.runs
 import io.mockk.unmockkAll
 import io.mockk.verify
+import org.bibletranslationtools.resourcecontainer.Language
+import org.bibletranslationtools.resourcecontainer.Project
+import org.bibletranslationtools.resourcecontainer.Resource
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -17,15 +18,13 @@ import org.junit.Test
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.door43client.Index
 import org.unfoldingword.door43client.models.Translation
-import org.unfoldingword.resourcecontainer.Language
-import org.unfoldingword.resourcecontainer.Project
-import org.unfoldingword.resourcecontainer.Resource
 
 class GetAvailableSourcesTest {
 
     @MockK private lateinit var library: Door43Client
-    @MockK private lateinit var progressListener: OnProgressListener
     @MockK private lateinit var index: Index
+
+    val onProgress = mockk<(Float, String?) -> Unit>(relaxed = true)
 
     @Before
     fun setup() {
@@ -33,7 +32,7 @@ class GetAvailableSourcesTest {
 
         every { library.index } returns index
 
-        every { progressListener.onProgress(any(), any()) }.just(runs)
+        every { onProgress(any(), any()) }.just(runs)
     }
 
     @After
@@ -52,7 +51,7 @@ class GetAvailableSourcesTest {
                 )
             }
 
-        val result = GetAvailableSources(library).execute(progressListener)
+        val result = GetAvailableSources(library).execute(onProgress)
 
         assertEquals(4, result.sources.size)
         assertEquals(2, result.byLanguage.size)
@@ -68,24 +67,27 @@ class GetAvailableSourcesTest {
         assertEquals(2, result.otherBooks["bible"]!!.size)
 
         verify(exactly = 2) { index.findTranslations(any(), any(), any(), any(), any(), any(), any()) }
-        verify { progressListener.onProgress(any(), any()) }
+        verify { onProgress(any(), any()) }
     }
 
-    private fun mockLanguage(slug: String): Language {
-        val language: Language = mockk()
-        TestUtils.setPropertyReflection(language, "slug", slug)
+    private fun mockLanguage(id: String): Language {
+        val language: Language = mockk {
+            every { slug }.returns(id)
+        }
         return language
     }
 
-    private fun mockProject(slug: String): Project {
-        val project: Project = mockk()
-        TestUtils.setPropertyReflection(project, "slug", slug)
+    private fun mockProject(id: String): Project {
+        val project: Project = mockk {
+            every { slug }.returns(id)
+        }
         return project
     }
 
-    private fun mockResource(slug: String): Resource {
-        val resource: Resource = mockk()
-        TestUtils.setPropertyReflection(resource, "slug", slug)
+    private fun mockResource(id: String): Resource {
+        val resource: Resource = mockk {
+            every { slug }.returns(id)
+        }
         return resource
     }
 

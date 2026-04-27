@@ -42,7 +42,6 @@ import com.door43.translationstudio.ui.navigation.RootComponent
 import com.door43.usecases.BackupRC
 import com.door43.usecases.GogsLogout
 import com.door43.usecases.TranslationProgress
-import com.door43.usecases.UpdateAll
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -218,9 +217,6 @@ class DefaultHomeComponent(
     private val gogsLogout: GogsLogout by inject()
     private val backupRC: BackupRC by inject()
     private val library: Door43Client by inject()
-
-    // TODO Remove
-    private val updateAll: UpdateAll by inject()
 
     override val coroutineScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
 

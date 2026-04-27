@@ -5,7 +5,6 @@ import android.app.Application
 import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
-import android.os.Build
 import android.os.Process
 import android.text.TextUtils
 import androidx.preference.PreferenceManager
@@ -51,6 +50,7 @@ class App : Application() {
         directory = directoryProvider
         prefs = prefRepository
         backup = backupRC
+        platform = AndroidPlatform(this, directoryProvider)
 
         Foreground.init(this)
 
@@ -91,6 +91,8 @@ class App : Application() {
         private lateinit var prefs: IPreferenceRepository
         private lateinit var directory: IDirectoryProvider
         private lateinit var backup: BackupRC
+
+        private lateinit var platform: Platform
 
         fun configureLogger(minLogLevel: Int) {
             Logger.configure(directory.logFile, LogLevel.getLevel(minLogLevel))
@@ -141,8 +143,11 @@ class App : Application() {
          */
         @SuppressLint("HardwareIds")
         fun udid(): String {
-            return Build.MODEL.lowercase().replace(" ", "_")
+            return info.model.lowercase().replace(" ", "_")
         }
+
+        val info: AppInfo
+            get() = platform.info
 
         fun restart() {
             val packageName = instance.packageName

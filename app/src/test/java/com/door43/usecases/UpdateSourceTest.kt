@@ -2,8 +2,6 @@ package com.door43.usecases
 
 import android.content.Context
 import android.content.res.Resources
-import com.door43.OnProgressListener
-import com.door43.TestUtils
 import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
 import com.door43.translationstudio.R
@@ -17,7 +15,10 @@ import io.mockk.mockk
 import io.mockk.runs
 import io.mockk.unmockkAll
 import io.mockk.verify
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
+import org.bibletranslationtools.resourcecontainer.Language
+import org.bibletranslationtools.resourcecontainer.Project
+import org.bibletranslationtools.resourcecontainer.Resource
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -27,18 +28,16 @@ import org.junit.Test
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.door43client.Index
 import org.unfoldingword.door43client.models.Translation
-import org.unfoldingword.resourcecontainer.Language
-import org.unfoldingword.resourcecontainer.Project
-import org.unfoldingword.resourcecontainer.Resource
 
 class UpdateSourceTest {
 
     @MockK private lateinit var context: Context
     @MockK private lateinit var library: Door43Client
     @MockK private lateinit var prefRepository: IPreferenceRepository
-    @MockK private lateinit var progressListener: OnProgressListener
     @MockK private lateinit var index: Index
     @MockK private lateinit var resources: Resources
+
+    val onProgress = mockk<(Float, String?) -> Unit>(relaxed = true)
 
     @Before
     fun setup() {
@@ -47,7 +46,7 @@ class UpdateSourceTest {
         every { context.resources }.returns(resources)
         every { library.index } returns index
 
-        every { progressListener.onProgress(any(), any()) }.just(runs)
+        every { onProgress(any(), any()) }.just(runs)
         every { library.getResourceContainerLastModified(any(), any(), any()) }
             .returns(1234567890)
         coEvery { library.updateSources(any(), any()) }.just(runs)
@@ -68,17 +67,15 @@ class UpdateSourceTest {
     }
 
     @Test
-    fun `test update source, nothing new`() {
+    fun `test update source, nothing new`() = runTest  {
         every { index.findTranslations(any(), any(), any(), any(), any(), any(), any()) }
             .returns(listOf(getTranslation("en", "mrk", "ulb")))
 
-        val result = runBlocking {
-            UpdateSource(
-                context,
-                library,
-                prefRepository
-            ).execute(progressListener)
-        }
+        val result = UpdateSource(
+            context,
+            library,
+            prefRepository
+        ).execute(onProgress)
 
         assertTrue(result.success)
         assertEquals(0, result.updatedCount)
@@ -88,7 +85,7 @@ class UpdateSourceTest {
     }
 
     @Test
-    fun `test update source, added new translation`() {
+    fun `test update source, added new translation`() = runTest  {
         val translation1 = getTranslation("en", "mrk", "ulb")
         val translation2 = getTranslation("id", "luk", "ayt")
 
@@ -100,13 +97,11 @@ class UpdateSourceTest {
             }
         }
 
-        val result = runBlocking {
-            UpdateSource(
-                context,
-                library,
-                prefRepository
-            ).execute(progressListener)
-        }
+        val result = UpdateSource(
+            context,
+            library,
+            prefRepository
+        ).execute(onProgress)
 
         assertTrue(result.success)
         assertEquals(0, result.updatedCount)
@@ -116,7 +111,7 @@ class UpdateSourceTest {
     }
 
     @Test
-    fun `test update source, updated old translation`() {
+    fun `test update source, updated old translation`() = runTest  {
         val translation = getTranslation("en", "mrk", "ulb")
 
         var called = 0
@@ -130,13 +125,11 @@ class UpdateSourceTest {
         every { index.findTranslations(any(), any(), any(), any(), any(), any(), any()) }
             .returns(listOf(translation))
 
-        val result = runBlocking {
-            UpdateSource(
-                context,
-                library,
-                prefRepository
-            ).execute(progressListener)
-        }
+        val result = UpdateSource(
+            context,
+            library,
+            prefRepository
+        ).execute(onProgress)
 
         assertTrue(result.success)
         assertEquals(1, result.updatedCount)
@@ -146,19 +139,17 @@ class UpdateSourceTest {
     }
 
     @Test
-    fun `test update source, throws exception`() {
+    fun `test update source, throws exception`() = runTest  {
         every { index.findTranslations(any(), any(), any(), any(), any(), any(), any()) }
             .returns(listOf(getTranslation("en", "mrk", "ulb")))
 
         coEvery { library.updateSources(any(), any()) }.throws(Exception("An error occurred."))
 
-        val result = runBlocking {
-            UpdateSource(
-                context,
-                library,
-                prefRepository
-            ).execute(progressListener)
-        }
+        val result = UpdateSource(
+            context,
+            library,
+            prefRepository
+        ).execute(onProgress)
 
         assertFalse(result.success)
         assertEquals(0, result.updatedCount)
@@ -180,14 +171,15 @@ class UpdateSourceTest {
     private fun getTranslation(lang: String, book: String, res: String): Translation {
         val translation: Translation = mockk()
 
-        val language: Language = mockk()
-        TestUtils.setPropertyReflection(language, "slug", lang)
-
-        val project: Project = mockk()
-        TestUtils.setPropertyReflection(project, "slug", book)
-
-        val resource: Resource = mockk()
-        TestUtils.setPropertyReflection(resource, "slug", res)
+        val language: Language = mockk {
+            every { slug }.returns(lang)
+        }
+        val project: Project = mockk {
+            every { slug }.returns(book)
+        }
+        val resource: Resource = mockk {
+            every { slug }.returns(res)
+        }
 
         every { translation.resourceContainerSlug } returns "${lang}_${book}_${res}"
         every { translation.language } returns language

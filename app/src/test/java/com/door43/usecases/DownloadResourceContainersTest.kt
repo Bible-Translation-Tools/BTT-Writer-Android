@@ -1,7 +1,5 @@
 package com.door43.usecases
 
-import com.door43.OnProgressListener
-import com.door43.TestUtils
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -14,7 +12,13 @@ import io.mockk.runs
 import io.mockk.unmockkAll
 import io.mockk.verify
 import io.mockk.verifySequence
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
+import org.bibletranslationtools.logger.Logger
+import org.bibletranslationtools.resourcecontainer.ContainerTools
+import org.bibletranslationtools.resourcecontainer.Language
+import org.bibletranslationtools.resourcecontainer.Project
+import org.bibletranslationtools.resourcecontainer.Resource
+import org.bibletranslationtools.resourcecontainer.ResourceContainer
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -26,22 +30,17 @@ import org.junit.Test
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.door43client.Index
 import org.unfoldingword.door43client.models.Translation
-import org.unfoldingword.resourcecontainer.ContainerTools
-import org.unfoldingword.resourcecontainer.Language
-import org.unfoldingword.resourcecontainer.Project
-import org.unfoldingword.resourcecontainer.Resource
-import org.unfoldingword.resourcecontainer.ResourceContainer
-import org.bibletranslationtools.logger.Logger
 
 class DownloadResourceContainersTest {
 
     @MockK private lateinit var library: Door43Client
     @MockK private lateinit var translation: Translation
-    @MockK private lateinit var progressListener: OnProgressListener
     @MockK private lateinit var language: Language
     @MockK private lateinit var project: Project
     @MockK private lateinit var resource: Resource
     @MockK private lateinit var index: Index
+
+    val onProgress = mockk<(Float, String?) -> Unit>(relaxed = true)
 
     @Before
     fun setup() {
@@ -54,7 +53,7 @@ class DownloadResourceContainersTest {
         every { translation.resource } returns resource
         every { translation.resourceContainerSlug } returns "en_mat_ulb"
 
-        every { progressListener.onProgress(any(), any()) }.just(runs)
+        every { onProgress(any(), any()) }.just(runs)
         every { library.index } returns index
     }
 
@@ -64,25 +63,22 @@ class DownloadResourceContainersTest {
     }
 
     @Test
-    fun `test download ulb resource container also downloads helps`() {
+    fun `test download ulb resource container also downloads helps`() = runTest {
         val rcUlb: ResourceContainer = mockk()
         val twUlb: ResourceContainer = mockk()
         val tnUlb: ResourceContainer = mockk()
         val tqUlb: ResourceContainer = mockk()
 
-        TestUtils.setPropertyReflection(language, "slug", "en")
-        TestUtils.setPropertyReflection(project, "slug", "mrk")
-        TestUtils.setPropertyReflection(resource, "slug", "ulb")
+        every { language.slug } returns("en")
+        every { project.slug } returns("mrk")
+        every { resource.slug } returns("ulb")
 
-        coEvery { library.download(language.slug, project.slug, resource.slug) }.returns(rcUlb)
-        coEvery { library.download(language.slug, "bible", "tw") }.returns(twUlb)
-        coEvery { library.download(language.slug, project.slug, "tn") }.returns(tnUlb)
-        coEvery { library.download(language.slug, project.slug, "tq") }.returns(tqUlb)
+        coEvery { library.download("en", "mrk", "ulb") }.returns(rcUlb)
+        coEvery { library.download("en", "bible", "tw") }.returns(twUlb)
+        coEvery { library.download("en", "mrk", "tn") }.returns(tnUlb)
+        coEvery { library.download("en", "mrk", "tq") }.returns(tqUlb)
 
-        val result = runBlocking {
-            DownloadResourceContainers(library)
-                .download(translation, progressListener)
-        }
+        val result = DownloadResourceContainers(library).download(translation, onProgress)
 
         assertTrue(result.success)
         assertEquals(4, result.containers.size)
@@ -93,112 +89,104 @@ class DownloadResourceContainersTest {
         assertEquals(tqUlb, result.containers[3])
 
         verifySequence {
-            progressListener.onProgress(any(), "Downloading resource container")
-            progressListener.onProgress(any(), "Downloading translation words")
-            progressListener.onProgress(any(), "Downloading translation notes")
-            progressListener.onProgress(any(), "Downloading translation questions")
+            onProgress(any(), "Downloading resource container")
+            onProgress(any(), "Downloading translation words")
+            onProgress(any(), "Downloading translation notes")
+            onProgress(any(), "Downloading translation questions")
         }
 
-        coVerify { library.download(language.slug, project.slug, resource.slug) }
-        coVerify { library.download(language.slug, "bible", "tw") }
-        coVerify { library.download(language.slug, project.slug, "tn") }
-        coVerify { library.download(language.slug, project.slug, "tq") }
+        coVerify { library.download("en", "mrk", "ulb") }
+        coVerify { library.download("en", "bible", "tw") }
+        coVerify { library.download("en", "mrk", "tn") }
+        coVerify { library.download("en", "mrk", "tq") }
     }
 
     @Test
-    fun `test download tw resource container`() {
+    fun `test download tw resource container`() = runTest {
         val resourceSlug = "tw"
         val projectSlug = "bible"
         val twUlb: ResourceContainer = mockk()
 
-        TestUtils.setPropertyReflection(language, "slug", "en")
-        TestUtils.setPropertyReflection(project, "slug", projectSlug)
-        TestUtils.setPropertyReflection(resource, "slug", resourceSlug)
+        every { language.slug } returns("en")
+        every { project.slug } returns(projectSlug)
+        every { resource.slug } returns(resourceSlug)
 
-        coEvery { library.download(language.slug, projectSlug, resourceSlug) }.returns(twUlb)
+        coEvery { library.download("en", projectSlug, resourceSlug) }.returns(twUlb)
 
-        val result = runBlocking {
-            DownloadResourceContainers(library)
-                .download(translation, progressListener)
-        }
+        val result = DownloadResourceContainers(library)
+            .download(translation, onProgress)
 
         assertTrue(result.success)
         assertEquals(1, result.containers.size)
         assertEquals(twUlb, result.containers[0])
 
-        verify { progressListener.onProgress(any(), "Downloading resource container") }
-        coVerify { library.download(language.slug, projectSlug, resourceSlug) }
+        verify { onProgress(any(), "Downloading resource container") }
+        coVerify { library.download("en", projectSlug, resourceSlug) }
     }
 
     @Test
-    fun `test download tn resource container`() {
+    fun `test download tn resource container`() = runTest {
         val resourceSlug = "tn"
         val tnUlb: ResourceContainer = mockk()
 
-        TestUtils.setPropertyReflection(language, "slug", "en")
-        TestUtils.setPropertyReflection(project, "slug", "mrk")
-        TestUtils.setPropertyReflection(resource, "slug", resourceSlug)
+        every { language.slug } returns("en")
+        every { project.slug } returns("mrk")
+        every { resource.slug } returns(resourceSlug)
 
-        coEvery { library.download(language.slug, project.slug, resourceSlug) }.returns(tnUlb)
+        coEvery { library.download("en", "mrk", resourceSlug) }.returns(tnUlb)
 
-        val result = runBlocking {
-            DownloadResourceContainers(library)
-                .download(translation, progressListener)
-        }
+        val result = DownloadResourceContainers(library)
+            .download(translation, onProgress)
 
         assertTrue(result.success)
         assertEquals(1, result.containers.size)
         assertEquals(tnUlb, result.containers[0])
 
-        verify { progressListener.onProgress(any(), "Downloading resource container") }
-        coVerify { library.download(language.slug, project.slug, resourceSlug) }
+        verify { onProgress(any(), "Downloading resource container") }
+        coVerify { library.download("en", "mrk", resourceSlug) }
     }
 
     @Test
-    fun `test download tq resource container`() {
+    fun `test download tq resource container`() = runTest {
         val resourceSlug = "tq"
         val tqUlb: ResourceContainer = mockk()
 
-        TestUtils.setPropertyReflection(language, "slug", "en")
-        TestUtils.setPropertyReflection(project, "slug", "mrk")
-        TestUtils.setPropertyReflection(resource, "slug", resourceSlug)
+        every { language.slug } returns("en")
+        every { project.slug } returns("mrk")
+        every { resource.slug } returns(resourceSlug)
 
-        coEvery { library.download(language.slug, project.slug, resourceSlug) }.returns(tqUlb)
+        coEvery { library.download("en", "mrk", resourceSlug) }.returns(tqUlb)
 
-        val result = runBlocking {
-            DownloadResourceContainers(library)
-                .download(translation, progressListener)
-        }
+        val result = DownloadResourceContainers(library)
+            .download(translation, onProgress)
 
         assertTrue(result.success)
         assertEquals(1, result.containers.size)
         assertEquals(tqUlb, result.containers[0])
 
-        verify { progressListener.onProgress(any(), "Downloading resource container") }
-        coVerify { library.download(language.slug, project.slug, resourceSlug) }
+        verify { onProgress(any(), "Downloading resource container") }
+        coVerify { library.download("en", "mrk", resourceSlug) }
     }
 
     @Test
-    fun `test download obs resource container also downloads helps`() {
+    fun `test download obs resource container also downloads helps`() = runTest {
         val rcUlb: ResourceContainer = mockk()
         val twUlb: ResourceContainer = mockk()
         val tnUlb: ResourceContainer = mockk()
         val tqUlb: ResourceContainer = mockk()
 
-        TestUtils.setPropertyReflection(language, "slug", "en")
-        TestUtils.setPropertyReflection(project, "slug", "obs")
-        TestUtils.setPropertyReflection(resource, "slug", "ulb")
+        every { language.slug } returns("en")
+        every { project.slug } returns("obs")
+        every { resource.slug } returns("ulb")
 
-        coEvery { library.download(language.slug, project.slug, resource.slug) }.returns(rcUlb)
-        coEvery { library.download(language.slug, "bible-obs", "tw") }.returns(twUlb)
-        coEvery { library.download(language.slug, project.slug, "tn") }.returns(tnUlb)
-        coEvery { library.download(language.slug, project.slug, "tq") }.returns(tqUlb)
+        coEvery { library.download("en", "obs", "ulb") }.returns(rcUlb)
+        coEvery { library.download("en", "bible-obs", "tw") }.returns(twUlb)
+        coEvery { library.download("en", "obs", "tn") }.returns(tnUlb)
+        coEvery { library.download("en", "obs", "tq") }.returns(tqUlb)
 
-        val result = runBlocking {
-            DownloadResourceContainers(library)
-                .download(translation, progressListener)
+        val result = DownloadResourceContainers(library)
+            .download(translation, onProgress)
 
-        }
         assertTrue(result.success)
         assertEquals(4, result.containers.size)
 
@@ -208,60 +196,56 @@ class DownloadResourceContainersTest {
         assertEquals(tqUlb, result.containers[3])
 
         verifySequence {
-            progressListener.onProgress(any(), "Downloading resource container")
-            progressListener.onProgress(any(), "Downloading obs translation words")
-            progressListener.onProgress(any(), "Downloading translation notes")
-            progressListener.onProgress(any(), "Downloading translation questions")
+            onProgress(any(), "Downloading resource container")
+            onProgress(any(), "Downloading obs translation words")
+            onProgress(any(), "Downloading translation notes")
+            onProgress(any(), "Downloading translation questions")
         }
 
-        coVerify { library.download(language.slug, project.slug, resource.slug) }
-        coVerify { library.download(language.slug, "bible-obs", "tw") }
-        coVerify { library.download(language.slug, project.slug, "tn") }
-        coVerify { library.download(language.slug, project.slug, "tq") }
+        coVerify { library.download("en", "obs", "ulb") }
+        coVerify { library.download("en", "bible-obs", "tw") }
+        coVerify { library.download("en", "obs", "tn") }
+        coVerify { library.download("en", "obs", "tq") }
     }
 
     @Test
-    fun `test ulb resource with exception downloads nothing`() {
-        TestUtils.setPropertyReflection(language, "slug", "en")
-        TestUtils.setPropertyReflection(project, "slug", "mrk")
-        TestUtils.setPropertyReflection(resource, "slug", "ulb")
+    fun `test ulb resource with exception downloads nothing`() = runTest {
+        every { language.slug } returns("en")
+        every { project.slug } returns("mrk")
+        every { resource.slug } returns("ulb")
 
-        coEvery { library.download(language.slug, project.slug, resource.slug) }
+        coEvery { library.download("en", "mrk", "ulb") }
             .throws(Exception("An error occurred."))
 
-        val result = runBlocking {
-            DownloadResourceContainers(library)
-                .download(translation, progressListener)
-        }
+        val result = DownloadResourceContainers(library)
+            .download(translation, onProgress)
 
         assertFalse(result.success)
         assertEquals(0, result.containers.size)
 
-        verify { progressListener.onProgress(any(), "Downloading resource container") }
-        coVerify { library.download(language.slug, project.slug, resource.slug) }
+        verify { onProgress(any(), "Downloading resource container") }
+        coVerify { library.download("en", "mrk", "ulb") }
     }
 
     @Test
-    fun `test download ulb resource with tw exception`() {
+    fun `test download ulb resource with tw exception`() = runTest {
         val rcUlb: ResourceContainer = mockk()
         val twUlb: ResourceContainer = mockk()
         val tnUlb: ResourceContainer = mockk()
         val tqUlb: ResourceContainer = mockk()
 
-        TestUtils.setPropertyReflection(language, "slug", "en")
-        TestUtils.setPropertyReflection(project, "slug", "mrk")
-        TestUtils.setPropertyReflection(resource, "slug", "ulb")
+        every { language.slug } returns("en")
+        every { project.slug } returns("mrk")
+        every { resource.slug } returns("ulb")
 
-        coEvery { library.download(language.slug, project.slug, resource.slug) }.returns(rcUlb)
-        coEvery { library.download(language.slug, "bible", "tw") }
+        coEvery { library.download("en", "mrk", "ulb") }.returns(rcUlb)
+        coEvery { library.download("en", "bible", "tw") }
             .throws(Exception("An error occurred."))
-        coEvery { library.download(language.slug, project.slug, "tn") }.returns(tnUlb)
-        coEvery { library.download(language.slug, project.slug, "tq") }.returns(tqUlb)
+        coEvery { library.download("en", "mrk", "tn") }.returns(tnUlb)
+        coEvery { library.download("en", "mrk", "tq") }.returns(tqUlb)
 
-        val result = runBlocking {
-            DownloadResourceContainers(library)
-                .download(translation, progressListener)
-        }
+        val result = DownloadResourceContainers(library)
+            .download(translation, onProgress)
 
         assertTrue(result.success)
         assertEquals(3, result.containers.size)
@@ -272,39 +256,37 @@ class DownloadResourceContainersTest {
         assertFalse(result.containers.contains(twUlb))
 
         verifySequence {
-            progressListener.onProgress(any(), "Downloading resource container")
-            progressListener.onProgress(any(), "Downloading translation words")
-            progressListener.onProgress(any(), "Downloading translation notes")
-            progressListener.onProgress(any(), "Downloading translation questions")
+            onProgress(any(), "Downloading resource container")
+            onProgress(any(), "Downloading translation words")
+            onProgress(any(), "Downloading translation notes")
+            onProgress(any(), "Downloading translation questions")
         }
 
-        coVerify { library.download(language.slug, project.slug, resource.slug) }
-        coVerify { library.download(language.slug, "bible", "tw") }
-        coVerify { library.download(language.slug, project.slug, "tn") }
-        coVerify { library.download(language.slug, project.slug, "tq") }
+        coVerify { library.download("en", "mrk", "ulb") }
+        coVerify { library.download("en", "bible", "tw") }
+        coVerify { library.download("en", "mrk", "tn") }
+        coVerify { library.download("en", "mrk", "tq") }
     }
 
     @Test
-    fun `test download ulb resource with tn exception`() {
+    fun `test download ulb resource with tn exception`() = runTest {
         val rcUlb: ResourceContainer = mockk()
         val twUlb: ResourceContainer = mockk()
         val tnUlb: ResourceContainer = mockk()
         val tqUlb: ResourceContainer = mockk()
 
-        TestUtils.setPropertyReflection(language, "slug", "en")
-        TestUtils.setPropertyReflection(project, "slug", "mrk")
-        TestUtils.setPropertyReflection(resource, "slug", "ulb")
+        every { language.slug } returns("en")
+        every { project.slug } returns("mrk")
+        every { resource.slug } returns("ulb")
 
-        coEvery { library.download(language.slug, project.slug, resource.slug) }.returns(rcUlb)
-        coEvery { library.download(language.slug, "bible", "tw") }.returns(twUlb)
-        coEvery { library.download(language.slug, project.slug, "tn") }
+        coEvery { library.download("en", "mrk", "ulb") }.returns(rcUlb)
+        coEvery { library.download("en", "bible", "tw") }.returns(twUlb)
+        coEvery { library.download("en", "mrk", "tn") }
             .throws(Exception("An error occurred."))
-        coEvery { library.download(language.slug, project.slug, "tq") }.returns(tqUlb)
+        coEvery { library.download("en", "mrk", "tq") }.returns(tqUlb)
 
-        val result = runBlocking {
-            DownloadResourceContainers(library)
-                .download(translation, progressListener)
-        }
+        val result = DownloadResourceContainers(library)
+            .download(translation, onProgress)
 
         assertTrue(result.success)
         assertEquals(3, result.containers.size)
@@ -315,39 +297,37 @@ class DownloadResourceContainersTest {
         assertFalse(result.containers.contains(tnUlb))
 
         verifySequence {
-            progressListener.onProgress(any(), "Downloading resource container")
-            progressListener.onProgress(any(), "Downloading translation words")
-            progressListener.onProgress(any(), "Downloading translation notes")
-            progressListener.onProgress(any(), "Downloading translation questions")
+            onProgress(any(), "Downloading resource container")
+            onProgress(any(), "Downloading translation words")
+            onProgress(any(), "Downloading translation notes")
+            onProgress(any(), "Downloading translation questions")
         }
 
-        coVerify { library.download(language.slug, project.slug, resource.slug) }
-        coVerify { library.download(language.slug, "bible", "tw") }
-        coVerify { library.download(language.slug, project.slug, "tn") }
-        coVerify { library.download(language.slug, project.slug, "tq") }
+        coVerify { library.download("en", "mrk", "ulb") }
+        coVerify { library.download("en", "bible", "tw") }
+        coVerify { library.download("en", "mrk", "tn") }
+        coVerify { library.download("en", "mrk", "tq") }
     }
 
     @Test
-    fun `test download ulb resource with tq exception`() {
+    fun `test download ulb resource with tq exception`() = runTest {
         val rcUlb: ResourceContainer = mockk()
         val twUlb: ResourceContainer = mockk()
         val tnUlb: ResourceContainer = mockk()
         val tqUlb: ResourceContainer = mockk()
 
-        TestUtils.setPropertyReflection(language, "slug", "en")
-        TestUtils.setPropertyReflection(project, "slug", "mrk")
-        TestUtils.setPropertyReflection(resource, "slug", "ulb")
+        every { language.slug } returns("en")
+        every { project.slug } returns("mrk")
+        every { resource.slug } returns("ulb")
 
-        coEvery { library.download(language.slug, project.slug, resource.slug) }.returns(rcUlb)
-        coEvery { library.download(language.slug, "bible", "tw") }.returns(twUlb)
-        coEvery { library.download(language.slug, project.slug, "tn") }.returns(tnUlb)
-        coEvery { library.download(language.slug, project.slug, "tq") }
+        coEvery { library.download("en", "mrk", "ulb") }.returns(rcUlb)
+        coEvery { library.download("en", "bible", "tw") }.returns(twUlb)
+        coEvery { library.download("en", "mrk", "tn") }.returns(tnUlb)
+        coEvery { library.download("en", "mrk", "tq") }
             .throws(Exception("An error occurred."))
 
-        val result = runBlocking {
-            DownloadResourceContainers(library)
-                .download(translation, progressListener)
-        }
+        val result = DownloadResourceContainers(library)
+            .download(translation, onProgress)
 
         assertTrue(result.success)
         assertEquals(3, result.containers.size)
@@ -358,40 +338,38 @@ class DownloadResourceContainersTest {
         assertFalse(result.containers.contains(tqUlb))
 
         verifySequence {
-            progressListener.onProgress(any(), "Downloading resource container")
-            progressListener.onProgress(any(), "Downloading translation words")
-            progressListener.onProgress(any(), "Downloading translation notes")
-            progressListener.onProgress(any(), "Downloading translation questions")
+            onProgress(any(), "Downloading resource container")
+            onProgress(any(), "Downloading translation words")
+            onProgress(any(), "Downloading translation notes")
+            onProgress(any(), "Downloading translation questions")
         }
 
-        coVerify { library.download(language.slug, project.slug, resource.slug) }
-        coVerify { library.download(language.slug, "bible", "tw") }
-        coVerify { library.download(language.slug, project.slug, "tn") }
-        coVerify { library.download(language.slug, project.slug, "tq") }
+        coVerify { library.download("en", "mrk", "ulb") }
+        coVerify { library.download("en", "bible", "tw") }
+        coVerify { library.download("en", "mrk", "tn") }
+        coVerify { library.download("en", "mrk", "tq") }
     }
 
     @Test
-    fun `test download obs resource with tw exception`() {
+    fun `test download obs resource with tw exception`() = runTest {
         val rcObs: ResourceContainer = mockk()
         val twUlb: ResourceContainer = mockk()
         val tnUlb: ResourceContainer = mockk()
         val tqUlb: ResourceContainer = mockk()
 
-        TestUtils.setPropertyReflection(language, "slug", "en")
-        TestUtils.setPropertyReflection(project, "slug", "obs")
-        TestUtils.setPropertyReflection(resource, "slug", "ulb")
+        every { language.slug } returns("en")
+        every { project.slug } returns("obs")
+        every { resource.slug } returns("ulb")
 
-        coEvery { library.download(language.slug, project.slug, resource.slug) }.returns(rcObs)
-        coEvery { library.download(language.slug, "bible-obs", "tw") }
+        coEvery { library.download("en", "obs", "ulb") }.returns(rcObs)
+        coEvery { library.download("en", "bible-obs", "tw") }
             .throws(Exception("An error occurred."))
-        coEvery { library.download(language.slug, project.slug, "tn") }.returns(tnUlb)
-        coEvery { library.download(language.slug, project.slug, "tq") }.returns(tqUlb)
+        coEvery { library.download("en", "obs", "tn") }.returns(tnUlb)
+        coEvery { library.download("en", "obs", "tq") }.returns(tqUlb)
 
 
-        val result = runBlocking {
-            DownloadResourceContainers(library)
-                .download(translation, progressListener)
-        }
+        val result = DownloadResourceContainers(library)
+            .download(translation, onProgress)
 
         assertTrue(result.success)
         assertEquals(3, result.containers.size)
@@ -402,20 +380,20 @@ class DownloadResourceContainersTest {
         assertFalse(result.containers.contains(twUlb))
 
         verifySequence {
-            progressListener.onProgress(any(), "Downloading resource container")
-            progressListener.onProgress(any(), "Downloading obs translation words")
-            progressListener.onProgress(any(), "Downloading translation notes")
-            progressListener.onProgress(any(), "Downloading translation questions")
+            onProgress(any(), "Downloading resource container")
+            onProgress(any(), "Downloading obs translation words")
+            onProgress(any(), "Downloading translation notes")
+            onProgress(any(), "Downloading translation questions")
         }
 
-        coVerify { library.download(language.slug, project.slug, resource.slug) }
-        coVerify { library.download(language.slug, "bible-obs", "tw") }
-        coVerify { library.download(language.slug, project.slug, "tn") }
-        coVerify { library.download(language.slug, project.slug, "tq") }
+        coVerify { library.download("en", "obs", "ulb") }
+        coVerify { library.download("en", "bible-obs", "tw") }
+        coVerify { library.download("en", "obs", "tn") }
+        coVerify { library.download("en", "obs", "tq") }
     }
 
     @Test
-    fun `test download multiple translations by ids`() {
+    fun `test download multiple translations by ids`() = runTest {
         val ids = listOf(
             "en_mrk_ulb",
             "id_gen_ayt"
@@ -448,10 +426,8 @@ class DownloadResourceContainersTest {
             mockHelpTranslations(languageSlug, projectSlug, resourceSlug)
         }
 
-        val result = runBlocking {
-            DownloadResourceContainers(library)
-                .download(ids, progressListener)
-        }
+        val result = DownloadResourceContainers(library)
+            .download(ids, onProgress)
 
         assertEquals(2, result.downloadedTranslations.size)
         assertTrue(result.downloadedTranslations.contains(ids[0]))
@@ -479,24 +455,24 @@ class DownloadResourceContainersTest {
         verify(exactly = 2) { index.getTranslation(any()) }
         coVerify(exactly = 8) { library.download(any(), any(), any()) }
         verify(exactly = 6) { index.findTranslations(any(), any(), any(), any(), any(), any(), any()) }
-        verify(exactly = 10) { progressListener.onProgress(any(), any()) }
+        verify(exactly = 10) { onProgress(any(), any()) }
 
         verifySequence {
-            progressListener.onProgress(-1f, "")
-            progressListener.onProgress(0f, "en_mrk_ulb")
-            progressListener.onProgress(0f, "en_bible_tw")
-            progressListener.onProgress(0f, "en_mrk_tn")
-            progressListener.onProgress(0f, "en_mrk_tq")
-            progressListener.onProgress(0.5f, "id_gen_ayt")
-            progressListener.onProgress(0.5f, "id_bible_tw")
-            progressListener.onProgress(0.5f, "id_gen_tn")
-            progressListener.onProgress(0.5f, "id_gen_tq")
-            progressListener.onProgress(1f, "")
+            onProgress(-1f, "")
+            onProgress(0f, "en_mrk_ulb")
+            onProgress(0f, "en_bible_tw")
+            onProgress(0f, "en_mrk_tn")
+            onProgress(0f, "en_mrk_tq")
+            onProgress(0.5f, "id_gen_ayt")
+            onProgress(0.5f, "id_bible_tw")
+            onProgress(0.5f, "id_gen_tn")
+            onProgress(0.5f, "id_gen_tq")
+            onProgress(1f, "")
         }
     }
 
     @Test
-    fun `test download one of the translations not found`() {
+    fun `test download one of the translations not found`() = runTest {
         val ids = listOf(
             "en_mrk_ulb",
             "id_gen_ayt"
@@ -531,10 +507,8 @@ class DownloadResourceContainersTest {
             mockHelpTranslations(languageSlug, projectSlug, resourceSlug)
         }
 
-        val result = runBlocking {
-            DownloadResourceContainers(library)
-                .download(ids, progressListener)
-        }
+        val result = DownloadResourceContainers(library)
+            .download(ids, onProgress)
 
         assertEquals(1, result.downloadedTranslations.size)
         assertTrue(result.downloadedTranslations.contains(ids[0]))
@@ -563,21 +537,21 @@ class DownloadResourceContainersTest {
         verify(exactly = 2) { index.getTranslation(any()) }
         coVerify(exactly = 4) { library.download(any(), any(), any()) }
         verify(exactly = 3) { index.findTranslations(any(), any(), any(), any(), any(), any(), any()) }
-        verify(exactly = 7) { progressListener.onProgress(any(), any()) }
+        verify(exactly = 7) { onProgress(any(), any()) }
 
         verifySequence {
-            progressListener.onProgress(-1f, "")
-            progressListener.onProgress(0f, "en_mrk_ulb")
-            progressListener.onProgress(0f, "en_bible_tw")
-            progressListener.onProgress(0f, "en_mrk_tn")
-            progressListener.onProgress(0f, "en_mrk_tq")
-            progressListener.onProgress(0.5f, "id_gen_ayt")
-            progressListener.onProgress(1f, "")
+            onProgress(-1f, "")
+            onProgress(0f, "en_mrk_ulb")
+            onProgress(0f, "en_bible_tw")
+            onProgress(0f, "en_mrk_tn")
+            onProgress(0f, "en_mrk_tq")
+            onProgress(0.5f, "id_gen_ayt")
+            onProgress(1f, "")
         }
     }
 
     @Test
-    fun `test download one of the translations failed to download`() {
+    fun `test download one of the translations failed to download`() = runTest {
         val ids = listOf(
             "en_mrk_ulb",
             "id_gen_ayt"
@@ -613,10 +587,8 @@ class DownloadResourceContainersTest {
             mockHelpTranslations(languageSlug, projectSlug, resourceSlug)
         }
 
-        val result = runBlocking {
-            DownloadResourceContainers(library)
-                .download(ids, progressListener)
-        }
+        val result = DownloadResourceContainers(library)
+            .download(ids, onProgress)
 
         assertEquals(1, result.downloadedTranslations.size)
         assertTrue(result.downloadedTranslations.contains(ids[0]))
@@ -645,21 +617,21 @@ class DownloadResourceContainersTest {
         verify(exactly = 2) { index.getTranslation(any()) }
         coVerify(exactly = 5) { library.download(any(), any(), any()) }
         verify(exactly = 3) { index.findTranslations(any(), any(), any(), any(), any(), any(), any()) }
-        verify(exactly = 7) { progressListener.onProgress(any(), any()) }
+        verify(exactly = 7) { onProgress(any(), any()) }
 
         verifySequence {
-            progressListener.onProgress(-1f, "")
-            progressListener.onProgress(0f, "en_mrk_ulb")
-            progressListener.onProgress(0f, "en_bible_tw")
-            progressListener.onProgress(0f, "en_mrk_tn")
-            progressListener.onProgress(0f, "en_mrk_tq")
-            progressListener.onProgress(0.5f, "id_gen_ayt")
-            progressListener.onProgress(1f, "")
+            onProgress(-1f, "")
+            onProgress(0f, "en_mrk_ulb")
+            onProgress(0f, "en_bible_tw")
+            onProgress(0f, "en_mrk_tn")
+            onProgress(0f, "en_mrk_tq")
+            onProgress(0.5f, "id_gen_ayt")
+            onProgress(1f, "")
         }
     }
 
     @Test
-    fun `test download one of the help translations failed to download`() {
+    fun `test download one of the help translations failed to download`() = runTest {
         val ids = listOf(
             "en_mrk_ulb",
             "id_gen_ayt"
@@ -695,10 +667,8 @@ class DownloadResourceContainersTest {
             mockHelpTranslations(languageSlug, projectSlug, resourceSlug)
         }
 
-        val result = runBlocking {
-            DownloadResourceContainers(library)
-                .download(ids, progressListener)
-        }
+        val result = DownloadResourceContainers(library)
+            .download(ids, onProgress)
 
         assertEquals(1, result.downloadedTranslations.size)
         assertTrue(result.downloadedTranslations.contains(ids[0]))
@@ -727,24 +697,24 @@ class DownloadResourceContainersTest {
         verify(exactly = 2) { index.getTranslation(any()) }
         coVerify(exactly = 8) { library.download(any(), any(), any()) }
         verify(exactly = 6) { index.findTranslations(any(), any(), any(), any(), any(), any(), any()) }
-        verify(exactly = 10) { progressListener.onProgress(any(), any()) }
+        verify(exactly = 10) { onProgress(any(), any()) }
 
         verifySequence {
-            progressListener.onProgress(-1f, "")
-            progressListener.onProgress(0f, "en_mrk_ulb")
-            progressListener.onProgress(0f, "en_bible_tw")
-            progressListener.onProgress(0f, "en_mrk_tn")
-            progressListener.onProgress(0f, "en_mrk_tq")
-            progressListener.onProgress(0.5f, "id_gen_ayt")
-            progressListener.onProgress(0.5f, "id_bible_tw")
-            progressListener.onProgress(0.5f, "id_gen_tn")
-            progressListener.onProgress(0.5f, "id_gen_tq")
-            progressListener.onProgress(1f, "")
+            onProgress(-1f, "")
+            onProgress(0f, "en_mrk_ulb")
+            onProgress(0f, "en_bible_tw")
+            onProgress(0f, "en_mrk_tn")
+            onProgress(0f, "en_mrk_tq")
+            onProgress(0.5f, "id_gen_ayt")
+            onProgress(0.5f, "id_bible_tw")
+            onProgress(0.5f, "id_gen_tn")
+            onProgress(0.5f, "id_gen_tq")
+            onProgress(1f, "")
         }
     }
 
     @Test
-    fun `test download multiple translations by ids with one obs resource`() {
+    fun `test download multiple translations by ids with one obs resource`() = runTest {
         val ids = listOf(
             "en_mrk_ulb",
             "id_obs_ulb"
@@ -777,10 +747,8 @@ class DownloadResourceContainersTest {
             mockHelpTranslations(languageSlug, projectSlug, resourceSlug)
         }
 
-        val result = runBlocking {
-            DownloadResourceContainers(library)
-                .download(ids, progressListener)
-        }
+        val result = DownloadResourceContainers(library)
+            .download(ids, onProgress)
 
         assertEquals(2, result.downloadedTranslations.size)
         assertTrue(result.downloadedTranslations.contains(ids[0]))
@@ -808,19 +776,19 @@ class DownloadResourceContainersTest {
         verify(exactly = 2) { index.getTranslation(any()) }
         coVerify(exactly = 8) { library.download(any(), any(), any()) }
         verify(exactly = 6) { index.findTranslations(any(), any(), any(), any(), any(), any(), any()) }
-        verify(exactly = 10) { progressListener.onProgress(any(), any()) }
+        verify(exactly = 10) { onProgress(any(), any()) }
 
         verifySequence {
-            progressListener.onProgress(-1f, "")
-            progressListener.onProgress(0f, "en_mrk_ulb")
-            progressListener.onProgress(0f, "en_bible_tw")
-            progressListener.onProgress(0f, "en_mrk_tn")
-            progressListener.onProgress(0f, "en_mrk_tq")
-            progressListener.onProgress(0.5f, "id_obs_ulb")
-            progressListener.onProgress(0.5f, "id_bible-obs_tw")
-            progressListener.onProgress(0.5f, "id_obs_tn")
-            progressListener.onProgress(0.5f, "id_obs_tq")
-            progressListener.onProgress(1f, "")
+            onProgress(-1f, "")
+            onProgress(0f, "en_mrk_ulb")
+            onProgress(0f, "en_bible_tw")
+            onProgress(0f, "en_mrk_tn")
+            onProgress(0f, "en_mrk_tq")
+            onProgress(0.5f, "id_obs_ulb")
+            onProgress(0.5f, "id_bible-obs_tw")
+            onProgress(0.5f, "id_obs_tn")
+            onProgress(0.5f, "id_obs_tq")
+            onProgress(1f, "")
         }
     }
 
@@ -861,21 +829,24 @@ class DownloadResourceContainersTest {
         return translation
     }
 
-    private fun mockLanguage(slug: String): Language {
-        val language: Language = mockk()
-        TestUtils.setPropertyReflection(language, "slug", slug)
+    private fun mockLanguage(id: String): Language {
+        val language: Language = mockk {
+            every { slug } returns(id)
+        }
         return language
     }
 
-    private fun mockProject(slug: String): Project {
-        val project: Project = mockk()
-        TestUtils.setPropertyReflection(project, "slug", slug)
+    private fun mockProject(id: String): Project {
+        val project: Project = mockk {
+            every { slug } returns(id)
+        }
         return project
     }
 
-    private fun mockResource(slug: String): Resource {
-        val resource: Resource = mockk()
-        TestUtils.setPropertyReflection(resource, "slug", slug)
+    private fun mockResource(id: String): Resource {
+        val resource: Resource = mockk {
+            every { slug } returns(id)
+        }
         return resource
     }
 
@@ -890,16 +861,16 @@ class DownloadResourceContainersTest {
     }
 
     private fun mockResourceContainer(
-        language: String,
-        project: String,
-        resource: String
+        languageSlug: String,
+        projectSlug: String,
+        resourceSlug: String
     ): ResourceContainer {
         return mockk<ResourceContainer> {
-            val slug = ContainerTools.makeSlug(language, project, resource)
-            TestUtils.setPropertyReflection(this, "language", mockLanguage(language))
-            TestUtils.setPropertyReflection(this, "project", mockProject(project))
-            TestUtils.setPropertyReflection(this, "resource", mockResource(resource))
-            TestUtils.setPropertyReflection(this, "slug", slug)
+            val rcSlug = ContainerTools.makeSlug(languageSlug, projectSlug, resourceSlug)
+            every { language }.returns(mockLanguage(languageSlug))
+            every { project }.returns(mockProject(projectSlug))
+            every { resource }.returns(mockResource(resourceSlug))
+            every { slug }.returns(rcSlug)
         }
     }
 }

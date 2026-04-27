@@ -22,7 +22,15 @@ import java.io.File
 import java.io.RandomAccessFile
 import java.text.DecimalFormat
 
+data class AppInfo(
+    val versionName: String,
+    val versionCode: Int,
+    val model: String
+)
+
 interface Platform {
+    val info: AppInfo
+
     fun restart()
     fun exit()
 
@@ -56,6 +64,13 @@ class AndroidPlatform(
     private val context: Context,
     private val directoryProvider: IDirectoryProvider
 ) : Platform {
+
+    override val info: AppInfo
+        get() = AppInfo(
+            versionName = BuildConfig.VERSION_NAME,
+            versionCode = BuildConfig.VERSION_CODE,
+            model = Build.MODEL
+        )
 
     override fun restart() {
         val backupIntent = Intent(context, BackupService::class.java)
@@ -109,7 +124,7 @@ class AndroidPlatform(
         message += "Low memory state on the system: ${info.lowMemory}\n"
 
         message += "Manufacturer: ${Build.MANUFACTURER}\n"
-        message += "Model: ${Build.MODEL}\n"
+        message += "Model: ${App.info.model}\n"
         message += "Version: ${Build.VERSION.SDK_INT}\n"
         message += "Version Release: ${Build.VERSION.RELEASE}\n"
 

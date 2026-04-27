@@ -4,7 +4,6 @@ import android.content.ContentResolver
 import android.content.Context
 import android.content.res.Resources
 import android.net.Uri
-import com.door43.OnProgressListener
 import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
 import com.door43.translationstudio.R
@@ -36,9 +35,10 @@ class DownloadIndexTest {
     @MockK private lateinit var prefRepository: IPreferenceRepository
     @MockK private lateinit var directoryProvider: IDirectoryProvider
     @MockK private lateinit var library: Door43Client
-    @MockK private lateinit var progressListener: OnProgressListener
     @MockK private lateinit var resources: Resources
     @MockK private lateinit var contentResolver: ContentResolver
+
+    val onProgress = mockk<(Float, String?) -> Unit>(relaxed = true)
 
     @get:Rule var tempFolder = TemporaryFolder()
 
@@ -50,7 +50,7 @@ class DownloadIndexTest {
         MockKAnnotations.init(this)
 
         every { context.resources }.returns(resources)
-        every { progressListener.onProgress(any(), any()) }.just(runs)
+        every { onProgress(any(), any()) }.just(runs)
 
         every { resources.getString(R.string.downloading_index) }
             .returns("Downloading index")
@@ -79,12 +79,12 @@ class DownloadIndexTest {
         server.enqueue(createDownloadResponse())
 
         val success = DownloadIndex(context, directoryProvider, prefRepository, library)
-            .download(progressListener)
+            .download(onProgress)
 
         assertTrue(success)
         assertEquals("1234567890", directoryProvider.databaseFile.readText())
 
-        verify { progressListener.onProgress(any(), "Downloading index") }
+        verify { onProgress(any(), "Downloading index") }
         verify { resources.getString(R.string.downloading_index) }
         verify { resources.getString(R.string.pref_default_index_sqlite_url) }
         verify { prefRepository.getDefaultPref(any(), any(), String::class.java) }
@@ -97,11 +97,11 @@ class DownloadIndexTest {
         every { library.tearDown() }.throws(Exception("An error occurred"))
 
         val success = DownloadIndex(context, directoryProvider, prefRepository, library)
-            .download(progressListener)
+            .download(onProgress)
 
         assertFalse(success)
 
-        verify { progressListener.onProgress(any(), "Downloading index") }
+        verify { onProgress(any(), "Downloading index") }
         verify { resources.getString(R.string.downloading_index) }
         verify { library.tearDown() }
     }
@@ -111,11 +111,11 @@ class DownloadIndexTest {
         server.enqueue(MockResponse().setResponseCode(500))
 
         val success = DownloadIndex(context, directoryProvider, prefRepository, library)
-            .download(progressListener)
+            .download(onProgress)
 
         assertFalse(success)
 
-        verify { progressListener.onProgress(any(), "Downloading index") }
+        verify { onProgress(any(), "Downloading index") }
         verify { resources.getString(R.string.downloading_index) }
         verify { library.tearDown() }
     }

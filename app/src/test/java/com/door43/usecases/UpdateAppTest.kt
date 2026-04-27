@@ -1,12 +1,8 @@
 package com.door43.usecases
 
 import android.content.Context
-import android.content.pm.PackageInfo
-import android.content.pm.PackageManager
 import android.content.res.Resources
 import androidx.preference.PreferenceManager
-import com.door43.OnProgressListener
-import com.door43.TestUtils
 import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
@@ -14,6 +10,8 @@ import com.door43.data.getPrivatePref
 import com.door43.data.setDefaultPref
 import com.door43.data.setPrivatePref
 import com.door43.translationstudio.App
+import com.door43.translationstudio.AppInfo
+import com.door43.translationstudio.Platform
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.TargetTranslationMigrator
@@ -32,7 +30,8 @@ import io.mockk.mockkStatic
 import io.mockk.runs
 import io.mockk.unmockkAll
 import io.mockk.verify
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
+import org.bibletranslationtools.resourcecontainer.ResourceContainer
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -41,7 +40,6 @@ import org.junit.rules.TemporaryFolder
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.door43client.Index
 import org.unfoldingword.door43client.models.Translation
-import org.unfoldingword.resourcecontainer.ResourceContainer
 import java.io.File
 
 class UpdateAppTest {
@@ -53,11 +51,12 @@ class UpdateAppTest {
     @MockK private lateinit var backupRC: BackupRC
     @MockK private lateinit var translator: Translator
     @MockK private lateinit var migrator: TargetTranslationMigrator
-    @MockK private lateinit var progressListener: OnProgressListener
-    @MockK private lateinit var packageManager: PackageManager
-    @MockK private lateinit var packageInfo: PackageInfo
     @MockK private lateinit var index: Index
     @MockK private lateinit var resources: Resources
+    @MockK private lateinit var info: AppInfo
+    @MockK private lateinit var platform: Platform
+
+    val onProgress = mockk<(Float, String?) -> Unit>(relaxed = true)
 
     @JvmField
     @Rule
@@ -69,12 +68,11 @@ class UpdateAppTest {
 
         every { context.resources }.returns(resources)
         every { context.packageName }.returns("org.example.writer")
-        every { context.packageManager }.returns(packageManager)
         every { context.externalCacheDir }.returns(tempDir.newFolder("old_cache"))
         every { context.deleteDatabase(any()) }.returns(true)
-        every { packageManager.getPackageInfo(any<String>(), 0) }.returns(packageInfo)
 
-        TestUtils.setPropertyReflection(packageInfo, "versionCode", 10)
+        every { info.versionCode }.returns(10)
+        every { platform.info }.returns(info)
 
         every { library.index } returns index
         every { prefRepository.getPrivatePref("last_version_code", any<Int>()) }
@@ -102,7 +100,7 @@ class UpdateAppTest {
             .returns(tempDir.newFolder("internal"))
         every { directoryProvider.cacheDir }.returns(tempDir.newFolder("cache"))
 
-        mockkStatic(ResourceContainer::class)
+        mockkObject(ResourceContainer)
         coEvery { library.importResourceContainer(any()) }.returns(mockk())
         every { library.updateLanguageUrl(any()) }.just(runs)
 
@@ -123,9 +121,8 @@ class UpdateAppTest {
 
         mockkObject(TargetTranslation)
         every { translator.targetTranslations }.returns(arrayOf())
-        every { TargetTranslation.updateGenerator(any(), any()) }.just(runs)
 
-        every { progressListener.onProgress(any(), any()) }.just(runs)
+        every { onProgress(any(), any()) }.just(runs)
 
         mockkStatic(PreferenceManager::class)
         every { PreferenceManager.setDefaultValues(any(), any(), any()) }.just(runs)
@@ -141,55 +138,51 @@ class UpdateAppTest {
     }
 
     @Test
-    fun `test update app, fresh install`() {
+    fun `test update app, fresh install`() = runTest {
         every { prefRepository.getPrivatePref("last_version_code", any<Int>()) }
             .returns(0)
         every { library.isLibraryDeployed }.returns(true)
 
-        runBlocking {
-            UpdateApp(
-                context,
-                prefRepository,
-                directoryProvider,
-                library,
-                backupRC,
-                translator,
-                migrator
-            ).execute(progressListener)
-        }
+        UpdateApp(
+            context,
+            prefRepository,
+            directoryProvider,
+            library,
+            backupRC,
+            translator,
+            migrator,
+            platform
+        ).execute(onProgress)
 
         verify { library.isLibraryDeployed }
 
         verifyCommonStuff()
         verifyUpdateLibrary()
         verifyNoSourceTranslations()
-        verifyNoTargetTranslations()
     }
 
     @Test
-    fun `test update app, install update`() {
+    fun `test update app, install update`() = runTest {
         every { prefRepository.getPrivatePref("last_version_code", any<Int>()) }
             .returns(9)
         every { library.isLibraryDeployed }.returns(true)
 
-        runBlocking {
-            UpdateApp(
-                context,
-                prefRepository,
-                directoryProvider,
-                library,
-                backupRC,
-                translator,
-                migrator
-            ).execute(progressListener)
-        }
+        UpdateApp(
+            context,
+            prefRepository,
+            directoryProvider,
+            library,
+            backupRC,
+            translator,
+            migrator,
+            platform
+        ).execute(onProgress)
 
         verify(exactly = 0) { library.isLibraryDeployed }
 
         verifyCommonStuff()
         verifyUpdateLibrary()
         verifyNoSourceTranslations()
-        verifyNoTargetTranslations()
 
         verifyUpgradePre87()
         verifyUpgradePre103()
@@ -201,7 +194,7 @@ class UpdateAppTest {
     }
 
     @Test
-    fun `test update app, backup imported sources`() {
+    fun `test update app, backup imported sources`() = runTest {
         every { prefRepository.getPrivatePref("last_version_code", any<Int>()) }
             .returns(10)
         every { library.isLibraryDeployed }.returns(false)
@@ -214,22 +207,20 @@ class UpdateAppTest {
 
         every { ResourceContainer.open(file, any()) }.returns(mockk())
 
-        runBlocking {
-            UpdateApp(
-                context,
-                prefRepository,
-                directoryProvider,
-                library,
-                backupRC,
-                translator,
-                migrator
-            ).execute(progressListener)
-        }
+        UpdateApp(
+            context,
+            prefRepository,
+            directoryProvider,
+            library,
+            backupRC,
+            translator,
+            migrator,
+            platform
+        ).execute(onProgress)
 
         verify { library.isLibraryDeployed }
         verifyCommonStuff()
         verifyUpdateLibrary()
-        verifyNoTargetTranslations()
 
         verify { backupRC.backupResourceContainer(translation) }
         verify { ResourceContainer.open(file, any()) }
@@ -238,7 +229,7 @@ class UpdateAppTest {
     }
 
     @Test
-    fun `test update app, update target translations`() {
+    fun `test update app, update target translations`() = runTest {
         every { prefRepository.getPrivatePref("last_version_code", any<Int>()) }
             .returns(10)
         every { library.isLibraryDeployed }.returns(true)
@@ -249,22 +240,22 @@ class UpdateAppTest {
         val targetTranslation: TargetTranslation = mockk {
             every { unlockRepo() }.returns(true)
             every { commitSync() }.returns(true)
+            every { id }.returns("aa_mrk_text_ulb")
         }
         every { translator.targetTranslations }.returns(arrayOf(targetTranslation))
 
         every { migrator.migrate(targetTranslationDir) }.returns(targetTranslationDir)
 
-        runBlocking {
-            UpdateApp(
-                context,
-                prefRepository,
-                directoryProvider,
-                library,
-                backupRC,
-                translator,
-                migrator
-            ).execute(progressListener)
-        }
+        UpdateApp(
+            context,
+            prefRepository,
+            directoryProvider,
+            library,
+            backupRC,
+            translator,
+            migrator,
+            platform
+        ).execute(onProgress)
 
         verify { library.isLibraryDeployed }
         verifyCommonStuff()
@@ -280,10 +271,11 @@ class UpdateAppTest {
         verify { migrator.migrate(targetTranslationDir) }
         verify { targetTranslation.unlockRepo() }
         verify { targetTranslation.commitSync() }
+        verify { targetTranslation.id }
     }
 
     @Test
-    fun `test update app, upgrade build numbers`() {
+    fun `test update app, upgrade build numbers`() = runTest {
         every { prefRepository.getPrivatePref("last_version_code", any<Int>()) }
             .returns(10)
         every { library.isLibraryDeployed }.returns(true)
@@ -293,51 +285,48 @@ class UpdateAppTest {
         }
         every { translator.targetTranslations }.returns(arrayOf(targetTranslation))
 
-        runBlocking {
-            UpdateApp(
-                context,
-                prefRepository,
-                directoryProvider,
-                library,
-                backupRC,
-                translator,
-                migrator
-            ).execute(progressListener)
-        }
+        UpdateApp(
+            context,
+            prefRepository,
+            directoryProvider,
+            library,
+            backupRC,
+            translator,
+            migrator,
+            platform
+        ).execute(onProgress)
 
         verify { library.isLibraryDeployed }
         verifyCommonStuff()
         verifyNoSourceTranslations()
 
-        verify { TargetTranslation.updateGenerator(any(), targetTranslation) }
+        verify { targetTranslation.updateGenerator(any()) }
         verify { targetTranslation.id }
         verify { translator.path }
     }
 
     @Test
-    fun `test update app, upgrade post 87`() {
-        TestUtils.setPropertyReflection(packageInfo, "versionCode", 89)
+    fun `test update app, upgrade post 87`() = runTest {
+        every { info.versionCode }.returns(89)
         every { prefRepository.getPrivatePref("last_version_code", any<Int>()) }
             .returns(88)
         every { library.isLibraryDeployed }.returns(false)
 
-        runBlocking {
-            UpdateApp(
-                context,
-                prefRepository,
-                directoryProvider,
-                library,
-                backupRC,
-                translator,
-                migrator
-            ).execute(progressListener)
-        }
+        UpdateApp(
+            context,
+            prefRepository,
+            directoryProvider,
+            library,
+            backupRC,
+            translator,
+            migrator,
+            platform
+        ).execute(onProgress)
 
         verify(exactly = 0) { library.isLibraryDeployed }
         verifyCommonStuff()
         verifyUpdateLibrary()
         verifyNoSourceTranslations()
-        verifyNoTargetTranslations()
 
         verifyUpgradePre87(false)
         verifyUpgradePre103()
@@ -349,29 +338,27 @@ class UpdateAppTest {
     }
 
     @Test
-    fun `test update app, upgrade post 103`() {
-        TestUtils.setPropertyReflection(packageInfo, "versionCode", 105)
+    fun `test update app, upgrade post 103`() = runTest {
+        every { info.versionCode }.returns(105)
         every { prefRepository.getPrivatePref("last_version_code", any<Int>()) }
             .returns(104)
         every { library.isLibraryDeployed }.returns(false)
 
-        runBlocking {
-            UpdateApp(
-                context,
-                prefRepository,
-                directoryProvider,
-                library,
-                backupRC,
-                translator,
-                migrator
-            ).execute(progressListener)
-        }
+        UpdateApp(
+            context,
+            prefRepository,
+            directoryProvider,
+            library,
+            backupRC,
+            translator,
+            migrator,
+            platform
+        ).execute(onProgress)
 
         verify(exactly = 0) { library.isLibraryDeployed }
         verifyCommonStuff()
         verifyUpdateLibrary()
         verifyNoSourceTranslations()
-        verifyNoTargetTranslations()
 
         verifyUpgradePre87(false)
         verifyUpgradePre103(false)
@@ -383,29 +370,27 @@ class UpdateAppTest {
     }
 
     @Test
-    fun `test update app, upgrade post 111`() {
-        TestUtils.setPropertyReflection(packageInfo, "versionCode", 113)
+    fun `test update app, upgrade post 111`() = runTest {
+        every { info.versionCode }.returns(113)
         every { prefRepository.getPrivatePref("last_version_code", any<Int>()) }
             .returns(112)
         every { library.isLibraryDeployed }.returns(false)
 
-        runBlocking {
-            UpdateApp(
-                context,
-                prefRepository,
-                directoryProvider,
-                library,
-                backupRC,
-                translator,
-                migrator
-            ).execute(progressListener)
-        }
+        UpdateApp(
+            context,
+            prefRepository,
+            directoryProvider,
+            library,
+            backupRC,
+            translator,
+            migrator,
+            platform
+        ).execute(onProgress)
 
         verify(exactly = 0) { library.isLibraryDeployed }
         verifyCommonStuff()
         verifyUpdateLibrary()
         verifyNoSourceTranslations()
-        verifyNoTargetTranslations()
 
         verifyUpgradePre87(false)
         verifyUpgradePre103(false)
@@ -417,29 +402,27 @@ class UpdateAppTest {
     }
 
     @Test
-    fun `test update app, upgrade post 122`() {
-        TestUtils.setPropertyReflection(packageInfo, "versionCode", 124)
+    fun `test update app, upgrade post 122`() = runTest {
+        every { info.versionCode }.returns(124)
         every { prefRepository.getPrivatePref("last_version_code", any<Int>()) }
             .returns(123)
         every { library.isLibraryDeployed }.returns(false)
 
-        runBlocking {
-            UpdateApp(
-                context,
-                prefRepository,
-                directoryProvider,
-                library,
-                backupRC,
-                translator,
-                migrator
-            ).execute(progressListener)
-        }
+        UpdateApp(
+            context,
+            prefRepository,
+            directoryProvider,
+            library,
+            backupRC,
+            translator,
+            migrator,
+            platform
+        ).execute(onProgress)
 
         verify(exactly = 0) { library.isLibraryDeployed }
         verifyCommonStuff()
         verifyUpdateLibrary()
         verifyNoSourceTranslations()
-        verifyNoTargetTranslations()
 
         verifyUpgradePre87(false)
         verifyUpgradePre103(false)
@@ -451,29 +434,27 @@ class UpdateAppTest {
     }
 
     @Test
-    fun `test update app, upgrade post 139`() {
-        TestUtils.setPropertyReflection(packageInfo, "versionCode", 141)
+    fun `test update app, upgrade post 139`() = runTest {
+        every { info.versionCode }.returns(141)
         every { prefRepository.getPrivatePref("last_version_code", any<Int>()) }
             .returns(140)
         every { library.isLibraryDeployed }.returns(false)
 
-        runBlocking {
-            UpdateApp(
-                context,
-                prefRepository,
-                directoryProvider,
-                library,
-                backupRC,
-                translator,
-                migrator
-            ).execute(progressListener)
-        }
+        UpdateApp(
+            context,
+            prefRepository,
+            directoryProvider,
+            library,
+            backupRC,
+            translator,
+            migrator,
+            platform
+        ).execute(onProgress)
 
         verify(exactly = 0) { library.isLibraryDeployed }
         verifyCommonStuff()
         verifyUpdateLibrary()
         verifyNoSourceTranslations()
-        verifyNoTargetTranslations()
 
         verifyUpgradePre87(false)
         verifyUpgradePre103(false)
@@ -485,29 +466,27 @@ class UpdateAppTest {
     }
 
     @Test
-    fun `test update app, upgrade post 142`() {
-        TestUtils.setPropertyReflection(packageInfo, "versionCode", 144)
+    fun `test update app, upgrade post 142`() = runTest {
+        every { info.versionCode }.returns(144)
         every { prefRepository.getPrivatePref("last_version_code", any<Int>()) }
             .returns(143)
         every { library.isLibraryDeployed }.returns(false)
 
-        runBlocking {
-            UpdateApp(
-                context,
-                prefRepository,
-                directoryProvider,
-                library,
-                backupRC,
-                translator,
-                migrator
-            ).execute(progressListener)
-        }
+        UpdateApp(
+            context,
+            prefRepository,
+            directoryProvider,
+            library,
+            backupRC,
+            translator,
+            migrator,
+            platform
+        ).execute(onProgress)
 
         verify(exactly = 0) { library.isLibraryDeployed }
         verifyCommonStuff()
         verifyUpdateLibrary()
         verifyNoSourceTranslations()
-        verifyNoTargetTranslations()
 
         verifyUpgradePre87(false)
         verifyUpgradePre103(false)
@@ -519,28 +498,26 @@ class UpdateAppTest {
     }
 
     @Test
-    fun `test update app, upgrade post 175`() {
-        TestUtils.setPropertyReflection(packageInfo, "versionCode", 177)
+    fun `test update app, upgrade post 175`() = runTest {
+        every { info.versionCode }.returns(177)
         every { prefRepository.getPrivatePref("last_version_code", any<Int>()) }
             .returns(176)
         every { library.isLibraryDeployed }.returns(false)
 
-        runBlocking {
-            UpdateApp(
-                context,
-                prefRepository,
-                directoryProvider,
-                library,
-                backupRC,
-                translator,
-                migrator
-            ).execute(progressListener)
-        }
+        UpdateApp(
+            context,
+            prefRepository,
+            directoryProvider,
+            library,
+            backupRC,
+            translator,
+            migrator,
+            platform
+        ).execute(onProgress)
 
         verify(exactly = 0) { library.isLibraryDeployed }
         verifyCommonStuff()
         verifyNoSourceTranslations()
-        verifyNoTargetTranslations()
 
         verifyUpgradePre87(false)
         verifyUpgradePre103(false)
@@ -555,7 +532,7 @@ class UpdateAppTest {
 
     private fun verifyCommonStuff() {
         verify { prefRepository.getPrivatePref("last_version_code", any<Int>()) }
-        verify { packageManager.getPackageInfo(any<String>(), 0) }
+        verify { info.versionCode }
     }
 
     private fun verifyUpdateLibrary(called: Boolean = true) {
@@ -570,10 +547,6 @@ class UpdateAppTest {
         coVerify(exactly = 0) { library.importResourceContainer(any()) }
     }
 
-    private fun verifyNoTargetTranslations() {
-        verify(exactly = 0) { TargetTranslation.updateGenerator(any(), any()) }
-    }
-
     private fun verifyUpgradePre87(called: Boolean = true) {
         verify(inverse = !called) { prefRepository.setDefaultPref(
             IPreferenceRepository.KEY_PREF_TRANSLATION_TYPEFACE,
@@ -582,7 +555,7 @@ class UpdateAppTest {
     }
 
     private fun verifyUpgradePre103(called: Boolean = true) {
-        verify(inverse = !called) { progressListener.onProgress(any(), "Updating translations") }
+        verify(inverse = !called) { onProgress(any(), "Updating translations") }
         verify(inverse = !called) { directoryProvider.cacheDir }
         verify(inverse = !called) { context.externalCacheDir }
     }
@@ -603,7 +576,7 @@ class UpdateAppTest {
     }
 
     private fun verifyUpgradePre175(called: Boolean = true) {
-        verify(inverse = !called) { progressListener.onProgress(any(), "Updating fonts") }
+        verify(inverse = !called) { onProgress(any(), "Updating fonts") }
         verify(inverse = !called) { prefRepository.getDefaultPref(
             IPreferenceRepository.KEY_PREF_TRANSLATION_TYPEFACE,
             any<String>()

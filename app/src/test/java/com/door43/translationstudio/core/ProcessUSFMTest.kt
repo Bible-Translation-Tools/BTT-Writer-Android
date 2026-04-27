@@ -7,7 +7,6 @@ import android.content.pm.PackageManager
 import android.content.res.Resources
 import android.net.Uri
 import android.text.TextUtils
-import com.door43.OnProgressListener
 import com.door43.TestUtils
 import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
@@ -49,7 +48,6 @@ class ProcessUSFMTest {
     @MockK private lateinit var library: Door43Client
     @MockK private lateinit var assetsProvider: AssetsProvider
     @MockK private lateinit var targetLanguage: TargetLanguage
-    @MockK private lateinit var progressListener: OnProgressListener
     @MockK private lateinit var index: Index
     @MockK private lateinit var packageManager: PackageManager
     @MockK private lateinit var packageInfo: PackageInfo
@@ -57,6 +55,8 @@ class ProcessUSFMTest {
 
     @MockK private lateinit var mockFile: File
     @MockK private lateinit var mockUri: Uri
+
+    val onProgress = mockk<(Float, String?) -> Unit>(relaxed = true)
 
     @Before
     fun setUp() {
@@ -73,12 +73,11 @@ class ProcessUSFMTest {
 
         every { packageManager.getPackageInfo(any(String::class), 0) }.returns(packageInfo)
         every { TargetTranslation.create(any(), any(), any(), any(), any(),
-            any(), any(), any(), any()) }.returns(mockk())
+            any(), any(), any()) }.returns(mockk())
 
         mockStringResources()
 
         every { directoryProvider.cacheDir } returns File("/cache")
-        every { progressListener.onProgress(any(), any()) } just runs
 
         every { index.getVersifications("en") } returns listOf(
             Versification("en", "English")
@@ -112,7 +111,7 @@ class ProcessUSFMTest {
         )
         mockChunkMarkers()
 
-        TestUtils.setPropertyReflection(targetLanguage, "slug", "aa")
+        every { targetLanguage.slug }.returns("aa")
 
         val processUSFM = ProcessUSFM.Builder(
             context,
@@ -121,7 +120,7 @@ class ProcessUSFMTest {
             library,
             assetsProvider
         )
-            .fromFile(targetLanguage, mockFile, progressListener)
+            .fromFile(targetLanguage, mockFile, onProgress)
             .build()
 
         requireNotNull(processUSFM)
@@ -142,7 +141,7 @@ class ProcessUSFMTest {
             .returns(TestUtils.getResource("mrk.usfm")?.readText() ?: "")
         mockChunkMarkers()
 
-        TestUtils.setPropertyReflection(targetLanguage, "slug", "aa")
+        every { targetLanguage.slug }.returns("aa")
 
         val processUSFM = ProcessUSFM.Builder(
             context,
@@ -151,7 +150,7 @@ class ProcessUSFMTest {
             library,
             assetsProvider
         )
-            .fromUri(targetLanguage, mockUri, progressListener)
+            .fromUri(targetLanguage, mockUri, onProgress)
             .build()
 
         requireNotNull(processUSFM)
@@ -174,7 +173,7 @@ class ProcessUSFMTest {
             .returns(TestUtils.getResource("mrk.usfm")?.readText() ?: "")
         every { FileUtilities.getFilename(rcPath) }.returns("mrk.usfm")
 
-        TestUtils.setPropertyReflection(targetLanguage, "slug", "aa")
+        every { targetLanguage.slug }.returns("aa")
         mockChunkMarkers()
 
         val processUSFM = ProcessUSFM.Builder(
@@ -184,7 +183,7 @@ class ProcessUSFMTest {
             library,
             assetsProvider
         )
-            .fromRc(targetLanguage, rcPath, progressListener)
+            .fromRc(targetLanguage, rcPath, onProgress)
             .build()
 
         requireNotNull(processUSFM)
@@ -204,7 +203,7 @@ class ProcessUSFMTest {
         )
         mockChunkMarkers()
 
-        TestUtils.setPropertyReflection(targetLanguage, "slug", "aa")
+        every { targetLanguage.slug }.returns("aa")
 
         val processUSFM = ProcessUSFM.Builder(
             context,
@@ -213,7 +212,7 @@ class ProcessUSFMTest {
             library,
             assetsProvider
         )
-            .fromFile(targetLanguage, mockFile, progressListener)
+            .fromFile(targetLanguage, mockFile, onProgress)
             .build()
 
         assertNotNull("ProcessUSFM should not be null", processUSFM)
@@ -238,7 +237,7 @@ class ProcessUSFMTest {
         )
         mockChunkMarkers()
 
-        TestUtils.setPropertyReflection(targetLanguage, "slug", "aa")
+        every { targetLanguage.slug }.returns("aa")
 
         val processUSFM = ProcessUSFM.Builder(
             context,
@@ -247,7 +246,7 @@ class ProcessUSFMTest {
             library,
             assetsProvider
         )
-            .fromFile(targetLanguage, mockFile, progressListener)
+            .fromFile(targetLanguage, mockFile, onProgress)
             .build()
 
         assertNotNull("ProcessUSFM should not be null", processUSFM)
@@ -271,7 +270,7 @@ class ProcessUSFMTest {
         )
         mockChunkMarkers()
 
-        TestUtils.setPropertyReflection(targetLanguage, "slug", "aa")
+        every { targetLanguage.slug }.returns("aa")
 
         val processUSFM = ProcessUSFM.Builder(
             context,
@@ -280,7 +279,7 @@ class ProcessUSFMTest {
             library,
             assetsProvider
         )
-            .fromFile(targetLanguage, mockFile, progressListener)
+            .fromFile(targetLanguage, mockFile, onProgress)
             .build()
 
         assertNotNull("ProcessUSFM should not be null", processUSFM)
@@ -304,7 +303,7 @@ class ProcessUSFMTest {
         )
         mockChunkMarkers()
 
-        TestUtils.setPropertyReflection(targetLanguage, "slug", "aa")
+        every { targetLanguage.slug }.returns("aa")
 
         val processUSFM = ProcessUSFM.Builder(
             context,
@@ -313,7 +312,7 @@ class ProcessUSFMTest {
             library,
             assetsProvider
         )
-            .fromFile(targetLanguage, mockFile, progressListener)
+            .fromFile(targetLanguage, mockFile, onProgress)
             .build()
 
         assertNotNull("ProcessUSFM should not be null", processUSFM)
@@ -337,7 +336,7 @@ class ProcessUSFMTest {
         )
         mockChunkMarkers()
 
-        TestUtils.setPropertyReflection(targetLanguage, "slug", "aa")
+        every { targetLanguage.slug }.returns("aa")
 
         val processUSFM = ProcessUSFM.Builder(
             context,
@@ -346,7 +345,7 @@ class ProcessUSFMTest {
             library,
             assetsProvider
         )
-            .fromFile(targetLanguage, mockFile, progressListener)
+            .fromFile(targetLanguage, mockFile, onProgress)
             .build()
 
         assertNotNull("ProcessUSFM should not be null", processUSFM)
@@ -385,7 +384,7 @@ class ProcessUSFMTest {
         )
         mockChunkMarkers()
 
-        TestUtils.setPropertyReflection(targetLanguage, "slug", "aa")
+        every { targetLanguage.slug }.returns("aa")
 
         val processUSFM = ProcessUSFM.Builder(
             context,
@@ -394,7 +393,7 @@ class ProcessUSFMTest {
             library,
             assetsProvider
         )
-            .fromFile(targetLanguage, mockFile, progressListener)
+            .fromFile(targetLanguage, mockFile, onProgress)
             .build()
 
         assertNotNull("ProcessUSFM should not be null", processUSFM)
@@ -434,7 +433,7 @@ class ProcessUSFMTest {
             library,
             assetsProvider
         )
-            .fromFile(targetLanguage, mockFile, progressListener)
+            .fromFile(targetLanguage, mockFile, onProgress)
             .build()
 
         processUSFM?.cleanup()
@@ -524,11 +523,10 @@ class ProcessUSFMTest {
         assertTrue(result.booksMissingNames.isEmpty())
 
         verify { index.getChunkMarkers("mrk", "en") }
-        verify { packageManager.getPackageInfo(any(String::class), 0) }
         verify { TargetTranslation.create(any(), any(), any(), any(), any(),
-            any(), any(), any(), any()) }
+            any(), any(), any()) }
         verify { directoryProvider.cacheDir }
-        verify { progressListener.onProgress(any(), any()) }
+        verify { onProgress(any(), any()) }
         verify { index.getVersifications("en") }
         verify { FileUtilities.forceMkdir(any()) }
         verify { FileUtilities.writeStringToFile(any(), any()) }

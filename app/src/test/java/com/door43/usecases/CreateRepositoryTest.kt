@@ -2,7 +2,6 @@ package com.door43.usecases
 
 import android.content.Context
 import android.content.res.Resources
-import com.door43.OnProgressListener
 import com.door43.TestUtils
 import com.door43.data.IPreferenceRepository
 import com.door43.translationstudio.R
@@ -16,20 +15,21 @@ import io.mockk.mockk
 import io.mockk.runs
 import io.mockk.unmockkAll
 import io.mockk.verify
+import kotlinx.coroutines.test.runTest
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
-import org.json.JSONObject
+import org.bibletranslationtools.gogsclient.Token
+import org.bibletranslationtools.gogsclient.User
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import org.bibletranslationtools.gogsclient.Token
-import org.bibletranslationtools.gogsclient.User
-import kotlinx.coroutines.test.runTest
-import io.mockk.coEvery
-import io.mockk.coVerify
+import org.junit.jupiter.api.assertNotNull
 
 class CreateRepositoryTest {
 
@@ -37,8 +37,9 @@ class CreateRepositoryTest {
     @MockK private lateinit var prefRepository: IPreferenceRepository
     @MockK private lateinit var profile: Profile
     @MockK private lateinit var targetTranslation: TargetTranslation
-    @MockK private lateinit var progressListener: OnProgressListener
     @MockK private lateinit var resources: Resources
+
+    val onProgress = mockk<(Float, String?) -> Unit>(relaxed = true)
 
     private val server = MockWebServer()
     private val apiUrl = server.url("/api").toString()
@@ -49,7 +50,7 @@ class CreateRepositoryTest {
 
         every { context.resources }.returns(resources)
 
-        every { progressListener.onProgress(any(), any()) }.just(runs)
+        every { onProgress(any(), any()) }.just(runs)
         every { prefRepository.getDefaultPref(any(), any(), String::class.java) }.returns(apiUrl)
 
         every { targetTranslation.id }.returns("aa_gen_text_reg")
@@ -73,16 +74,17 @@ class CreateRepositoryTest {
         server.enqueue(createRepositoryResponse())
 
         val success = CreateRepository(context, prefRepository, profile)
-            .execute(targetTranslation, progressListener)
+            .execute(targetTranslation, onProgress)
 
         assertTrue(success)
 
-        val request = JSONObject(server.takeRequest().body.readString(Charsets.UTF_8))
-        assertEquals("aa_gen_text_reg", request.getString("name"))
-        assertTrue(request.has("description"))
-        assertTrue(request.has("private"))
+        val str = server.takeRequest().body.readString(Charsets.UTF_8)
+        val response = Json.parseToJsonElement(str).jsonObject
+        assertEquals("aa_gen_text_reg", response["name"]?.jsonPrimitive?.content)
+        assertNotNull(response["description"])
+        assertNotNull(response["private"])
 
-        verify { progressListener.onProgress(any(), any()) }
+        verify { onProgress(any(), any()) }
         verify { prefRepository.getDefaultPref(any(), any(), String::class.java) }
         verify { targetTranslation.id }
         verify { resources.getString(R.string.pref_default_gogs_api) }
@@ -98,11 +100,11 @@ class CreateRepositoryTest {
         server.enqueue(createRepositoryExistsResponse())
 
         val success = CreateRepository(context, prefRepository, profile)
-            .execute(targetTranslation, progressListener)
+            .execute(targetTranslation, onProgress)
 
         assertFalse(success)
 
-        verify { progressListener.onProgress(any(), any()) }
+        verify { onProgress(any(), any()) }
         verify { prefRepository.getDefaultPref(any(), any(), String::class.java) }
         verify { targetTranslation.id }
         verify { resources.getString(R.string.pref_default_gogs_api) }
@@ -114,11 +116,11 @@ class CreateRepositoryTest {
         every { profile.gogsUser }.returns(null)
 
         val success = CreateRepository(context, prefRepository, profile)
-            .execute(targetTranslation, progressListener)
+            .execute(targetTranslation, onProgress)
 
         assertFalse(success)
 
-        verify { progressListener.onProgress(any(), any()) }
+        verify { onProgress(any(), any()) }
         verify { prefRepository.getDefaultPref(any(), any(), String::class.java) }
         verify(exactly = 0) { targetTranslation.id }
         verify { resources.getString(R.string.pref_default_gogs_api) }

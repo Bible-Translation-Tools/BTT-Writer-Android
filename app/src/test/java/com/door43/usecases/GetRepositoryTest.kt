@@ -1,9 +1,11 @@
 package com.door43.usecases
 
-import com.door43.OnProgressListener
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TargetTranslation
+import com.door43.util.JsonLenient
 import io.mockk.MockKAnnotations
+import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.just
@@ -11,34 +13,31 @@ import io.mockk.mockk
 import io.mockk.runs
 import io.mockk.unmockkAll
 import io.mockk.verify
-import org.json.JSONObject
+import kotlinx.coroutines.test.runTest
+import org.bibletranslationtools.gogsclient.Repository
+import org.bibletranslationtools.gogsclient.User
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
-import org.bibletranslationtools.gogsclient.Repository
-import org.bibletranslationtools.gogsclient.User
-import kotlinx.coroutines.test.runTest
-import io.mockk.coEvery
-import io.mockk.coVerify
-import com.door43.util.JsonLenient
 
 class GetRepositoryTest {
 
     @MockK private lateinit var createRepository: CreateRepository
     @MockK private lateinit var searchRepository: SearchGogsRepositories
     @MockK private lateinit var profile: Profile
-    @MockK private lateinit var progressListener: OnProgressListener
     @MockK private lateinit var targetTranslation: TargetTranslation
+
+    val onProgress = mockk<(Float, String?) -> Unit>(relaxed = true)
 
     @Before
     fun setup() {
         MockKAnnotations.init(this)
 
         coEvery { createRepository.execute(any(), any()) }.returns(true)
-        every { progressListener.onProgress(any(), any()) }.just(runs)
+        every { onProgress(any(), any()) }.just(runs)
 
         every { targetTranslation.id }.returns("aa_gen_text_reg")
     }
@@ -59,7 +58,7 @@ class GetRepositoryTest {
             .returns(getRepositories(user, targetTranslation.id))
 
         val repository = GetRepository(createRepository, searchRepository, profile)
-            .execute(targetTranslation, progressListener)
+            .execute(targetTranslation, onProgress)
 
         assertNotNull(repository)
         requireNotNull(repository)
@@ -74,7 +73,7 @@ class GetRepositoryTest {
         verify { profile.gogsUser }
         coVerify { searchRepository.execute(any(), any(), any(), any()) }
         coVerify { createRepository.execute(any(), any()) }
-        verify { progressListener.onProgress(any(), any()) }
+        verify { onProgress(any(), any()) }
         verify { targetTranslation.id }
     }
 
@@ -89,7 +88,7 @@ class GetRepositoryTest {
             .returns(getRepositories(user, "aa_gen_text_reg_l2"))
 
         val repository = GetRepository(createRepository, searchRepository, profile)
-            .execute(targetTranslation, progressListener)
+            .execute(targetTranslation, onProgress)
 
         assertNull(repository)
 
@@ -98,7 +97,7 @@ class GetRepositoryTest {
         verify { profile.gogsUser }
         coVerify { searchRepository.execute(any(), any(), any(), any()) }
         coVerify { createRepository.execute(any(), any()) }
-        verify { progressListener.onProgress(any(), any()) }
+        verify { onProgress(any(), any()) }
         verify { targetTranslation.id }
     }
 
@@ -113,14 +112,14 @@ class GetRepositoryTest {
             .returns(listOf())
 
         val repository = GetRepository(createRepository, searchRepository, profile)
-            .execute(targetTranslation, progressListener)
+            .execute(targetTranslation, onProgress)
 
         assertNull(repository)
 
         verify { profile.gogsUser }
         coVerify { searchRepository.execute(any(), any(), any(), any()) }
         coVerify { createRepository.execute(any(), any()) }
-        verify { progressListener.onProgress(any(), any()) }
+        verify { onProgress(any(), any()) }
         verify { targetTranslation.id }
     }
 

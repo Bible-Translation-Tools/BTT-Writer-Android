@@ -9,7 +9,6 @@ import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
 import com.door43.data.setDefaultPref
 import com.door43.translationstudio.App
-import com.door43.translationstudio.BuildConfig
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.BackupController
 import com.door43.translationstudio.core.ComponentScope
@@ -178,7 +177,7 @@ class DefaultSettingsComponent(
     override val event = _event.receiveAsFlow()
 
     override val appVersion: String
-        get() = "${BuildConfig.VERSION_NAME} - ${BuildConfig.VERSION_CODE}"
+        get() = "${App.info.versionName} - ${App.info.versionCode}"
 
     init {
         loadInitialPreferences()

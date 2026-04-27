@@ -1,16 +1,16 @@
 package com.door43.usecases
 
-import android.content.Context
-import android.content.pm.PackageInfo
-import android.content.pm.PackageManager
-import com.door43.TestUtils
 import com.door43.data.IPreferenceRepository
+import com.door43.translationstudio.App
+import com.door43.translationstudio.AppInfo
+import com.door43.translationstudio.Platform
 import io.mockk.MockKAnnotations
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
+import io.mockk.mockkObject
 import io.mockk.unmockkAll
 import io.mockk.verify
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
@@ -22,10 +22,9 @@ import org.junit.Test
 
 class CheckForLatestReleaseTest {
 
-    @MockK private lateinit var context: Context
     @MockK private lateinit var prefRepository: IPreferenceRepository
-    @MockK private lateinit var packageManager: PackageManager
-    @MockK private lateinit var packageInfo: PackageInfo
+    @MockK private lateinit var platform: Platform
+    @MockK private lateinit var info: AppInfo
 
     private val server = MockWebServer()
 
@@ -33,9 +32,7 @@ class CheckForLatestReleaseTest {
     fun setup() {
         MockKAnnotations.init(this)
 
-        every { context.packageName }.returns("org.writer")
-        every { context.packageManager }.returns(packageManager)
-        every { packageManager.getPackageInfo(any(String::class), 0) }.returns(packageInfo)
+        mockkObject(App)
 
         every { prefRepository.getGithubRepoApi() }.returns(server.url("/api").toString())
     }
@@ -46,14 +43,13 @@ class CheckForLatestReleaseTest {
     }
 
     @Test
-    fun `test checkForLatestRelease when there is a new release`() {
+    fun `test checkForLatestRelease when there is a new release`() = runTest {
         server.enqueue(createReleaseResponse())
 
-        TestUtils.setPropertyReflection(packageInfo, "versionCode", 9)
+        every { info.versionCode }.returns(1)
+        every { platform.info }.returns(info)
 
-        val result = runBlocking {
-            CheckForLatestRelease(context, prefRepository).execute()
-        }
+        val result = CheckForLatestRelease(prefRepository, platform).execute()
 
         assertNotNull(result.release)
 
@@ -64,27 +60,19 @@ class CheckForLatestReleaseTest {
         assertEquals(12345, release.downloadSize)
         assertEquals(10, release.build)
 
-        verify { context.packageName }
-        verify { context.packageManager }
-        verify { packageManager.getPackageInfo(any(String::class), 0) }
         verify { prefRepository.getGithubRepoApi() }
     }
 
     @Test
-    fun `test checkForLatestRelease when there is no new release`() {
+    fun `test checkForLatestRelease when there is no new release`() = runTest {
         server.enqueue(createReleaseResponse())
 
-        TestUtils.setPropertyReflection(packageInfo, "versionCode", 10)
+        every { info.versionCode }.returns(10)
 
-        val result = runBlocking {
-            CheckForLatestRelease(context, prefRepository).execute()
-        }
+        val result = CheckForLatestRelease(prefRepository, platform).execute()
 
         assertNull(result.release)
 
-        verify { context.packageName }
-        verify { context.packageManager }
-        verify { packageManager.getPackageInfo(any(String::class), 0) }
         verify { prefRepository.getGithubRepoApi() }
     }
 

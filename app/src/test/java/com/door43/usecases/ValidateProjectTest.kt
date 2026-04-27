@@ -1,7 +1,6 @@
 package com.door43.usecases
 
 import android.content.Context
-import com.door43.TestUtils
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.ChapterTranslation
 import com.door43.translationstudio.core.FrameTranslation
@@ -16,8 +15,9 @@ import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.unmockkAll
 import io.mockk.verify
+import org.bibletranslationtools.resourcecontainer.PackageInfo
+import org.bibletranslationtools.resourcecontainer.ResourceContainer
 import org.json.JSONException
-import org.json.JSONObject
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -27,7 +27,7 @@ import org.junit.Test
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.door43client.Index
 import org.unfoldingword.door43client.models.SourceLanguage
-import org.unfoldingword.resourcecontainer.ResourceContainer
+import org.unfoldingword.door43client.models.toLanguage
 
 class ValidateProjectTest {
 
@@ -55,15 +55,17 @@ class ValidateProjectTest {
         every { translator.getTargetTranslation(targetTranslationId) }
             .returns(targetTranslation)
 
-        TestUtils.setPropertyReflection(sourceLanguage, "slug", "en")
+        every { sourceLanguage.slug }.returns("en")
+        every { sourceLanguage.name }.returns("mrk")
+        every { sourceLanguage.direction }.returns("ltr")
         every { index.getTargetLanguage(any()) }.returns(mockk())
         every { index.getSourceLanguage(any()) }.returns(sourceLanguage)
 
-        val info: JSONObject = mockk {
-            every { getString(any()) }.returns("text/usfm")
+        val info: PackageInfo = mockk {
+            every { contentMimeType }.returns("text/usfm")
         }
-        TestUtils.setPropertyReflection(sourceContainer, "info", info)
-        TestUtils.setPropertyReflection(sourceContainer, "language", sourceLanguage)
+        every { sourceContainer.info }.returns(info)
+        every { sourceContainer.language }.returns(sourceLanguage.toLanguage())
 
         every { library.open(any()) }.returns(sourceContainer)
 
@@ -376,13 +378,13 @@ class ValidateProjectTest {
         verify { translator.getTargetTranslation(targetTranslationId) }
         verify { index.getTargetLanguage(any()) }
         verify { library.open(sourceTranslationId) }
-        // should not be called if there is not source translation
-        verify(inverse = true) { sourceContainer.info.getString(any()) }
+        // should not be called if there is no source translation
+        verify(inverse = true) { sourceContainer.info }
     }
 
     @Test
     fun `test validate project, failed to parse format`() {
-        every { sourceContainer.info.getString(any()) }.throws(JSONException("Bad format."))
+        every { sourceContainer.info }.throws(JSONException("Bad format."))
 
         val items = ValidateProject(
             context,
@@ -398,7 +400,7 @@ class ValidateProjectTest {
         verify { translator.getTargetTranslation(targetTranslationId) }
         verify { index.getTargetLanguage(any()) }
         verify { library.open(sourceTranslationId) }
-        verify { sourceContainer.info.getString(any()) }
+        verify { sourceContainer.info }
         // should not be called if failed to parse format
         verify(inverse = true) { sourceContainer.readChunk("front", "title") }
     }
@@ -417,14 +419,14 @@ class ValidateProjectTest {
                 else -> ""
             }
         }
-        every { sourceContainer.chapters() }.returns(arrayOf("front", "01", "02"))
+        every { sourceContainer.chapters() }.returns(listOf("front", "01", "02"))
         every { sourceContainer.chunks(any()) }.answers {
             val chapterSlug = firstArg<String>()
             when (chapterSlug) {
-                "front" -> arrayOf("title")
-                "01" -> arrayOf("title", "01", "04")
-                "02" -> arrayOf("01", "03")
-                else -> arrayOf()
+                "front" -> listOf("title")
+                "01" -> listOf("title", "01", "04")
+                "02" -> listOf("01", "03")
+                else -> listOf()
             }
         }
     }
@@ -472,7 +474,7 @@ class ValidateProjectTest {
         verify { library.open(any()) }
         verify { sourceContainer.chapters() }
         verify { sourceContainer.chunks(any()) }
-        verify { sourceContainer.info.getString(any()) }
+        verify { sourceContainer.info }
         verify { sourceContainer.readChunk(any(), any()) }
         verify { index.getSourceLanguage(any()) }
         verify { MergeConflictsHandler.isMergeConflicted(any()) }

@@ -2,7 +2,6 @@ package com.door43.usecases
 
 import android.content.Context
 import android.content.res.Resources
-import com.door43.OnProgressListener
 import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
 import com.door43.translationstudio.R
@@ -10,6 +9,8 @@ import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.git.Repo
 import io.mockk.MockKAnnotations
+import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.just
@@ -17,6 +18,8 @@ import io.mockk.mockk
 import io.mockk.runs
 import io.mockk.unmockkAll
 import io.mockk.verify
+import kotlinx.coroutines.test.runTest
+import org.bibletranslationtools.gogsclient.Repository
 import org.eclipse.jgit.api.CreateBranchCommand
 import org.eclipse.jgit.api.DeleteBranchCommand
 import org.eclipse.jgit.api.Git
@@ -34,11 +37,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import org.bibletranslationtools.gogsclient.Repository
 import java.io.IOException
-import kotlinx.coroutines.test.runTest
-import io.mockk.coEvery
-import io.mockk.coVerify
 
 class PushTargetTranslationTest {
 
@@ -47,7 +46,6 @@ class PushTargetTranslationTest {
     @MockK private lateinit var getRepository: GetRepository
     @MockK private lateinit var directoryProvider: IDirectoryProvider
     @MockK private lateinit var prefRepository: IPreferenceRepository
-    @MockK private lateinit var progressListener: OnProgressListener
     @MockK private lateinit var resources: Resources
     @MockK private lateinit var targetTranslation: TargetTranslation
     @MockK private lateinit var git: Git
@@ -56,6 +54,8 @@ class PushTargetTranslationTest {
     @MockK private lateinit var deleteCommand: DeleteBranchCommand
     @MockK private lateinit var createCommand: CreateBranchCommand
     @MockK private lateinit var pushCommand: PushCommand
+
+    val onProgress = mockk<(Float, String?) -> Unit>(relaxed = true)
 
     @Before
     fun setup() {
@@ -71,9 +71,9 @@ class PushTargetTranslationTest {
             )
         }.returns("22")
 
-        every { progressListener.onProgress(any(), any()) }.just(runs)
+        every { onProgress(any(), any()) }.just(runs)
         every { repository.sshUrl }.returns("ssh://repo.git")
-        coEvery { getRepository.execute(targetTranslation, progressListener) }.returns(repository)
+        coEvery { getRepository.execute(targetTranslation, onProgress) }.returns(repository)
 
         every { targetTranslation.commitSync() }.returns(true)
         every { targetTranslation.repo }.returns(repo)
@@ -124,7 +124,7 @@ class PushTargetTranslationTest {
             getRepository,
             directoryProvider,
             prefRepository
-        ).execute(targetTranslation, progressListener)
+        ).execute(targetTranslation, onProgress)
 
         val expectedMessage = """
             OK ${refUpdate.remoteName}
@@ -149,7 +149,7 @@ class PushTargetTranslationTest {
             getRepository,
             directoryProvider,
             prefRepository
-        ).execute(targetTranslation, progressListener)
+        ).execute(targetTranslation, onProgress)
 
         assertEquals(PushTargetTranslation.Status.AUTH_FAILURE, result.status)
         assertFalse(result.status.isRejected)
@@ -157,9 +157,9 @@ class PushTargetTranslationTest {
 
         verify { profile.gogsUser }
         verify(exactly = 0) { pushCommand.call() }
-        verify(exactly = 0) { progressListener.onProgress(any(), any()) }
+        verify(exactly = 0) { onProgress(any(), any()) }
         verify(exactly = 0) { repository.sshUrl }
-        coVerify(exactly = 0) { getRepository.execute(targetTranslation, progressListener) }
+        coVerify(exactly = 0) { getRepository.execute(targetTranslation, onProgress) }
     }
 
     @Test
@@ -174,7 +174,7 @@ class PushTargetTranslationTest {
             getRepository,
             directoryProvider,
             prefRepository
-        ).execute(targetTranslation, progressListener)
+        ).execute(targetTranslation, onProgress)
 
         assertEquals(PushTargetTranslation.Status.UNKNOWN, result.status)
         assertFalse(result.status.isRejected)
@@ -183,7 +183,7 @@ class PushTargetTranslationTest {
         verify { profile.gogsUser }
         verify(exactly = 0) { pushCommand.call() }
         verify(exactly = 0) { repository.sshUrl }
-        coVerify { getRepository.execute(targetTranslation, progressListener) }
+        coVerify { getRepository.execute(targetTranslation, onProgress) }
     }
 
     @Test
@@ -199,7 +199,7 @@ class PushTargetTranslationTest {
             getRepository,
             directoryProvider,
             prefRepository
-        ).execute(targetTranslation, progressListener)
+        ).execute(targetTranslation, onProgress)
 
         assertEquals(PushTargetTranslation.Status.UNKNOWN, result.status)
         assertFalse(result.status.isRejected)
@@ -208,7 +208,7 @@ class PushTargetTranslationTest {
         verify { profile.gogsUser }
         verify(exactly = 0) { pushCommand.call() }
         verify(exactly = 0) { repository.sshUrl }
-        coVerify { getRepository.execute(targetTranslation, progressListener) }
+        coVerify { getRepository.execute(targetTranslation, onProgress) }
     }
 
     @Test
@@ -223,7 +223,7 @@ class PushTargetTranslationTest {
             getRepository,
             directoryProvider,
             prefRepository
-        ).execute(targetTranslation, progressListener)
+        ).execute(targetTranslation, onProgress)
 
         assertEquals(PushTargetTranslation.Status.UNKNOWN, result.status)
         assertFalse(result.status.isRejected)
@@ -233,9 +233,9 @@ class PushTargetTranslationTest {
         verify(exactly = 0) { pushCommand.call() }
         verify { repo.deleteRemote(any()) }
         verify(exactly = 0) { repo.setRemote(any(), any()) }
-        verify { progressListener.onProgress(any(), any()) }
+        verify { onProgress(any(), any()) }
         verify { repository.sshUrl }
-        coVerify { getRepository.execute(targetTranslation, progressListener) }
+        coVerify { getRepository.execute(targetTranslation, onProgress) }
     }
 
     @Test
@@ -256,7 +256,7 @@ class PushTargetTranslationTest {
             getRepository,
             directoryProvider,
             prefRepository
-        ).execute(targetTranslation, progressListener)
+        ).execute(targetTranslation, onProgress)
 
         val expectedMessage = """
             Rejected non-fast-forward ${refUpdate.remoteName}
@@ -289,7 +289,7 @@ class PushTargetTranslationTest {
             getRepository,
             directoryProvider,
             prefRepository
-        ).execute(targetTranslation, progressListener)
+        ).execute(targetTranslation, onProgress)
 
         val expectedMessage = """
             Rejected non-delete ${refUpdate.remoteName}
@@ -322,7 +322,7 @@ class PushTargetTranslationTest {
             getRepository,
             directoryProvider,
             prefRepository
-        ).execute(targetTranslation, progressListener)
+        ).execute(targetTranslation, onProgress)
 
         val expectedMessage = """
             Rejected remote changed ${refUpdate.remoteName}
@@ -356,7 +356,7 @@ class PushTargetTranslationTest {
             getRepository,
             directoryProvider,
             prefRepository
-        ).execute(targetTranslation, progressListener)
+        ).execute(targetTranslation, onProgress)
 
         val expectedMessage = """
             Rejected other reason detailed ${refUpdate.remoteName}
@@ -389,7 +389,7 @@ class PushTargetTranslationTest {
             getRepository,
             directoryProvider,
             prefRepository
-        ).execute(targetTranslation, progressListener)
+        ).execute(targetTranslation, onProgress)
 
         assertEquals(PushTargetTranslation.Status.AUTH_FAILURE, result.status)
         assertFalse(result.status.isRejected)
@@ -414,7 +414,7 @@ class PushTargetTranslationTest {
             getRepository,
             directoryProvider,
             prefRepository
-        ).execute(targetTranslation, progressListener)
+        ).execute(targetTranslation, onProgress)
 
         assertEquals(PushTargetTranslation.Status.NO_REMOTE_REPO, result.status)
         assertFalse(result.status.isRejected)
@@ -439,7 +439,7 @@ class PushTargetTranslationTest {
             getRepository,
             directoryProvider,
             prefRepository
-        ).execute(targetTranslation, progressListener)
+        ).execute(targetTranslation, onProgress)
 
         assertEquals(PushTargetTranslation.Status.AUTH_FAILURE, result.status)
         assertFalse(result.status.isRejected)
@@ -460,7 +460,7 @@ class PushTargetTranslationTest {
             getRepository,
             directoryProvider,
             prefRepository
-        ).execute(targetTranslation, progressListener)
+        ).execute(targetTranslation, onProgress)
 
         assertEquals(PushTargetTranslation.Status.UNKNOWN, result.status)
         assertFalse(result.status.isRejected)
@@ -481,7 +481,7 @@ class PushTargetTranslationTest {
             getRepository,
             directoryProvider,
             prefRepository
-        ).execute(targetTranslation, progressListener)
+        ).execute(targetTranslation, onProgress)
 
         assertEquals(PushTargetTranslation.Status.OUT_OF_MEMORY, result.status)
         assertFalse(result.status.isRejected)
@@ -502,7 +502,7 @@ class PushTargetTranslationTest {
             getRepository,
             directoryProvider,
             prefRepository
-        ).execute(targetTranslation, progressListener)
+        ).execute(targetTranslation, onProgress)
 
         assertEquals(PushTargetTranslation.Status.UNKNOWN, result.status)
         assertFalse(result.status.isRejected)
@@ -523,7 +523,7 @@ class PushTargetTranslationTest {
             getRepository,
             directoryProvider,
             prefRepository
-        ).execute(targetTranslation, progressListener)
+        ).execute(targetTranslation, onProgress)
 
         assertEquals(PushTargetTranslation.Status.UNKNOWN, result.status)
         assertFalse(result.status.isRejected)
@@ -545,9 +545,9 @@ class PushTargetTranslationTest {
         verify { pushCommand.call() }
         verify { repo.deleteRemote(any()) }
         verify { repo.setRemote(any(), any()) }
-        verify { progressListener.onProgress(any(), any()) }
+        verify { onProgress(any(), any()) }
         verify { repository.sshUrl }
-        coVerify { getRepository.execute(targetTranslation, progressListener) }
+        coVerify { getRepository.execute(targetTranslation, onProgress) }
     }
 
     private fun mockResources() {

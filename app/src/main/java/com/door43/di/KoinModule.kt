@@ -6,8 +6,10 @@ import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
 import com.door43.repositories.PreferenceRepository
+import com.door43.translationstudio.AndroidPlatform
 import com.door43.translationstudio.DirectoryProvider
 import com.door43.translationstudio.MainAssetsProvider
+import com.door43.translationstudio.Platform
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.AndroidBackupController
 import com.door43.translationstudio.core.AndroidResourceProvider
@@ -57,6 +59,7 @@ import org.koin.dsl.module
 import org.unfoldingword.door43client.Door43Client
 
 val appModule = module {
+    singleOf(::AndroidPlatform).bind<Platform>()
     singleOf(::DirectoryProvider).bind<IDirectoryProvider>()
 
     singleOf(::BackupRC)

@@ -1,6 +1,5 @@
 package com.door43.usecases
 
-import com.door43.TestUtils
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.Translator
 import io.mockk.MockKAnnotations
@@ -9,6 +8,9 @@ import io.mockk.impl.annotations.MockK
 import io.mockk.mockk
 import io.mockk.unmockkAll
 import io.mockk.verify
+import org.bibletranslationtools.resourcecontainer.Language
+import org.bibletranslationtools.resourcecontainer.Resource
+import org.bibletranslationtools.resourcecontainer.ResourceContainer
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -16,9 +18,6 @@ import org.junit.Test
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.door43client.Index
 import org.unfoldingword.door43client.models.Translation
-import org.unfoldingword.resourcecontainer.Language
-import org.unfoldingword.resourcecontainer.Resource
-import org.unfoldingword.resourcecontainer.ResourceContainer
 
 class TranslationProgressTest {
 
@@ -46,14 +45,14 @@ class TranslationProgressTest {
     @Test
     fun `test complete progress with selected source`() {
         val rc: ResourceContainer = mockk {
-            every { chapters() }.returns(arrayOf("01", "02", "03"))
+            every { chapters() }.returns(listOf("01", "02", "03"))
             every { chunks(any()) }.answers {
                 val chapter = firstArg<String>()
                 when (chapter) {
-                    "01" -> arrayOf("01", "02", "03")
-                    "02" -> arrayOf("01", "03", "05")
-                    "03" -> arrayOf("01", "05")
-                    else -> arrayOf()
+                    "01" -> listOf("01", "02", "03")
+                    "02" -> listOf("01", "03", "05")
+                    "03" -> listOf("01", "05")
+                    else -> listOf()
                 }
             }
         }
@@ -77,14 +76,14 @@ class TranslationProgressTest {
     @Test
     fun `test complete progress with no selected source, with English as default`() {
         val rc: ResourceContainer = mockk {
-            every { chapters() }.returns(arrayOf("01", "02", "03"))
+            every { chapters() }.returns(listOf("01", "02", "03"))
             every { chunks(any()) }.answers {
                 val chapter = firstArg<String>()
                 when (chapter) {
-                    "01" -> arrayOf("01", "02", "03")
-                    "02" -> arrayOf("01", "03", "05")
-                    "03" -> arrayOf("01", "05")
-                    else -> arrayOf()
+                    "01" -> listOf("01", "02", "03")
+                    "02" -> listOf("01", "03", "05")
+                    "03" -> listOf("01", "05")
+                    else -> listOf()
                 }
             }
         }
@@ -142,14 +141,14 @@ class TranslationProgressTest {
     @Test
     fun `test half progress with the selected source`() {
         val rc: ResourceContainer = mockk {
-            every { chapters() }.returns(arrayOf("01", "02", "03"))
+            every { chapters() }.returns(listOf("01", "02", "03"))
             every { chunks(any()) }.answers {
                 val chapter = firstArg<String>()
                 when (chapter) {
-                    "01" -> arrayOf("01", "02", "03")
-                    "02" -> arrayOf("01", "03", "05")
-                    "03" -> arrayOf("01", "05")
-                    else -> arrayOf()
+                    "01" -> listOf("01", "02", "03")
+                    "02" -> listOf("01", "03", "05")
+                    "03" -> listOf("01", "05")
+                    else -> listOf()
                 }
             }
         }
@@ -173,14 +172,14 @@ class TranslationProgressTest {
     @Test
     fun `test target chunks more than source chunks still returns 100`() {
         val rc: ResourceContainer = mockk {
-            every { chapters() }.returns(arrayOf("01", "02", "03"))
+            every { chapters() }.returns(listOf("01", "02", "03"))
             every { chunks(any()) }.answers {
                 val chapter = firstArg<String>()
                 when (chapter) {
-                    "01" -> arrayOf("01", "02", "03")
-                    "02" -> arrayOf("01", "03", "05")
-                    "03" -> arrayOf("01", "05")
-                    else -> arrayOf()
+                    "01" -> listOf("01", "02", "03")
+                    "02" -> listOf("01", "03", "05")
+                    "03" -> listOf("01", "05")
+                    else -> listOf()
                 }
             }
         }
@@ -204,8 +203,8 @@ class TranslationProgressTest {
     @Test
     fun `test when source chunks empty, progress is 0`() {
         val rc: ResourceContainer = mockk {
-            every { chapters() }.returns(arrayOf())
-            every { chunks(any()) }.returns(arrayOf())
+            every { chapters() }.returns(listOf())
+            every { chunks(any()) }.returns(listOf())
         }
         every { library.open(any()) }.returns(rc)
         every { translator.getSelectedSourceTranslationId(any()) }
@@ -225,21 +224,25 @@ class TranslationProgressTest {
     }
 
     private fun mockSourceTranslations() {
-        val english: Language = mockk()
-        val ulb: Resource = mockk()
+        val english: Language = mockk {
+            every { slug }.returns("en")
+        }
+        val ulb: Resource = mockk {
+            every { slug }.returns("ulb")
+        }
         val enTranslation: Translation = mockk()
-        TestUtils.setPropertyReflection(english, "slug", "en")
-        TestUtils.setPropertyReflection(ulb, "slug", "ulb")
 
         every { enTranslation.language } returns english
         every { enTranslation.resource } returns ulb
         every { enTranslation.resourceContainerSlug } returns "en_mrk_ulb"
 
-        val indonesian: Language = mockk()
-        val ayt: Resource = mockk()
+        val indonesian: Language = mockk {
+            every { slug }.returns("id")
+        }
+        val ayt: Resource = mockk {
+            every { slug }.returns("ayt")
+        }
         val idTranslation: Translation = mockk()
-        TestUtils.setPropertyReflection(indonesian, "slug", "id")
-        TestUtils.setPropertyReflection(ayt, "slug", "ayt")
         every { idTranslation.language } returns indonesian
         every { idTranslation.resource } returns ayt
         every { idTranslation.resourceContainerSlug } returns "id_mrk_ayt"

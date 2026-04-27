@@ -4,7 +4,7 @@ import android.content.Context
 import android.net.Uri
 import android.util.Log
 import com.door43.data.IDirectoryProvider
-import com.door43.translationstudio.BuildConfig
+import com.door43.translationstudio.Platform
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.ArchiveDetails.Companion.archiveJson
 import com.door43.translationstudio.core.ArchiveGenerator
@@ -34,7 +34,8 @@ class ExportProjects(
     private val context: Context,
     private val directoryProvider: IDirectoryProvider,
     private val library: Door43Client,
-    private val typography: Typography
+    private val typography: Typography,
+    private val platform: Platform
 ) {
 
     /**
@@ -276,7 +277,7 @@ class ExportProjects(
             timestamp = Util.unixTime.toInt(),
             generator = ArchiveGenerator(
                 name = GENERATOR_NAME,
-                build = BuildConfig.VERSION_CODE.toString()
+                build = platform.info.versionCode.toString()
             ),
             targetTranslations = listOf(
                 ArchiveTranslation(

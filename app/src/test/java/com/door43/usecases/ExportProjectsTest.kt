@@ -2,11 +2,10 @@ package com.door43.usecases
 
 import android.content.ContentResolver
 import android.content.Context
-import android.content.pm.PackageInfo
-import android.content.pm.PackageManager
 import android.net.Uri
-import com.door43.TestUtils
 import com.door43.data.IDirectoryProvider
+import com.door43.translationstudio.AppInfo
+import com.door43.translationstudio.Platform
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.ChapterTranslation
 import com.door43.translationstudio.core.FrameTranslation
@@ -32,6 +31,8 @@ import io.mockk.mockkStatic
 import io.mockk.runs
 import io.mockk.unmockkAll
 import io.mockk.verify
+import org.bibletranslationtools.resourcecontainer.Project
+import org.bibletranslationtools.resourcecontainer.Resource
 import org.eclipse.jgit.errors.TransportException
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -44,8 +45,6 @@ import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.door43client.Index
-import org.unfoldingword.resourcecontainer.Project
-import org.unfoldingword.resourcecontainer.Resource
 import java.io.File
 import java.io.OutputStream
 
@@ -62,9 +61,9 @@ class ExportProjectsTest {
     @MockK private lateinit var typography: Typography
     @MockK private lateinit var targetTranslation: TargetTranslation
     @MockK private lateinit var contentResolver: ContentResolver
-    @MockK private lateinit var packageManager: PackageManager
-    @MockK private lateinit var packageInfo: PackageInfo
     @MockK private lateinit var index: Index
+    @MockK private lateinit var platform: Platform
+    @MockK private lateinit var info: AppInfo
 
     @Before
     fun setup() {
@@ -79,21 +78,22 @@ class ExportProjectsTest {
         mockkStatic(BaseFont::class)
 
         every { library.index } returns index
-        val project: Project = mockk()
-        val resource: Resource = mockk()
+        val project: Project = mockk {
+            every { slug }.returns("mrk")
+            every { languageSlug }.returns("en")
+        }
+        val resource: Resource = mockk {
+            every { slug }.returns("ulb")
+        }
+
+        every { info.versionCode }.returns(11)
+        every { platform.info }.returns(info)
 
         every { index.getProject(any(), any(), any()) }.returns(project)
         every { index.getResources(any(), any()) }.returns(listOf(resource))
 
-        TestUtils.setPropertyReflection(project, "slug", "mrk")
-        TestUtils.setPropertyReflection(resource, "slug", "ulb")
-
         every { context.contentResolver }.returns(contentResolver)
-        every { context.packageManager }.returns(packageManager)
         every { context.packageName }.returns("org.example.writer")
-        every { packageManager.getPackageInfo(any<String>(), any<Int>()) }.returns(packageInfo)
-
-        TestUtils.setPropertyReflection(packageInfo, "versionCode", 10)
 
         every { targetTranslation.commitSync(any(), any()) }.returns(true)
         every { targetTranslation.commit() }.just(runs)
@@ -142,7 +142,8 @@ class ExportProjectsTest {
             context,
             directoryProvider,
             library,
-            typography
+            typography,
+            platform
         ).exportProject(targetTranslation, outputFile)
 
         verify { Uri.fromFile(any()) }
@@ -176,7 +177,8 @@ class ExportProjectsTest {
             context,
             directoryProvider,
             library,
-            typography
+            typography,
+            platform
         ).exportProject(targetTranslation, uri)
 
         verify(exactly = 2) { directoryProvider.createTempDir(any()) }
@@ -197,7 +199,8 @@ class ExportProjectsTest {
             context,
             directoryProvider,
             library,
-            typography
+            typography,
+            platform
         ).exportProject(projectDir, outFile)
 
         verify { Zip.zipToStream(any(), any()) }
@@ -216,7 +219,8 @@ class ExportProjectsTest {
                 context,
                 directoryProvider,
                 library,
-                typography
+                typography,
+                platform
             ).exportProject(projectDir, outFile)
         }
 
@@ -236,7 +240,8 @@ class ExportProjectsTest {
                 context,
                 directoryProvider,
                 library,
-                typography
+                typography,
+                platform
             ).exportProject(projectDir, outFile)
         }
 
@@ -270,7 +275,8 @@ class ExportProjectsTest {
             context,
             directoryProvider,
             library,
-            typography
+            typography,
+            platform
         ).exportUSFM(targetTranslation, uri)
 
         assertTrue(result.success)
@@ -326,7 +332,8 @@ class ExportProjectsTest {
             context,
             directoryProvider,
             library,
-            typography
+            typography,
+            platform
         ).exportUSFM(targetTranslation, uri)
 
         assertFalse(result.success)
@@ -359,7 +366,8 @@ class ExportProjectsTest {
             context,
             directoryProvider,
             library,
-            typography
+            typography,
+            platform
         ).exportPDF(
             targetTranslation,
             uri,
@@ -393,7 +401,8 @@ class ExportProjectsTest {
             context,
             directoryProvider,
             library,
-            typography
+            typography,
+            platform
         ).exportPDF(
             targetTranslation,
             uri,
@@ -443,15 +452,17 @@ class ExportProjectsTest {
     }
 
     private fun mockTranslationContents() {
-        val chapterTranslation: ChapterTranslation = mockk()
-        every { chapterTranslation.id } returns "01"
-        every { chapterTranslation.title } returns "Chapter 1"
-        every { chapterTranslation.reference } returns "Chapter reference"
+        val chapterTranslation: ChapterTranslation = mockk {
+            every { id } returns "01"
+            every { title } returns "Chapter 1"
+            every { reference } returns "Chapter reference"
+        }
         every { targetTranslation.chapterTranslations }.returns(arrayOf(chapterTranslation))
 
-        val frameTranslation: FrameTranslation = mockk()
-        every { frameTranslation.id } returns "01"
-        every { frameTranslation.body } returns "This is a test verse contents"
+        val frameTranslation: FrameTranslation = mockk {
+            every { id } returns "01"
+            every { body } returns "This is a test verse contents"
+        }
         every { targetTranslation.getFrameTranslations(any(), any()) }
             .returns(arrayOf(frameTranslation))
     }

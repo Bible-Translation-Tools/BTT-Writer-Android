@@ -1,25 +1,25 @@
 package com.door43.usecases
 
 import android.app.Application
-import android.content.Context
-import com.door43.TestUtils
 import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.TargetTranslationMigrator
 import com.door43.util.FileUtilities
 import io.mockk.MockKAnnotations
-import io.mockk.runs
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.mockkObject
-import io.mockk.mockkStatic
+import io.mockk.runs
 import io.mockk.unmockkAll
 import io.mockk.verify
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertTrue
+import org.bibletranslationtools.resourcecontainer.Language
+import org.bibletranslationtools.resourcecontainer.Project
+import org.bibletranslationtools.resourcecontainer.Resource
 import org.junit.After
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertThrows
@@ -27,9 +27,6 @@ import org.junit.Before
 import org.junit.Test
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.door43client.models.Translation
-import org.unfoldingword.resourcecontainer.Language
-import org.unfoldingword.resourcecontainer.Project
-import org.unfoldingword.resourcecontainer.Resource
 import java.io.File
 
 class BackupRCTest {
@@ -81,9 +78,9 @@ class BackupRCTest {
 
     @Test
     fun `test backupResourceContainer with valid translation`() {
-        TestUtils.setPropertyReflection(language, "slug", "fa")
-        TestUtils.setPropertyReflection(project, "slug", "mrk")
-        TestUtils.setPropertyReflection(resource, "slug", "nmv")
+        every { language.slug } returns("fa")
+        every { project.slug } returns("mrk")
+        every { resource.slug } returns("nmv")
 
         every { translation.resourceContainerSlug } returns "fa_mrk_nmv"
 
@@ -112,9 +109,9 @@ class BackupRCTest {
 
     @Test
     fun `test backupResourceContainer throws exception`() {
-        TestUtils.setPropertyReflection(language, "slug", "fa")
-        TestUtils.setPropertyReflection(project, "slug", "mrk")
-        TestUtils.setPropertyReflection(resource, "slug", "nmv")
+        every { language.slug } returns("fa")
+        every { project.slug } returns("mrk")
+        every { resource.slug } returns("nmv")
 
         every { translation.resourceContainerSlug } returns "fa_mrk_nmv"
 

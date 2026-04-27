@@ -3,7 +3,7 @@ package com.door43.usecases
 import android.content.Context
 import android.net.Uri
 import com.door43.data.IDirectoryProvider
-import com.door43.translationstudio.BuildConfig
+import com.door43.translationstudio.Platform
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.ArchiveImporter
 import com.door43.translationstudio.core.MergeConflictsHandler
@@ -27,7 +27,8 @@ class ImportProjects(
     private val backupRC: BackupRC,
     private val directoryProvider: IDirectoryProvider,
     private val archiveImporter: ArchiveImporter,
-    private val library: Door43Client
+    private val library: Door43Client,
+    private val platform: Platform
 ) {
     fun importProject(
         project: File,
@@ -156,7 +157,7 @@ class ImportProjects(
                     // update the generator info. TRICKY: we re-open to get the updated manifest.
                     TargetTranslation.open(destTargetTranslationDir)?.let { targetTranslation ->
                         importedTargetTranslations.add(targetTranslation)
-                        targetTranslation.updateGenerator(BuildConfig.VERSION_CODE.toString())
+                        targetTranslation.updateGenerator(platform.info.versionCode.toString())
                     }
                 }
             }
@@ -328,7 +329,7 @@ class ImportProjects(
                             ex.printStackTrace()
                         }
                     }
-                        ?.updateGenerator(BuildConfig.VERSION_CODE.toString())
+                        ?.updateGenerator(platform.info.versionCode.toString())
 
                     importedSlug = targetTranslationId
                 }

@@ -1,34 +1,32 @@
 package com.door43.usecases
 
 import android.content.Context
-import com.door43.OnProgressListener
 import com.door43.data.IPreferenceRepository
 import com.door43.translationstudio.R
 import io.mockk.MockKAnnotations
-import io.mockk.runs
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.just
 import io.mockk.mockk
+import io.mockk.runs
 import io.mockk.unmockkAll
 import io.mockk.verify
+import kotlinx.coroutines.test.runTest
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
+import org.bibletranslationtools.gogsclient.Repository
+import org.bibletranslationtools.gogsclient.User
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
-import org.bibletranslationtools.gogsclient.Repository
-import org.bibletranslationtools.gogsclient.User
-import kotlinx.coroutines.test.runTest
-import io.mockk.coEvery
-import io.mockk.coVerify
 
 class SearchGogsRepositoriesTest {
 
     @MockK private lateinit var context: Context
     @MockK private lateinit var prefRepository: IPreferenceRepository
-    @MockK private lateinit var progressListener: OnProgressListener
+
+    val onProgress = mockk<(Float, String?) -> Unit>(relaxed = true)
 
     private val server = MockWebServer()
     private val apiUrl = server.url("/api").toString()
@@ -37,7 +35,7 @@ class SearchGogsRepositoriesTest {
     fun setup() {
         MockKAnnotations.init(this)
 
-        every { progressListener.onProgress(any(), any()) } just runs
+        every { onProgress(any(), any()) } just runs
         every { prefRepository.getDefaultPref(any(), any(), String::class.java) }
             .returns(apiUrl)
         every { context.getString(R.string.pref_default_gogs_api) }
@@ -64,11 +62,11 @@ class SearchGogsRepositoriesTest {
         val repositories = SearchGogsRepositories(
             context,
             prefRepository
-        ).execute(0, repoQuery, limit, progressListener)
+        ).execute(0, repoQuery, limit, onProgress)
 
         assertEquals(1, repositories.size)
 
-        verify { progressListener.onProgress(any(), "Searching for repositories") }
+        verify { onProgress(any(), "Searching for repositories") }
     }
 
     @Test
@@ -88,12 +86,12 @@ class SearchGogsRepositoriesTest {
         val repositories = SearchGogsRepositories(
             context,
             prefRepository
-        ).execute(user.id, repoQuery, limit, progressListener)
+        ).execute(user.id, repoQuery, limit, onProgress)
 
         assertEquals(1, repositories.size)
 
         verify { user.id }
-        verify { progressListener.onProgress(any(), "Searching for repositories") }
+        verify { onProgress(any(), "Searching for repositories") }
     }
 
     @Test
@@ -110,11 +108,11 @@ class SearchGogsRepositoriesTest {
         val repositories = SearchGogsRepositories(
             context,
             prefRepository
-        ).execute(0, repoQuery, limit, progressListener)
+        ).execute(0, repoQuery, limit, onProgress)
 
         assertEquals(1, repositories.size)
 
-        verify { progressListener.onProgress(any(), "Searching for repositories") }
+        verify { onProgress(any(), "Searching for repositories") }
     }
 
     private fun createRepoResponse(): MockResponse {

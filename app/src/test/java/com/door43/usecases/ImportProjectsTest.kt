@@ -3,9 +3,10 @@ package com.door43.usecases
 import android.content.ContentResolver
 import android.content.Context
 import android.net.Uri
-import com.door43.OnProgressListener
 import com.door43.TestUtils
 import com.door43.data.IDirectoryProvider
+import com.door43.translationstudio.AppInfo
+import com.door43.translationstudio.Platform
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.ArchiveImporter
 import com.door43.translationstudio.core.MergeConflictsHandler
@@ -21,12 +22,15 @@ import io.mockk.impl.annotations.MockK
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.mockkObject
-import io.mockk.mockkStatic
 import io.mockk.runs
 import io.mockk.unmockkAll
 import io.mockk.verify
 import io.mockk.verifySequence
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
+import org.bibletranslationtools.resourcecontainer.Language
+import org.bibletranslationtools.resourcecontainer.Project
+import org.bibletranslationtools.resourcecontainer.Resource
+import org.bibletranslationtools.resourcecontainer.ResourceContainer
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -38,10 +42,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import org.unfoldingword.door43client.Door43Client
-import org.unfoldingword.resourcecontainer.Language
-import org.unfoldingword.resourcecontainer.Project
-import org.unfoldingword.resourcecontainer.Resource
-import org.unfoldingword.resourcecontainer.ResourceContainer
 import java.io.File
 import java.io.InputStream
 
@@ -53,8 +53,11 @@ class ImportProjectsTest {
     @MockK private lateinit var directoryProvider: IDirectoryProvider
     @MockK private lateinit var archiveImporter: ArchiveImporter
     @MockK private lateinit var library: Door43Client
-    @MockK private lateinit var progressListener: OnProgressListener
     @MockK private lateinit var contentResolver: ContentResolver
+    @MockK private lateinit var platform: Platform
+    @MockK private lateinit var info: AppInfo
+
+    val onProgress = mockk<(Float, String?) -> Unit>(relaxed = true)
 
     @JvmField
     @Rule
@@ -68,6 +71,9 @@ class ImportProjectsTest {
         MockKAnnotations.init(this)
 
         every { context.contentResolver }.returns(contentResolver)
+
+        every { info.versionCode }.returns(1)
+        every { platform.info }.returns(info)
 
         tStudioFile = tempDir.newFile("aa_mrk_text_ulb.tstudio")
         pdfFile = tempDir.newFile("aa_mrk_text_ulb.pdf")
@@ -86,7 +92,6 @@ class ImportProjectsTest {
         }
 
         mockkObject(TargetTranslation)
-        every { TargetTranslation.updateGenerator(any(), any()) }.just(runs)
 
         every { directoryProvider.cacheDir }.returns(tempDir.newFolder("cache"))
         every { translator.path }.returns(tempDir.newFolder("translations"))
@@ -94,11 +99,11 @@ class ImportProjectsTest {
         mockkObject(FileUtilities)
         every { FileUtilities.deleteQuietly(any()) }.returns(true)
 
-        every { progressListener.onProgress(any(), any()) }.just(runs)
+        every { onProgress(any(), any()) }.just(runs)
         every { context.getString(R.string.importing_file) }.returns("Importing file")
 
         mockkObject(MergeConflictsHandler)
-        mockkStatic(ResourceContainer::class)
+        mockkObject(ResourceContainer)
     }
 
     @After
@@ -133,7 +138,8 @@ class ImportProjectsTest {
             backupRC,
             directoryProvider,
             archiveImporter,
-            library
+            library,
+            platform
         ).importProject(tStudioFile, false)
 
         assertNotNull(result)
@@ -153,6 +159,7 @@ class ImportProjectsTest {
         val dir = tempDir.newFolder("aa_mrk_text_ulb")
         val targetTranslation: TargetTranslation = mockk {
             every { id }.returns("aa_mrk_text_ulb")
+            every { updateGenerator(any()) }.just(runs)
         }
 
         every { archiveImporter.importArchive(any()) }
@@ -174,7 +181,8 @@ class ImportProjectsTest {
             backupRC,
             directoryProvider,
             archiveImporter,
-            library
+            library,
+            platform
         ).importProject(importDir, false)
 
         assertNotNull(result)
@@ -188,7 +196,7 @@ class ImportProjectsTest {
         verify(exactly = 0) { Zip.unzipFromStream(any(), any()) }
         verify(exactly = 0) { directoryProvider.cacheDir }
 
-        verify(exactly = 0) { TargetTranslation.updateGenerator(any(), any()) }
+        verify(exactly = 0) { targetTranslation.updateGenerator(any()) }
         verify { translator.path }
         verify { FileUtilities.deleteQuietly(any()) }
         verify { targetTranslation.id }
@@ -206,6 +214,7 @@ class ImportProjectsTest {
         val localTranslation: TargetTranslation = mockk {
             every { commitSync() }.returns(true)
             every { merge(any(), any()) }.returns(true)
+            every { updateGenerator(any()) }.just(runs)
         }
 
         every { archiveImporter.importArchive(any()) }
@@ -227,7 +236,8 @@ class ImportProjectsTest {
             backupRC,
             directoryProvider,
             archiveImporter,
-            library
+            library,
+            platform
         ).importProject(tStudioFile, false)
 
         assertNotNull(result)
@@ -253,6 +263,7 @@ class ImportProjectsTest {
         val localTranslation: TargetTranslation = mockk {
             every { commitSync() }.returns(true)
             every { merge(any(), any()) }.returns(false)
+            every { updateGenerator(any()) }.just(runs)
         }
 
         every { archiveImporter.importArchive(any()) }
@@ -274,7 +285,8 @@ class ImportProjectsTest {
             backupRC,
             directoryProvider,
             archiveImporter,
-            library
+            library,
+            platform
         ).importProject(tStudioFile, false)
 
         assertNotNull(result)
@@ -300,6 +312,7 @@ class ImportProjectsTest {
         val localTranslation: TargetTranslation = mockk {
             every { commitSync() }.returns(true)
             every { merge(any(), any()) }.returns(false)
+            every { updateGenerator(any()) }.just(runs)
         }
 
         every { archiveImporter.importArchive(any()) }
@@ -321,7 +334,8 @@ class ImportProjectsTest {
             backupRC,
             directoryProvider,
             archiveImporter,
-            library
+            library,
+            platform
         ).importProject(tStudioFile, true)
 
         assertNotNull(result)
@@ -349,7 +363,8 @@ class ImportProjectsTest {
             backupRC,
             directoryProvider,
             archiveImporter,
-            library
+            library,
+            platform
         ).importProject(tStudioFile, false)
 
         assertNull(result)
@@ -368,7 +383,8 @@ class ImportProjectsTest {
             backupRC,
             directoryProvider,
             archiveImporter,
-            library
+            library,
+            platform
         ).importProject(pdfFile, true)
 
         assertNull(result)
@@ -416,24 +432,25 @@ class ImportProjectsTest {
             backupRC,
             directoryProvider,
             archiveImporter,
-            library
+            library,
+            platform
         ).importProjects(
             listOf(project1, project2),
             false,
-            progressListener
+            onProgress
         )
 
         assertTrue(result.success)
         assertEquals(localTranslation, result.conflictingTargetTranslations.first())
 
         verifySequence {
-            progressListener.onProgress(any(), "Importing file")
-            progressListener.onProgress(0f, project1.name)
-            progressListener.onProgress(0.125f, project1.name)
-            progressListener.onProgress(0.5f, project2.name)
-            progressListener.onProgress(0.625f, project2.name)
-            progressListener.onProgress(0.75f, project2.name)
-            progressListener.onProgress(1f,  "Completed!")
+            onProgress(any(), "Importing file")
+            onProgress(0f, project1.name)
+            onProgress(0.125f, project1.name)
+            onProgress(0.5f, project2.name)
+            onProgress(0.625f, project2.name)
+            onProgress(0.75f, project2.name)
+            onProgress(1f,  "Completed!")
         }
 
         verify { translator.getConflictingTargetTranslation(any()) }
@@ -460,22 +477,23 @@ class ImportProjectsTest {
             backupRC,
             directoryProvider,
             archiveImporter,
-            library
+            library,
+            platform
         ).importProjects(
             listOf(project),
             false,
-            progressListener
+            onProgress
         )
 
         assertFalse(result.success)
         assertEquals(true, result.conflictingTargetTranslations.isEmpty())
 
         verifySequence {
-            progressListener.onProgress(any(), "Importing file")
-            progressListener.onProgress(0f, project.name)
-            progressListener.onProgress(0.25f, project.name)
-            progressListener.onProgress(0.5f, project.name)
-            progressListener.onProgress(1f, "Completed!")
+            onProgress(any(), "Importing file")
+            onProgress(0f, project.name)
+            onProgress(0.25f, project.name)
+            onProgress(0.5f, project.name)
+            onProgress(1f, "Completed!")
         }
 
         verify { translator.getConflictingTargetTranslation(any()) }
@@ -512,8 +530,9 @@ class ImportProjectsTest {
             backupRC,
             directoryProvider,
             archiveImporter,
-            library
-        ).importProject(uri, false, progressListener)
+            library,
+            platform
+        ).importProject(uri, false, onProgress)
 
         assertTrue(result.success)
         assertEquals(uri, result.filePath)
@@ -543,6 +562,7 @@ class ImportProjectsTest {
         val localTranslation: TargetTranslation = mockk {
             every { commitSync() }.returns(true)
             every { merge(any(), any()) }.returns(false)
+            every { updateGenerator(any()) }.just(runs)
         }
 
         every { TargetTranslation.open(any(), any()) }.answers {
@@ -574,8 +594,9 @@ class ImportProjectsTest {
             backupRC,
             directoryProvider,
             archiveImporter,
-            library
-        ).importProject(uri, false, progressListener)
+            library,
+            platform
+        ).importProject(uri, false, onProgress)
 
         assertTrue(result.success)
         assertEquals(uri, result.filePath)
@@ -601,10 +622,12 @@ class ImportProjectsTest {
         val dir = tempDir.newFolder("aa_mrk_text_ulb")
         val targetTranslation: TargetTranslation = mockk {
             every { id }.returns("aa_mrk_text_ulb")
+            every { updateGenerator(any()) }.just(runs)
         }
         val localTranslation: TargetTranslation = mockk {
             every { commitSync() }.returns(true)
             every { merge(any(), any()) }.returns(false)
+            every { updateGenerator(any()) }.just(runs)
         }
 
         every { TargetTranslation.open(any(), any()) }.answers {
@@ -636,8 +659,9 @@ class ImportProjectsTest {
             backupRC,
             directoryProvider,
             archiveImporter,
-            library
-        ).importProject(uri, true, progressListener)
+            library,
+            platform
+        ).importProject(uri, true, onProgress)
 
         assertTrue(result.success)
         assertEquals(uri, result.filePath)
@@ -663,8 +687,9 @@ class ImportProjectsTest {
             backupRC,
             directoryProvider,
             archiveImporter,
-            library
-        ).importProject(uri, true, progressListener)
+            library,
+            platform
+        ).importProject(uri, true, onProgress)
 
         assertFalse(result.success)
         assertEquals(uri, result.filePath)
@@ -681,7 +706,7 @@ class ImportProjectsTest {
     }
 
     @Test
-    fun `test import new source text from uri`() {
+    fun `test import new source text from uri`() = runTest {
         val uri: Uri = mockk()
 
         val srcDir = tempDir.newFolder("fa_mrk_nmv")
@@ -692,20 +717,20 @@ class ImportProjectsTest {
         every { library.open(any()) }.throws(Exception("local rc not found."))
         coEvery { library.importResourceContainer(srcDir) }.returns(mockk())
 
-        val tempRc: ResourceContainer = mockk()
-        TestUtils.setPropertyReflection(tempRc, "slug", "en")
+        val tempRc: ResourceContainer = mockk {
+            every { slug }.returns("en")
+        }
         every { ResourceContainer.load(srcDir) }.returns(tempRc)
 
-        val result = runBlocking {
-            ImportProjects(
-                context,
-                translator,
-                backupRC,
-                directoryProvider,
-                archiveImporter,
-                library
-            ).importSource(uri, false)
-        }
+        val result = ImportProjects(
+            context,
+            translator,
+            backupRC,
+            directoryProvider,
+            archiveImporter,
+            library,
+            platform
+        ).importSource(uri, false)
 
         assertTrue(result.success)
         assertFalse(result.hasConflict)
@@ -721,7 +746,7 @@ class ImportProjectsTest {
     }
 
     @Test
-    fun `test import existing source text from uri fails`() {
+    fun `test import existing source text from uri fails`() = runTest {
         val uri: Uri = mockk()
 
         val srcDir = tempDir.newFolder("fa_mrk_nmv")
@@ -733,7 +758,6 @@ class ImportProjectsTest {
         coEvery { library.importResourceContainer(srcDir) }.returns(mockk())
 
         val tempRc = mockResourceContainer()
-        TestUtils.setPropertyReflection(tempRc, "slug", "en")
         every { ResourceContainer.load(srcDir) }.returns(tempRc)
 
         every { context.getString(R.string.overwrite_content, any()) } answers {
@@ -742,16 +766,15 @@ class ImportProjectsTest {
 
         val expectedErrorMessage = "Overwrite Farsi - Mark - New Millennium Version?"
 
-        val result = runBlocking {
-            ImportProjects(
-                context,
-                translator,
-                backupRC,
-                directoryProvider,
-                archiveImporter,
-                library
-            ).importSource(uri, false)
-        }
+        val result = ImportProjects(
+            context,
+            translator,
+            backupRC,
+            directoryProvider,
+            archiveImporter,
+            library,
+            platform
+        ).importSource(uri, false)
 
         assertFalse(result.success)
         assertTrue(result.hasConflict)
@@ -767,7 +790,7 @@ class ImportProjectsTest {
     }
 
     @Test
-    fun `test import existing source text from uri overwrite`() {
+    fun `test import existing source text from uri overwrite`() = runTest {
         val uri: Uri = mockk()
 
         val srcDir = tempDir.newFolder("fa_mrk_nmv")
@@ -782,16 +805,15 @@ class ImportProjectsTest {
         TestUtils.setPropertyReflection(tempRc, "slug", "en")
         every { ResourceContainer.load(srcDir) }.returns(tempRc)
 
-        val result = runBlocking {
-            ImportProjects(
-                context,
-                translator,
-                backupRC,
-                directoryProvider,
-                archiveImporter,
-                library
-            ).importSource(uri, true)
-        }
+        val result = ImportProjects(
+            context,
+            translator,
+            backupRC,
+            directoryProvider,
+            archiveImporter,
+            library,
+            platform
+        ).importSource(uri, true)
 
         assertTrue(result.success)
         assertFalse(result.hasConflict)
@@ -807,7 +829,7 @@ class ImportProjectsTest {
     }
 
     @Test
-    fun `test import invalid source text from uri`() {
+    fun `test import invalid source text from uri`() = runTest {
         val uri: Uri = mockk()
 
         val srcDir = tempDir.newFolder("fa_mrk_nmv")
@@ -819,16 +841,15 @@ class ImportProjectsTest {
 
         val expectedErrorMessage = "Invalid rc."
 
-        val result = runBlocking {
-            ImportProjects(
-                context,
-                translator,
-                backupRC,
-                directoryProvider,
-                archiveImporter,
-                library
-            ).importSource(uri, false)
-        }
+        val result = ImportProjects(
+            context,
+            translator,
+            backupRC,
+            directoryProvider,
+            archiveImporter,
+            library,
+            platform
+        ).importSource(uri, false)
 
         assertFalse(result.success)
         assertFalse(result.hasConflict)
@@ -844,7 +865,7 @@ class ImportProjectsTest {
     }
 
     @Test
-    fun `test import source text from uri failed`() {
+    fun `test import source text from uri failed`() = runTest {
         val uri: Uri = mockk()
 
         val srcDir = tempDir.newFolder("fa_mrk_nmv")
@@ -855,22 +876,23 @@ class ImportProjectsTest {
         every { library.open(any()) }.throws(Exception("local rc not found."))
         coEvery { library.importResourceContainer(srcDir) }.throws(Exception("Failed to import rc."))
 
-        val tempRc: ResourceContainer = mockk()
+        val tempRc: ResourceContainer = mockk {
+            every { slug }.returns("slug")
+        }
         TestUtils.setPropertyReflection(tempRc, "slug", "en")
         every { ResourceContainer.load(srcDir) }.returns(tempRc)
 
         val expectedErrorMessage = "Failed to import rc."
 
-        val result = runBlocking {
-            ImportProjects(
-                context,
-                translator,
-                backupRC,
-                directoryProvider,
-                archiveImporter,
-                library
-            ).importSource(uri, false)
-        }
+        val result = ImportProjects(
+            context,
+            translator,
+            backupRC,
+            directoryProvider,
+            archiveImporter,
+            library,
+            platform
+        ).importSource(uri, false)
 
         assertFalse(result.success)
         assertFalse(result.hasConflict)
@@ -900,7 +922,6 @@ class ImportProjectsTest {
     private fun verifyImportFail() {
         verify { Zip.unzipFromStream(any(), any()) }
         verify { directoryProvider.cacheDir }
-        verify(exactly = 0) { TargetTranslation.updateGenerator(any(), any()) }
         verify(exactly = 0) { translator.path }
         verify(exactly = 0) { TargetTranslation.open(any(), any()) }
     }
@@ -914,19 +935,22 @@ class ImportProjectsTest {
     }
 
     private fun mockResourceContainer(): ResourceContainer {
-        val language: Language = mockk()
-        val project: Project = mockk()
-        val resource: Resource = mockk()
+        val mockLanguage: Language = mockk {
+            every { name }.returns("Farsi")
+        }
+        val mockProject: Project = mockk {
+            every { name }.returns("Mark")
+        }
+        val mockResource: Resource = mockk {
+            every { name }.returns("New Millennium Version")
+        }
 
-        TestUtils.setPropertyReflection(language, "name", "Farsi")
-        TestUtils.setPropertyReflection(project, "name", "Mark")
-        TestUtils.setPropertyReflection(resource, "name", "New Millennium Version")
-
-        val rc: ResourceContainer = mockk()
-
-        TestUtils.setPropertyReflection(rc, "language", language)
-        TestUtils.setPropertyReflection(rc, "project", project)
-        TestUtils.setPropertyReflection(rc, "resource", resource)
+        val rc: ResourceContainer = mockk {
+            every { language }.returns(mockLanguage)
+            every { project }.returns(mockProject)
+            every { resource }.returns(mockResource)
+            every { slug }.returns("fa_mrk_nmv")
+        }
 
         return rc
     }

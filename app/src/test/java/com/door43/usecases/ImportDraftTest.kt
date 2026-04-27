@@ -1,7 +1,6 @@
 package com.door43.usecases
 
 import android.content.Context
-import com.door43.OnProgressListener
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TargetTranslation
@@ -14,26 +13,27 @@ import io.mockk.mockk
 import io.mockk.runs
 import io.mockk.unmockkAll
 import io.mockk.verify
+import org.bibletranslationtools.resourcecontainer.ResourceContainer
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Before
 import org.junit.Test
-import org.unfoldingword.resourcecontainer.ResourceContainer
 
 class ImportDraftTest {
 
     @MockK private lateinit var context: Context
     @MockK private lateinit var translator: Translator
     @MockK private lateinit var profile: Profile
-    @MockK private lateinit var progressListener: OnProgressListener
     @MockK private lateinit var draftTranslator: ResourceContainer
+
+    val onProgress = mockk<(Float, String?) -> Unit>(relaxed = true)
 
     @Before
     fun setup() {
         MockKAnnotations.init(this)
 
-        every { progressListener.onProgress(any(), any()) }.just(runs)
+        every { onProgress(any(), any()) }.just(runs)
         every { context.getString(R.string.importing_draft) }
             .returns("Importing draft...")
         every { profile.nativeSpeaker }.returns(mockk())
@@ -51,12 +51,12 @@ class ImportDraftTest {
             .returns(targetTranslation)
 
         val result = ImportDraft(context, translator, profile)
-            .execute(draftTranslator, progressListener)
+            .execute(draftTranslator, onProgress)
 
         assertNotNull(result.targetTranslation)
         assertEquals(targetTranslation, result.targetTranslation)
 
-        verify { progressListener.onProgress(any(), any()) }
+        verify { onProgress(any(), any()) }
         verify { context.getString(R.string.importing_draft) }
     }
 }

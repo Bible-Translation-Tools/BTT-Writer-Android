@@ -2,23 +2,28 @@ package com.door43.usecases
 
 import android.content.Context
 import android.content.res.Resources
-import com.door43.OnProgressListener
 import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TargetTranslation
+import com.door43.translationstudio.core.manifest.Manifest
+import com.door43.translationstudio.core.manifest.ManifestAccessor
 import com.door43.translationstudio.git.Repo
-import com.door43.util.Manifest
 import io.mockk.MockKAnnotations
+import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.just
 import io.mockk.mockk
+import io.mockk.mockkConstructor
 import io.mockk.mockkObject
 import io.mockk.runs
 import io.mockk.unmockkAll
 import io.mockk.verify
+import kotlinx.coroutines.test.runTest
+import org.bibletranslationtools.gogsclient.Repository
 import org.eclipse.jgit.api.CheckoutCommand
 import org.eclipse.jgit.api.CreateBranchCommand
 import org.eclipse.jgit.api.DeleteBranchCommand
@@ -35,11 +40,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
-import org.bibletranslationtools.gogsclient.Repository
 import java.io.IOException
-import kotlinx.coroutines.test.runTest
-import io.mockk.coEvery
-import io.mockk.coVerify
 
 class PullTargetTranslationTest {
 
@@ -48,7 +49,6 @@ class PullTargetTranslationTest {
     @MockK private lateinit var profile: Profile
     @MockK private lateinit var prefRepository: IPreferenceRepository
     @MockK private lateinit var directoryProvider: IDirectoryProvider
-    @MockK private lateinit var progressListener: OnProgressListener
     @MockK private lateinit var targetTranslation: TargetTranslation
     @MockK private lateinit var git: Git
     @MockK private lateinit var repo: Repo
@@ -57,6 +57,9 @@ class PullTargetTranslationTest {
     @MockK private lateinit var createCommand: CreateBranchCommand
     @MockK private lateinit var pullCommand: PullCommand
     @MockK private lateinit var checkoutCommand: CheckoutCommand
+    @MockK private lateinit var manifestAccessor: ManifestAccessor
+
+    val onProgress = mockk<(Float, String?) -> Unit>(relaxed = true)
 
     @Before
     fun setup() {
@@ -65,9 +68,12 @@ class PullTargetTranslationTest {
         every { context.resources }.returns(resources)
 
         mockkObject(TargetTranslation)
-        mockkObject(Manifest)
+        mockkConstructor(ManifestAccessor::class)
 
-        every { Manifest.generate(any()) }.returns(mockk())
+        every { manifestAccessor.manifest }.returns(mockk())
+        every { manifestAccessor.reload() }.just(runs)
+        every { manifestAccessor.save() }.just(runs)
+        every { manifestAccessor.save(any()) }.just(runs)
 
         every {
             prefRepository.getDefaultPref(
@@ -77,9 +83,10 @@ class PullTargetTranslationTest {
             )
         }.returns("22")
 
+        every { targetTranslation.manifestAccessor }.returns(manifestAccessor)
+        every { targetTranslation.manifest }.returns(mockk())
         every { targetTranslation.commitSync() }.returns(true)
 
-        every { progressListener.onProgress(any(), any()) }.just(runs)
         every { git.branchDelete() }.returns(deleteCommand)
         every { git.branchCreate() }.returns(createCommand)
         every { git.pull() }.returns(pullCommand)
@@ -146,18 +153,17 @@ class PullTargetTranslationTest {
             targetTranslation,
             MergeStrategy.RECURSIVE,
             null,
-            progressListener
+            onProgress
         )
 
         assertEquals(PullTargetTranslation.Status.UP_TO_DATE, result.status)
         assertEquals("Pulled Successfully!", result.message)
 
-        verify { progressListener.onProgress(any(), "Downloading updates") }
+        verify { onProgress(any(), "Downloading updates") }
         verify { profile.gogsUser }
         verify { repository.sshUrl }
         coVerify { getRepository.execute(any(), any()) }
         verify { targetTranslation.repo }
-        verify { targetTranslation.path }
         verify { mergeResult.conflicts }
         verify { pullResult.mergeResult }
         verify { pullCommand.call() }
@@ -181,7 +187,7 @@ class PullTargetTranslationTest {
             targetTranslation,
             MergeStrategy.RECURSIVE,
             null,
-            progressListener
+            onProgress
         )
 
         assertEquals(PullTargetTranslation.Status.UNKNOWN, result.status)
@@ -208,7 +214,7 @@ class PullTargetTranslationTest {
             targetTranslation,
             MergeStrategy.RECURSIVE,
             null,
-            progressListener
+            onProgress
         )
 
         assertEquals(PullTargetTranslation.Status.AUTH_FAILURE, result.status)
@@ -216,7 +222,7 @@ class PullTargetTranslationTest {
 
         verify { profile.gogsUser }
         verify(exactly = 0) {
-            progressListener.onProgress(any(), "Downloading updates")
+            onProgress(any(), "Downloading updates")
         }
         coVerify(exactly = 0) { getRepository.execute(any(), any()) }
         verify(exactly = 0) { targetTranslation.repo }
@@ -248,13 +254,13 @@ class PullTargetTranslationTest {
             targetTranslation,
             MergeStrategy.RECURSIVE,
             null,
-            progressListener
+            onProgress
         )
 
         assertEquals(PullTargetTranslation.Status.UNKNOWN, result.status)
         assertEquals("Delete origin failed.", result.message)
 
-        verify { progressListener.onProgress(any(), "Downloading updates") }
+        verify { onProgress(any(), "Downloading updates") }
         verify { profile.gogsUser }
         verify { repository.sshUrl }
         coVerify { getRepository.execute(any(), any()) }
@@ -287,11 +293,8 @@ class PullTargetTranslationTest {
         every { pullResult.mergeResult }.returns(mergeResult)
         every { pullCommand.call() }.returns(pullResult)
 
-        every { Manifest.generate(any()) }.returns(mockk())
-        val localManifest: Manifest = mockk {
-            every { save() }.just(runs)
-        }
-        every { TargetTranslation.mergeManifests(any(), any()) }.returns(localManifest)
+        val localManifest: Manifest = mockk()
+        every { targetTranslation.mergeManifests(any()) }.returns(localManifest)
 
         val result = PullTargetTranslation(
             context,
@@ -303,25 +306,22 @@ class PullTargetTranslationTest {
             targetTranslation,
             MergeStrategy.RECURSIVE,
             null,
-            progressListener
+            onProgress
         )
 
         assertEquals(PullTargetTranslation.Status.MERGE_CONFLICTS, result.status)
         assertEquals("Pulled Successfully!", result.message)
 
-        verify { progressListener.onProgress(any(), "Downloading updates") }
+        verify { onProgress(any(), "Downloading updates") }
         verify { profile.gogsUser }
         verify { repository.sshUrl }
         coVerify { getRepository.execute(any(), any()) }
         verify { targetTranslation.repo }
-        verify { targetTranslation.path }
         verify { mergeResult.conflicts }
         verify { pullResult.mergeResult }
         verify { pullCommand.call() }
         verify(exactly = 2) { git.checkout() }
-        verify { Manifest.generate(any()) }
-        verify { TargetTranslation.mergeManifests(any(), any()) }
-        verify { localManifest.save() }
+        verify { targetTranslation.mergeManifests(any()) }
     }
 
     @Test
@@ -354,18 +354,17 @@ class PullTargetTranslationTest {
             targetTranslation,
             MergeStrategy.RECURSIVE,
             null,
-            progressListener
+            onProgress
         )
 
         assertEquals(PullTargetTranslation.Status.AUTH_FAILURE, result.status)
         assertNull(result.message)
 
-        verify { progressListener.onProgress(any(), "Downloading updates") }
+        verify { onProgress(any(), "Downloading updates") }
         verify { profile.gogsUser }
         verify { repository.sshUrl }
         coVerify { getRepository.execute(any(), any()) }
         verify { targetTranslation.repo }
-        verify { targetTranslation.path }
         verify { pullCommand.call() }
     }
 
@@ -397,18 +396,17 @@ class PullTargetTranslationTest {
             targetTranslation,
             MergeStrategy.RECURSIVE,
             null,
-            progressListener
+            onProgress
         )
 
         assertEquals(PullTargetTranslation.Status.NO_REMOTE_REPO, result.status)
         assertNull(result.message)
 
-        verify { progressListener.onProgress(any(), "Downloading updates") }
+        verify { onProgress(any(), "Downloading updates") }
         verify { profile.gogsUser }
         verify { repository.sshUrl }
         coVerify { getRepository.execute(any(), any()) }
         verify { targetTranslation.repo }
-        verify { targetTranslation.path }
         verify { pullCommand.call() }
     }
 
@@ -439,18 +437,17 @@ class PullTargetTranslationTest {
             targetTranslation,
             MergeStrategy.RECURSIVE,
             null,
-            progressListener
+            onProgress
         )
 
         assertEquals(PullTargetTranslation.Status.NO_REMOTE_REPO, result.status)
         assertNull(result.message)
 
-        verify { progressListener.onProgress(any(), "Downloading updates") }
+        verify { onProgress(any(), "Downloading updates") }
         verify { profile.gogsUser }
         verify { repository.sshUrl }
         coVerify { getRepository.execute(any(), any()) }
         coVerify { targetTranslation.repo }
-        verify { targetTranslation.path }
         verify { pullCommand.call() }
     }
 
@@ -478,18 +475,17 @@ class PullTargetTranslationTest {
             targetTranslation,
             MergeStrategy.RECURSIVE,
             null,
-            progressListener
+            onProgress
         )
 
         assertEquals(PullTargetTranslation.Status.OUT_OF_MEMORY, result.status)
         assertNull(result.message)
 
-        verify { progressListener.onProgress(any(), "Downloading updates") }
+        verify { onProgress(any(), "Downloading updates") }
         verify { profile.gogsUser }
         verify { repository.sshUrl }
         coVerify { getRepository.execute(any(), any()) }
         verify { targetTranslation.repo }
-        verify { targetTranslation.path }
         verify { pullCommand.call() }
     }
 
@@ -517,18 +513,17 @@ class PullTargetTranslationTest {
             targetTranslation,
             MergeStrategy.RECURSIVE,
             null,
-            progressListener
+            onProgress
         )
 
         assertEquals(PullTargetTranslation.Status.UNKNOWN, result.status)
         assertNull(result.message)
 
-        verify { progressListener.onProgress(any(), "Downloading updates") }
+        verify { onProgress(any(), "Downloading updates") }
         verify { profile.gogsUser }
         verify { repository.sshUrl }
         coVerify { getRepository.execute(any(), any()) }
         verify { targetTranslation.repo }
-        verify { targetTranslation.path }
         verify { pullCommand.call() }
     }
 }

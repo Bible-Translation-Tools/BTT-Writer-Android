@@ -1,32 +1,31 @@
 package com.door43.usecases
 
 import android.content.Context
-import com.door43.OnProgressListener
 import com.door43.data.IPreferenceRepository
 import com.door43.translationstudio.R
 import io.mockk.MockKAnnotations
-import io.mockk.runs
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.just
+import io.mockk.mockk
+import io.mockk.runs
 import io.mockk.unmockkAll
 import io.mockk.verify
+import kotlinx.coroutines.test.runTest
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
-import kotlinx.coroutines.test.runTest
-import io.mockk.coEvery
-import io.mockk.coVerify
 
 
 class SearchGogsUsersTest {
 
     @MockK private lateinit var context: Context
     @MockK private lateinit var prefRepository: IPreferenceRepository
-    @MockK private lateinit var progressListener: OnProgressListener
+
+    val onProgress = mockk<(Float, String?) -> Unit>(relaxed = true)
 
     private val server = MockWebServer()
     private val apiUrl = server.url("/api").toString()
@@ -35,7 +34,7 @@ class SearchGogsUsersTest {
     fun setup() {
         MockKAnnotations.init(this)
 
-        every { progressListener.onProgress(any(), any()) } just runs
+        every { onProgress(any(), any()) } just runs
         every { prefRepository.getDefaultPref(any(), any(), String::class.java) }
             .returns(apiUrl)
         every { context.getString(R.string.pref_default_gogs_api) }
@@ -58,11 +57,11 @@ class SearchGogsUsersTest {
         val users = SearchGogsUsers(
             context,
             prefRepository
-        ).execute(userQuery, limit, progressListener)
+        ).execute(userQuery, limit, onProgress)
 
         assertEquals(1, users.size)
 
-        verify { progressListener.onProgress(any(), "Searching for users") }
+        verify { onProgress(any(), "Searching for users") }
     }
 
     @Test
@@ -73,11 +72,11 @@ class SearchGogsUsersTest {
         val users = SearchGogsUsers(
             context,
             prefRepository
-        ).execute(userQuery, limit, progressListener)
+        ).execute(userQuery, limit, onProgress)
 
         assertEquals(0, users.size)
 
-        verify { progressListener.onProgress(any(), "Searching for users") }
+        verify { onProgress(any(), "Searching for users") }
     }
 
     private fun createUsersResponse(): MockResponse {
