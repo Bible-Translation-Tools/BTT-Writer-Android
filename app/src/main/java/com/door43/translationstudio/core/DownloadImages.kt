@@ -3,7 +3,6 @@ package com.door43.translationstudio.core
 import android.annotation.SuppressLint
 import android.content.Context
 import android.util.Log
-import com.door43.OnProgressListener
 import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.R
 import com.door43.translationstudio.network.GetRequest
@@ -25,11 +24,11 @@ class DownloadImages(
 ) {
     /**
      *
-     * @param listener
+     * @param onProgress
      * @return
      */
     @SuppressLint("DefaultLocale")
-    suspend fun download(listener: OnProgressListener? = null): File? {
+    suspend fun download(onProgress: (Float, String?) -> Unit): File? {
         // TODO: 1/21/2016 we need to be sure to download images for the correct project.
         // Right now only obs has images
         // eventually the api will be updated so we can easily download the correct images.
@@ -39,7 +38,7 @@ class DownloadImages(
 
         imagesDir.mkdirs()
 
-        val success = requestToFile(fullPath, listener)
+        val success = requestToFile(fullPath, onProgress)
         return if (success) {
             var fileCount = 0
             try {
@@ -48,7 +47,7 @@ class DownloadImages(
 
                 val outOf = context.getString(R.string.out_of)
                 val unpacking = context.getString(R.string.unpacking)
-                listener?.onProgress(0f, unpacking)
+                onProgress(0f, unpacking)
                 Log.i(TAG, "unpacking: ")
 
                 Zip.unzip(fullPath, tempDir)
@@ -68,7 +67,7 @@ class DownloadImages(
                                 outOf,
                                 TOTAL_FILE_COUNT
                             )
-                            listener?.onProgress(progress, message)
+                            onProgress(progress, message)
                             // Log.i(TAG,  "Download progress - " + fileCount + " out of " + TOTAL_FILE_COUNT);
                         }
                     }
@@ -83,7 +82,7 @@ class DownloadImages(
 
     private suspend fun requestToFile(
         outputFile: File,
-        listener: OnProgressListener?
+        onProgress: (Float, String?) -> Unit
     ): Boolean {
         val outOf = context.getString(R.string.out_of)
         val mbDownloaded = context.getString(R.string.mb_downloaded)
@@ -93,17 +92,15 @@ class DownloadImages(
         r.setProgressListener(object : HttpRequest.OnProgressListener {
             @SuppressLint("DefaultLocale")
             override fun onProgress(max: Long, progress: Long) {
-                listener?.let {
-                    val message = String.format(
-                        "%2.2f %s %2.2f %s",
-                        progress / (1024f * 1024f),
-                        outOf,
-                        max / (1024f * 1024f),
-                        mbDownloaded
-                    )
-                    listener.onProgress(progress / max.toFloat(), message)
-                    // Log.i(TAG,  "Download progress - " + progress + "out of " + max);
-                }
+                val message = String.format(
+                    "%2.2f %s %2.2f %s",
+                    progress / (1024f * 1024f),
+                    outOf,
+                    max / (1024f * 1024f),
+                    mbDownloaded
+                )
+                onProgress(progress / max.toFloat(), message)
+                // Log.i(TAG,  "Download progress - " + progress + "out of " + max);
             }
             override fun onIndeterminate() {
             }

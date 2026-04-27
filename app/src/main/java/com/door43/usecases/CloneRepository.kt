@@ -1,17 +1,16 @@
 package com.door43.usecases
 
 import android.content.Context
-import com.door43.OnProgressListener
 import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
 import com.door43.translationstudio.R
 import com.door43.translationstudio.git.TransportCallback
 import com.door43.util.FileUtilities.deleteQuietly
+import org.bibletranslationtools.logger.Logger
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.errors.TransportException
 import org.eclipse.jgit.errors.NoRemoteRepositoryException
-import org.bibletranslationtools.logger.Logger
 import java.io.File
 
 class CloneRepository(
@@ -21,9 +20,9 @@ class CloneRepository(
 ) {
     fun execute(
         cloneUrl: String,
-        progressListener: OnProgressListener? = null
+        onProgress: (Float, String?) -> Unit
     ): Result {
-        progressListener?.onProgress(-1f, context.resources.getString(R.string.downloading))
+        onProgress(-1f, context.resources.getString(R.string.downloading))
 
         var tempDir: File? = directoryProvider.createTempDir(System.currentTimeMillis().toString())
         var status = Status.UNKNOWN

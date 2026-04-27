@@ -2,8 +2,8 @@ package org.unfoldingword.door43client
 
 import android.content.Context
 import com.door43.data.IDirectoryProvider
-import org.unfoldingword.resourcecontainer.ContainerTools
-import org.unfoldingword.resourcecontainer.ResourceContainer
+import org.bibletranslationtools.resourcecontainer.ContainerTools
+import org.bibletranslationtools.resourcecontainer.ResourceContainer
 import java.io.File
 import java.io.IOException
 
@@ -72,19 +72,19 @@ class Door43Client @Throws(IOException::class) constructor(
      * Indexes the source content
      *
      * @param url the entry resource api catalog
-     * @param listener an optional progress listener. This should receive progress id, total, completed
+     * @param onProgress progress listener. This should receive progress id, value
      */
     @Throws(Exception::class)
-    suspend fun updateSources(url: String, listener: OnProgressListener?) {
-        api.updateSources(url, listener)
+    suspend fun updateSources(url: String, onProgress: (Float, String?) -> Unit) {
+        api.updateSources(url, onProgress)
     }
 
     /**
      * Indexes the supplementary catalogs
      */
     @Throws(Exception::class)
-    suspend fun updateCatalogs(force: Boolean, listener: OnProgressListener?) {
-        api.updateCatalogs(force, listener)
+    suspend fun updateCatalogs(force: Boolean, onProgress: (Float, String?) -> Unit) {
+        api.updateCatalogs(force, onProgress)
     }
 
     @Throws(Exception::class)
@@ -96,8 +96,8 @@ class Door43Client @Throws(IOException::class) constructor(
      * Indexes the chunk markers
      */
     @Throws(Exception::class)
-    suspend fun updateChunks(listener: OnProgressListener?) {
-        api.updateChunks(listener)
+    suspend fun updateChunks(onProgress: (Float, String?) -> Unit) {
+        api.updateChunks(onProgress)
     }
 
     /**

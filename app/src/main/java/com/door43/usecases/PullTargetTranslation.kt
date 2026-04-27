@@ -1,7 +1,6 @@
 package com.door43.usecases
 
 import android.content.Context
-import com.door43.OnProgressListener
 import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
@@ -10,7 +9,6 @@ import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.git.Repo
 import com.door43.translationstudio.git.TransportCallback
-import com.door43.util.Manifest
 import org.bibletranslationtools.logger.Logger
 import org.eclipse.jgit.api.CheckoutCommand
 import org.eclipse.jgit.api.Git
@@ -36,7 +34,7 @@ class PullTargetTranslation(
         targetTranslation: TargetTranslation,
         mergeStrategy: MergeStrategy,
         sourceURL: String? = null,
-        progressListener: OnProgressListener? = null
+        onProgress: (Float, String?) -> Unit
     ): Result {
         if (profile.gogsUser != null) {
             try {
@@ -54,10 +52,10 @@ class PullTargetTranslation(
             sourceURL ?: run {
                 getRepository.execute(
                     targetTranslation,
-                    progressListener
+                    onProgress
                 )?.sshUrl
             }?.let { remoteUrl ->
-                return pull(repo, remoteUrl, targetTranslation, mergeStrategy, progressListener)
+                return pull(repo, remoteUrl, targetTranslation, mergeStrategy, onProgress)
             }
         } else {
             return Result(Status.AUTH_FAILURE, context.getString(R.string.auth_failure_retry))
@@ -87,9 +85,9 @@ class PullTargetTranslation(
         remote: String,
         targetTranslation: TargetTranslation,
         mergeStrategy: MergeStrategy,
-        progressListener: OnProgressListener?
+        onProgress: (Float, String?) -> Unit
     ): Result {
-        progressListener?.onProgress(-1f, "Downloading updates")
+        onProgress(-1f, "Downloading updates")
 
         var status = Status.UNKNOWN
         val git: Git
@@ -102,7 +100,7 @@ class PullTargetTranslation(
         }
 
         val conflicts: Map<String, Array<IntArray>>
-        var localManifest = Manifest.generate(targetTranslation.path)
+        var manifest = targetTranslation.manifest
 
         // TODO: we might want to get some progress feedback for the user
         val port = prefRepository.getDefaultPref(
@@ -129,14 +127,14 @@ class PullTargetTranslation(
                             .setStage(CheckoutCommand.Stage.THEIRS)
                             .addPath("manifest.json")
                             .call()
-                        val remoteManifest = Manifest.generate(targetTranslation.path)
-                        localManifest =
-                            TargetTranslation.mergeManifests(localManifest, remoteManifest)
+
+                        targetTranslation.manifestAccessor.reload()
+                        manifest = targetTranslation.mergeManifests(manifest)
                     } catch (e: CheckoutConflictException) {
                         // failed to reset manifest.json
                         Logger.e(this.javaClass.name, "Failed to reset manifest: " + e.message, e)
                     } finally {
-                        localManifest.save()
+                        targetTranslation.manifestAccessor.save(manifest)
                     }
                 }
 

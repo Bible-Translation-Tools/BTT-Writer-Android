@@ -1,7 +1,6 @@
 package com.door43.usecases
 
 import android.content.Context
-import com.door43.OnProgressListener
 import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
 import com.door43.translationstudio.R
@@ -18,9 +17,9 @@ class CreateRepository(
 ) {
     suspend fun execute(
         targetTranslation: TargetTranslation,
-        progressListener: OnProgressListener? = null
+        onProgress: (Float, String?) -> Unit
     ): Boolean {
-        progressListener?.onProgress(-1f, "Preparing location on server")
+        onProgress(-1f, "Preparing location on server")
 
         val api = GogsAPI(
             apiUrl = prefRepo.getDefaultPref(

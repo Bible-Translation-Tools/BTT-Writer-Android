@@ -42,6 +42,7 @@ import com.door43.translationstudio.ui.navigation.RootComponent
 import com.door43.usecases.BackupRC
 import com.door43.usecases.GogsLogout
 import com.door43.usecases.TranslationProgress
+import com.door43.usecases.UpdateAll
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -60,10 +61,10 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
+import org.bibletranslationtools.resourcecontainer.Project
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.unfoldingword.door43client.Door43Client
-import org.unfoldingword.resourcecontainer.Project
 import java.io.File
 
 private const val SORT_BY_PROJECT: String = "sort_by_project"
@@ -217,6 +218,9 @@ class DefaultHomeComponent(
     private val gogsLogout: GogsLogout by inject()
     private val backupRC: BackupRC by inject()
     private val library: Door43Client by inject()
+
+    // TODO Remove
+    private val updateAll: UpdateAll by inject()
 
     override val coroutineScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
 

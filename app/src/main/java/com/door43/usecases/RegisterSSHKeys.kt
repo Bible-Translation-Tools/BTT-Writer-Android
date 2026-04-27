@@ -1,7 +1,6 @@
 package com.door43.usecases
 
 import android.content.Context
-import com.door43.OnProgressListener
 import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
@@ -20,8 +19,8 @@ class RegisterSSHKeys(
     private val directoryProvider: IDirectoryProvider,
     private val prefRepository: IPreferenceRepository
 ) {
-    suspend fun execute(force: Boolean, progressListener: OnProgressListener? = null): Boolean {
-        progressListener?.onProgress(-1f, "Authenticating")
+    suspend fun execute(force: Boolean, onProgress: (Float, String?) -> Unit): Boolean {
+        onProgress(-1f, "Authenticating")
 
         val keyName = context.resources.getString(R.string.gogs_public_key_name) + " " + App.udid()
 

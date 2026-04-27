@@ -1,11 +1,10 @@
 package com.door43.usecases
 
-import com.door43.OnProgressListener
 import com.door43.translationstudio.App
+import org.bibletranslationtools.logger.Logger
+import org.bibletranslationtools.resourcecontainer.ResourceContainer
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.door43client.models.Translation
-import org.unfoldingword.resourcecontainer.ResourceContainer
-import org.bibletranslationtools.logger.Logger
 
 class DownloadResourceContainers(
     private val library: Door43Client
@@ -26,12 +25,12 @@ class DownloadResourceContainers(
 
     suspend fun download(
         translation: Translation,
-        onProgressListener: OnProgressListener? = null
+        onProgress: (Float, String?) -> Unit
     ): DownloadResult {
         var success = false
         val downloadedContainers = arrayListOf<ResourceContainer>()
 
-        onProgressListener?.onProgress(-1f, "Downloading resource container")
+        onProgress(-1f, "Downloading resource container")
 
         try {
             val rc = library.download(
@@ -55,11 +54,11 @@ class DownloadResourceContainers(
                 // TODO: 11/2/16 only download these if there is an update
                 try {
                     if (translation.project.slug == "obs") {
-                        onProgressListener?.onProgress(-1f, "Downloading obs translation words")
+                        onProgress(-1f, "Downloading obs translation words")
                         val rc = library.download(translation.language.slug, "bible-obs", "tw")
                         downloadedContainers.add(rc)
                     } else {
-                        onProgressListener?.onProgress(-1f, "Downloading translation words")
+                        onProgress(-1f, "Downloading translation words")
                         val rc = library.download(translation.language.slug, "bible", "tw")
                         downloadedContainers.add(rc)
                     }
@@ -71,7 +70,7 @@ class DownloadResourceContainers(
                     )
                 }
                 try {
-                    onProgressListener?.onProgress(-1f, "Downloading translation notes")
+                    onProgress(-1f, "Downloading translation notes")
                     val rc = library.download(
                         translation.language.slug,
                         translation.project.slug,
@@ -86,7 +85,7 @@ class DownloadResourceContainers(
                     )
                 }
                 try {
-                    onProgressListener?.onProgress(-1f, "Downloading translation questions")
+                    onProgress(-1f, "Downloading translation questions")
                     val rc = library.download(
                         translation.language.slug,
                         translation.project.slug,
@@ -108,7 +107,7 @@ class DownloadResourceContainers(
 
     suspend fun download(
         translationIDs: List<String>,
-        progressListener: OnProgressListener? = null
+        onProgress: (Float, String?) -> Unit
     ): Result {
         val downloadedContainers = arrayListOf<ResourceContainer>()
         val failedSourceDownloads = arrayListOf<String>()
@@ -120,7 +119,7 @@ class DownloadResourceContainers(
 
         val maxProgress = translationIDs.size
 
-        progressListener?.onProgress(-1f, "")
+        onProgress(-1f, "")
 
         for (index in 0 until maxProgress) {
             val resourceContainerSlug = translationIDs[index]
@@ -128,7 +127,7 @@ class DownloadResourceContainers(
             var passSuccess = false
             val progress = index.toFloat() / maxProgress.toFloat()
 
-            progressListener?.onProgress(progress, resourceContainerSlug)
+            onProgress(progress, resourceContainerSlug)
 
             Logger.i(
                 this.javaClass.simpleName,
@@ -179,7 +178,7 @@ class DownloadResourceContainers(
                                     downloadedContainers,
                                     failedHelpsDownloads,
                                     failedSourceDownloads,
-                                    progressListener
+                                    onProgress
                                 )
                             } else {
                                 passSuccess = downloadTranslationWords(
@@ -192,7 +191,7 @@ class DownloadResourceContainers(
                                     downloadedContainers,
                                     failedHelpsDownloads,
                                     failedSourceDownloads,
-                                    progressListener
+                                    onProgress
                                 )
                             }
                         } catch (e: java.lang.Exception) {
@@ -213,7 +212,7 @@ class DownloadResourceContainers(
                             downloadedContainers,
                             failedHelpsDownloads,
                             failedSourceDownloads,
-                            progressListener
+                            onProgress
                         )
 
                         passSuccess = passSuccess and downloadHelps(
@@ -226,7 +225,7 @@ class DownloadResourceContainers(
                             downloadedContainers,
                             failedHelpsDownloads,
                             failedSourceDownloads,
-                            progressListener
+                            onProgress
                         )
                     }
                 }
@@ -237,7 +236,7 @@ class DownloadResourceContainers(
             }
         }
 
-        progressListener?.onProgress(1f, "")
+        onProgress(1f, "")
 
         return Result(
             downloadedContainers,
@@ -268,7 +267,7 @@ class DownloadResourceContainers(
         downloadedContainers: ArrayList<ResourceContainer>,
         failedHelpsDownloads: ArrayList<String>,
         failedSourceDownloads: ArrayList<String>,
-        progressListener: OnProgressListener?
+        onProgress: (Float, String?) -> Unit
     ): Boolean {
         var success = true
         if (!downloaded.contains(languageSlug)) {
@@ -282,7 +281,7 @@ class DownloadResourceContainers(
                 downloadedContainers,
                 failedHelpsDownloads,
                 failedSourceDownloads,
-                progressListener
+                onProgress
             )
             if (success) {
                 downloaded.add(languageSlug)
@@ -316,7 +315,7 @@ class DownloadResourceContainers(
         downloadedContainers: ArrayList<ResourceContainer>,
         failedHelpsDownloads: ArrayList<String>,
         failedSourceDownloads: ArrayList<String>,
-        progressListener: OnProgressListener?
+        onProgress: (Float, String?) -> Unit
     ): Boolean {
         var passSuccess = true
         try {
@@ -341,7 +340,7 @@ class DownloadResourceContainers(
                     this.javaClass.simpleName,
                     "Loading " + name + " ID: " + help.resourceContainerSlug
                 )
-                progressListener?.onProgress(progress, help.resourceContainerSlug)
+                onProgress(progress, help.resourceContainerSlug)
                 val rc = library.download(help.language.slug, help.project.slug, help.resource.slug)
                 downloadedContainers.add(rc)
                 Logger.i(this.javaClass.simpleName, name + " download Success: " + rc.slug)

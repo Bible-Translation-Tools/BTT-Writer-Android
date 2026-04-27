@@ -4,9 +4,9 @@ import com.door43.translationstudio.core.Chunk
 import com.door43.translationstudio.core.ContainerCache
 import com.door43.translationstudio.core.Util
 import com.door43.translationstudio.ui.translate.TranslationHelp
-import org.unfoldingword.door43client.Door43Client
-import org.unfoldingword.resourcecontainer.Link
 import org.bibletranslationtools.logger.Logger
+import org.bibletranslationtools.resourcecontainer.Link
+import org.unfoldingword.door43client.Door43Client
 import java.util.regex.Pattern
 
 class RenderHelps(
@@ -45,33 +45,40 @@ class RenderHelps(
             chunk.source.language
         )
         val titlePattern = Pattern.compile("#(.*)")
-        for (link in links) {
+        return links.mapNotNull { link ->
             try {
-                val rc = ContainerCache.cacheClosest(
-                    library,
-                    chunk.source.language.slug,
-                    link.project,
-                    link.resource
-                )
+                val rc = link.project?.let { project ->
+                    link.resource?.let { resource ->
+                        ContainerCache.cacheClosest(
+                            library,
+                            chunk.source.language.slug,
+                            project,
+                            resource
+                        )
+                    }
+                }
                 if (rc != null) {
                     // TODO: 10/12/16 the words need to have their title placed into
                     //  a "title" file instead of being inline in the chunk
-                    val word = rc.readChunk(link.chapter, "01")
-                    val match = titlePattern.matcher(word.trim())
-                    if (match.find()) {
-                        link.title = match.group(1)
+                    link.chapter?.let { chapter ->
+                        val word = rc.readChunk(chapter, "01")
+                        val match = titlePattern.matcher(word.trim())
+                        if (match.find()) {
+                            link.copy(title = match.group(1))
+                        } else null
                     }
                 } else {
                     Logger.w(
                         RenderHelps::class.java.simpleName,
                         "could not find resource container for words " + link.language + "-" + link.project + "-" + link.resource
                     )
+                    null
                 }
             } catch (e: Exception) {
                 Logger.e(RenderHelps::class.java.simpleName, e.message ?: "error", e)
+                null
             }
         }
-        return links
     }
 
     private fun getTranslationQuestions(chunk: Chunk): List<TranslationHelp> {

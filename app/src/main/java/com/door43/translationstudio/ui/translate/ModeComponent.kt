@@ -18,7 +18,7 @@ import com.door43.translationstudio.ui.textadapters.ComposeTextAdapter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.withContext
-import org.unfoldingword.resourcecontainer.ResourceContainer
+import org.bibletranslationtools.resourcecontainer.ResourceContainer
 
 enum class FootnoteAction {
     VIEW, ACTIONS, EDIT

@@ -16,8 +16,8 @@ class SlugSorter {
      * Sorts the slugs in place and returns the list
      * @param slugs the list of slugs to sort
      */
-    fun sort(slugs: MutableList<String>): List<String> {
-        slugs.sortWith(Comparator { left, right ->
+    fun sort(slugs: List<String>): List<String> {
+        return slugs.sortedWith(Comparator { left, right ->
             val leftWeight = getWeight(left)
             val rightWeight = getWeight(right)
 
@@ -32,7 +32,6 @@ class SlugSorter {
                 else -> 0
             }
         })
-        return slugs
     }
 
     /**

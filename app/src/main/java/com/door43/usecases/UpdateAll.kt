@@ -1,7 +1,6 @@
 package com.door43.usecases
 
 import android.content.Context
-import com.door43.OnProgressListener
 import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
 import com.door43.translationstudio.R
@@ -14,11 +13,14 @@ class UpdateAll(
 ) {
     data class Result(val success: Boolean)
 
-    suspend fun execute(updateCatalogs: Boolean, progressListener: OnProgressListener? = null): Result {
+    suspend fun execute(
+        updateCatalogs: Boolean,
+        onProgress: (Float, String?) -> Unit
+    ): Result {
         var success = false
         var overallSuccess = true
 
-        progressListener?.onProgress(-1f, "")
+        onProgress(-1f, "")
 
         try {
             val server = prefRepository.getDefaultPref(
@@ -26,12 +28,8 @@ class UpdateAll(
                 context.resources.getString(R.string.pref_default_media_server)
             )
             val rootApiUrl = server + prefRepository.getRootCatalogApi()
-            library.updateSources(
-                rootApiUrl
-            ) { tag, max, complete ->
-                val progress = complete / max.toFloat()
-                progressListener?.onProgress(progress, tag)
-                true
+            library.updateSources(rootApiUrl) { value, message ->
+                onProgress(value, message)
             }
             success = true
         } catch (e: Exception) {
@@ -41,13 +39,11 @@ class UpdateAll(
         overallSuccess = overallSuccess and success
         success = false
 
-        progressListener?.onProgress(-1f, "")
+        onProgress(-1f, "")
 
         try {
-            library.updateCatalogs(updateCatalogs) { tag, max, complete ->
-                val progress = complete / max.toFloat()
-                progressListener?.onProgress(progress, tag)
-                true
+            library.updateCatalogs(updateCatalogs) { value, message ->
+                onProgress(value, message)
             }
             success = true
         } catch (e: java.lang.Exception) {
@@ -57,13 +53,11 @@ class UpdateAll(
         overallSuccess = overallSuccess and success
         success = false
 
-        progressListener?.onProgress(-1f, "")
+        onProgress(-1f, "")
 
         try {
-            library.updateChunks { tag, max, complete ->
-                val progress = complete / max.toFloat()
-                progressListener?.onProgress(progress, tag)
-                true
+            library.updateChunks { value, message ->
+                onProgress(value, message)
             }
             success = true
         } catch (e: java.lang.Exception) {

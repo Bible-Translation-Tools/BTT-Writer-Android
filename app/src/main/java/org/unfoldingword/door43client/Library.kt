@@ -4,23 +4,21 @@ import android.content.ContentValues
 import android.database.Cursor
 import android.database.SQLException
 import android.database.sqlite.SQLiteDatabase
-import org.json.JSONException
-import org.json.JSONObject
+import org.bibletranslationtools.resourcecontainer.ContainerTools
+import org.bibletranslationtools.resourcecontainer.Language
+import org.bibletranslationtools.resourcecontainer.Project
+import org.bibletranslationtools.resourcecontainer.Resource
+import org.bibletranslationtools.resourcecontainer.ResourceContainer
 import org.unfoldingword.door43client.models.Catalog
 import org.unfoldingword.door43client.models.Category
 import org.unfoldingword.door43client.models.CategoryEntry
 import org.unfoldingword.door43client.models.ChunkMarker
-import org.unfoldingword.door43client.models.Question
-import org.unfoldingword.door43client.models.Questionnaire
+import org.unfoldingword.door43client.models.ProjectMeta
 import org.unfoldingword.door43client.models.SourceLanguage
 import org.unfoldingword.door43client.models.TargetLanguage
 import org.unfoldingword.door43client.models.Translation
 import org.unfoldingword.door43client.models.Versification
-import org.unfoldingword.resourcecontainer.ContainerTools
-import org.unfoldingword.resourcecontainer.Language
-import org.unfoldingword.resourcecontainer.Project
-import org.unfoldingword.resourcecontainer.Resource
-import org.unfoldingword.resourcecontainer.ResourceContainer
+import org.unfoldingword.door43client.models.toLanguage
 import java.io.IOException
 
 /**
@@ -296,20 +294,20 @@ internal class Library @Throws(IOException::class) constructor(
         validateNotEmpty(resource.name)
         validateNotEmpty(resource.type)
         validateNotEmpty(if (resource.formats.isNotEmpty()) "good" else null)
-        validateNotEmpty(resource.translateMode)
-        validateNotEmpty(resource.checkingLevel)
-        validateNotEmpty(resource.version)
+        validateNotEmpty(resource.status.translateMode)
+        validateNotEmpty(resource.status.checkingLevel)
+        validateNotEmpty(resource.status.version)
 
         val values = ContentValues().apply {
             put("slug", resource.slug)
             put("name", resource.name)
             put("type", resource.type)
-            put("translate_mode", resource.translateMode)
-            put("checking_level", resource.checkingLevel)
-            put("comments", deNull(resource.comments))
-            put("pub_date", deNull(resource.pubDate))
-            put("license", deNull(resource.license))
-            put("version", resource.version)
+            put("translate_mode", resource.status.translateMode)
+            put("checking_level", resource.status.checkingLevel)
+            put("comments", deNull(resource.status.comments))
+            put("pub_date", resource.status.pubDate)
+            put("license", deNull(resource.status.license))
+            put("version", resource.status.version)
             put("project_id", projectId)
         }
 
@@ -328,7 +326,7 @@ internal class Library @Throws(IOException::class) constructor(
             insertOrUpdate("resource_format", formatValues, arrayOf("mime_type", "resource_id"))
         }
 
-        val legacyUrl = resource._legacyData[API.LEGACY_WORDS_ASSIGNMENTS_URL] as? String
+        val legacyUrl = resource.legacyData[API.LEGACY_WORDS_ASSIGNMENTS_URL] as? String
         if (!legacyUrl.isNullOrEmpty()) {
             val legacyValues = ContentValues().apply {
                 put("translation_words_assignments_url", legacyUrl)
@@ -339,59 +337,13 @@ internal class Library @Throws(IOException::class) constructor(
         return resourceId
     }
 
-    @Throws(Exception::class)
-    fun addQuestionnaire(questionnaire: Questionnaire): Long {
-        validateNotEmpty(questionnaire.languageSlug)
-        validateNotEmpty(questionnaire.languageName)
-        validateNotEmpty(questionnaire.languageDirection)
-
-        val values = ContentValues().apply {
-            put("language_slug", questionnaire.languageSlug)
-            put("language_name", questionnaire.languageName)
-            put("language_direction", questionnaire.languageDirection)
-            put("td_id", questionnaire.tdId)
-        }
-
-        val id = insertOrUpdate("questionnaire", values, arrayOf("td_id", "language_slug")).id
-
-        questionnaire.dataFields.forEach { (key, value) ->
-            val fieldValues = ContentValues().apply {
-                put("questionnaire_id", id)
-                put("field", key)
-                put("question_td_id", value)
-            }
-            insertOrUpdate("questionnaire_data_field", fieldValues, arrayOf("field", "questionnaire_id"))
-        }
-
-        return id
-    }
-
-    @Throws(Exception::class)
-    fun addQuestion(question: Question, questionnaireId: Long): Long {
-        validateNotEmpty(question.text)
-        validateNotEmpty("ok")
-
-        val values = ContentValues().apply {
-            put("text", question.text)
-            put("help", deNull(question.help))
-            put("is_required", if (question.isRequired) 1 else 0)
-            put("input_type", question.inputType.toString())
-            put("sort", question.sort)
-            put("depends_on", question.dependsOn)
-            put("td_id", question.tdId)
-            put("questionnaire_id", questionnaireId)
-        }
-
-        return insertOrUpdate("question", values, arrayOf("td_id", "questionnaire_id")).id
-    }
-
     override fun listSourceLanguagesLastModified(): List<Map<String, Any>> {
         val query = """
             select sl.slug, max(rf.modified_at) as modified_at from resource_format as rf
             left join resource as r on r.id=rf.resource_id
             left join project as p on p.id=r.project_id
             left join source_language as sl on sl.id=p.source_language_id
-            where rf.mime_type like("${ResourceContainer.baseMimeType}+%")
+            where rf.mime_type like("${ResourceContainer.BASE_MIME_TYPE}+%")
             group by sl.slug
         """.trimIndent()
 
@@ -411,7 +363,7 @@ internal class Library @Throws(IOException::class) constructor(
             left join resource as r on r.id=rf.resource_id
             left join project as p on p.id=r.project_id
             left join source_language as sl on sl.id=p.source_language_id
-            where rf.mime_type like("${ResourceContainer.baseMimeType}+%") and sl.slug LIKE ?
+            where rf.mime_type like("${ResourceContainer.BASE_MIME_TYPE}+%") and sl.slug LIKE ?
             group by p.slug
         """.trimIndent()
 
@@ -426,19 +378,22 @@ internal class Library @Throws(IOException::class) constructor(
         return results
     }
 
-    fun getProjectMeta(projectSlug: String): JSONObject? {
-        db.rawQuery("select * from project where slug=? limit 1", arrayOf(projectSlug)).use { cursor ->
+    fun getProjectMeta(projectSlug: String): ProjectMeta? {
+        db.rawQuery(
+            "select * from project where slug=? limit 1",
+            arrayOf(projectSlug)
+        ).use { cursor ->
             if (cursor.moveToFirst()) {
                 val reader = CursorReader(cursor)
                 return try {
-                    JSONObject().apply {
-                        put("slug", reader.getString("slug"))
-                        put("icon", reader.getString("icon"))
-                        put("sort", reader.getString("sort"))
-                        put("chunks_url", reader.getString("chunks_url"))
-                        put("category_id", reader.getString("category_id"))
-                    }
-                } catch (e: JSONException) {
+                    ProjectMeta(
+                        slug = reader.getString("slug"),
+                        icon = reader.getString("icon"),
+                        sort = reader.getString("sort"),
+                        chunksUrl = reader.getString("chunks_url"),
+                        categoryId = reader.getString("category_id")
+                    )
+                } catch (e: Exception) {
                     e.printStackTrace()
                     null
                 }
@@ -453,7 +408,7 @@ internal class Library @Throws(IOException::class) constructor(
             val l = getSourceLanguage(slugs[0])
             val p = getProject(slugs[0], slugs[1])
             val r = getResource(slugs[0], slugs[1], slugs[2])
-            if (l != null && p != null && r != null) Translation(l, p, r) else null
+            if (l != null && p != null && r != null) Translation(l.toLanguage(), p, r) else null
         } catch (e: Exception) {
             e.printStackTrace()
             null
@@ -538,21 +493,36 @@ internal class Library @Throws(IOException::class) constructor(
     private fun buildTranslation(reader: CursorReader): Translation {
         val l = Language(reader.getString("language_slug"), reader.getString("language_name"), reader.getString("direction"))
 
-        val p = Project(reader.getString("project_slug"), reader.getString("project_name"), reader.getInt("sort")).apply {
-            description = reader.getString("desc")
-            icon = reader.getString("icon")
-            chunksUrl = reader.getString("chunks_url")
+        val p = Project(
+            reader.getString("project_slug"),
+            reader.getString("project_name"),
+            reader.getInt("sort"),
+            reader.getString("icon"),
+            reader.getString("desc"),
+            reader.getString("chunks_url")
+        ).apply {
             languageSlug = reader.getString("language_slug")
         }
 
+        val resourceStatus = Resource.Status(
+            reader.getString("translate_mode"),
+            reader.getString("checking_level"),
+            reader.getString("version"),
+            reader.getString("license"),
+            reader.getString("pub_date"),
+            reader.getString("comments")
+        )
+
         val r = Resource(
-            reader.getString("resource_slug"), reader.getString("resource_name"),
-            reader.getString("type"), reader.getString("translate_mode"), reader.getString("checking_level"), reader.getString("version")
+            slug = reader.getString("resource_slug"),
+            name = reader.getString("resource_name"),
+            type = reader.getString("type"),
+            status = resourceStatus
         ).apply {
-            comments = reader.getString("comments")
-            pubDate = reader.getString("pub_date")
-            license = reader.getString("license")
-            _legacyData[API.LEGACY_WORDS_ASSIGNMENTS_URL] = reader.getString("translation_words_assignments_url")
+            addLegacyData(
+                API.LEGACY_WORDS_ASSIGNMENTS_URL,
+                reader.getString("translation_words_assignments_url")
+            )
         }
 
         db.rawQuery("select * from resource_format where resource_id=${reader.getLong("resource_id")}", null).use { formatCursor ->
@@ -727,10 +697,14 @@ internal class Library @Throws(IOException::class) constructor(
         db.rawQuery(query, arrayOf(projectSlug, sourceLanguageSlug)).use { cursor ->
             if (cursor.moveToFirst()) {
                 val reader = CursorReader(cursor)
-                project = Project(reader.getString("slug"), reader.getString("name"), reader.getInt("sort")).apply {
-                    description = reader.getString("desc")
-                    icon = reader.getString("icon")
-                    chunksUrl = reader.getString("chunks_url")
+                project = Project(
+                    reader.getString("slug"),
+                    reader.getString("name"),
+                    reader.getInt("sort"),
+                    reader.getString("icon"),
+                    reader.getString("desc"),
+                    reader.getString("chunks_url")
+                ).apply {
                     languageSlug = reader.getString("source_language_slug")
                 }
             }
@@ -767,10 +741,14 @@ internal class Library @Throws(IOException::class) constructor(
         db.rawQuery(query, args).use { cursor ->
             val reader = CursorReader(cursor)
             while (cursor.moveToNext()) {
-                val project = Project(reader.getString("slug"), reader.getString("name"), reader.getInt("sort")).apply {
-                    description = reader.getString("desc")
-                    icon = reader.getString("icon")
-                    chunksUrl = reader.getString("chunks_url")
+                val project = Project(
+                    reader.getString("slug"),
+                    reader.getString("name"),
+                    reader.getInt("sort"),
+                    reader.getString("icon"),
+                    reader.getString("desc"),
+                    reader.getString("chunks_url")
+                ).apply {
                     languageSlug = if (enableDefaultLanguage) reader.getString("source_language_slug") else sourceLanguageSlug
                 }
                 results.add(project)
@@ -884,14 +862,24 @@ internal class Library @Throws(IOException::class) constructor(
             if (cursor.moveToFirst()) {
                 val reader = CursorReader(cursor)
                 val resourceId = reader.getLong("id")
+                val resourceStatus = Resource.Status(
+                    reader.getString("translate_mode"),
+                    reader.getString("checking_level"),
+                    reader.getString("version"),
+                    reader.getString("license"),
+                    reader.getString("pub_date"),
+                    reader.getString("comments")
+                )
                 val resource = Resource(
-                    resourceSlug, reader.getString("name"), reader.getString("type"),
-                    reader.getString("translate_mode"), reader.getString("checking_level"), reader.getString("version")
+                    slug = resourceSlug,
+                    name = reader.getString("name"),
+                    type = reader.getString("type"),
+                    status = resourceStatus
                 ).apply {
-                    _legacyData[API.LEGACY_WORDS_ASSIGNMENTS_URL] = reader.getString("translation_words_assignments_url")
-                    comments = reader.getString("comments")
-                    pubDate = reader.getString("pub_date")
-                    license = reader.getString("license")
+                    addLegacyData(
+                        API.LEGACY_WORDS_ASSIGNMENTS_URL,
+                        reader.getString("translation_words_assignments_url")
+                    )
                 }
 
                 db.rawQuery("select * from resource_format where resource_id=$resourceId", null).use { formatCursor ->
@@ -937,14 +925,24 @@ internal class Library @Throws(IOException::class) constructor(
             val reader = CursorReader(cursor)
             while (cursor.moveToNext()) {
                 val resourceId = reader.getLong("id")
+                val resourceStatus = Resource.Status(
+                    reader.getString("translate_mode"),
+                    reader.getString("checking_level"),
+                    reader.getString("version"),
+                    reader.getString("license"),
+                    reader.getString("pub_date"),
+                    reader.getString("comments")
+                )
                 val resource = Resource(
-                    reader.getString("slug"), reader.getString("name"), reader.getString("type"),
-                    reader.getString("translate_mode"), reader.getString("checking_level"), reader.getString("version")
+                    slug = reader.getString("slug"),
+                    name = reader.getString("name"),
+                    type = reader.getString("type"),
+                    status = resourceStatus
                 ).apply {
-                    _legacyData[API.LEGACY_WORDS_ASSIGNMENTS_URL] = reader.getString("translation_words_assignments_url")
-                    comments = reader.getString("comments")
-                    pubDate = reader.getString("pub_date")
-                    license = reader.getString("license")
+                    addLegacyData(
+                        API.LEGACY_WORDS_ASSIGNMENTS_URL,
+                        reader.getString("translation_words_assignments_url")
+                    )
                 }
 
                 db.rawQuery("select * from resource_format where resource_id=$resourceId", null).use { formatCursor ->
@@ -1043,76 +1041,6 @@ internal class Library @Throws(IOException::class) constructor(
         return results
     }
 
-    override fun getQuestionnaire(tdId: Long): Questionnaire? {
-        db.rawQuery("select * from questionnaire where td_id=$tdId", null).use { cursor ->
-            if (cursor.moveToFirst()) {
-                val reader = CursorReader(cursor)
-                val id = reader.getLong("id")
-
-                val dataFields = mutableMapOf<String, Long>()
-                db.rawQuery("select field, question_td_id from questionnaire_data_field where questionnaire_id=$id", null).use { dataCursor ->
-                    val dataReader = CursorReader(dataCursor)
-                    while (dataCursor.moveToNext()) {
-                        dataFields[dataReader.getString("field")] = dataReader.getLong("question_td_id")
-                    }
-                }
-
-                return Questionnaire(
-                    reader.getString("language_slug"), reader.getString("language_name"),
-                    reader.getString("language_direction"), reader.getLong("td_id"), dataFields
-                )
-            }
-        }
-        return null
-    }
-
-    override fun getQuestionnaires(): List<Questionnaire> {
-        val results = mutableListOf<Questionnaire>()
-        db.rawQuery("select * from questionnaire", null).use { cursor ->
-            val reader = CursorReader(cursor)
-            while (cursor.moveToNext()) {
-                val id = reader.getLong("id")
-                val dataFields = mutableMapOf<String, Long>()
-                db.rawQuery("select field, question_td_id from questionnaire_data_field where questionnaire_id=$id", null).use { dataCursor ->
-                    val dataReader = CursorReader(dataCursor)
-                    while (dataCursor.moveToNext()) {
-                        dataFields[dataReader.getString("field")] = dataReader.getLong("question_td_id")
-                    }
-                }
-                results.add(
-                    Questionnaire(
-                        reader.getString("language_slug"), reader.getString("language_name"),
-                        reader.getString("language_direction"), reader.getLong("td_id"), dataFields
-                    )
-                )
-            }
-        }
-        return results
-    }
-
-    override fun getQuestions(questionnaireTDId: Long): List<Question> {
-        val query = """
-            select * from question where questionnaire_id in (
-              select id from questionnaire where td_id=$questionnaireTDId
-            ) order by sort asc
-        """.trimIndent()
-
-        val results = mutableListOf<Question>()
-        db.rawQuery(query, null).use { cursor ->
-            val reader = CursorReader(cursor)
-            while (cursor.moveToNext()) {
-                results.add(
-                    Question(
-                        reader.getString("text"), reader.getString("help"), reader.getBoolean("is_required"),
-                        Question.InputType.get(reader.getString("input_type")), reader.getInt("sort"),
-                        reader.getLong("depends_on"), reader.getLong("td_id")
-                    )
-                )
-            }
-        }
-        return results
-    }
-
     override fun getCategory(languageSlug: String, slug: String): Category? {
         val query = """
             select cn.name, c.slug from category as c
@@ -1178,22 +1106,6 @@ internal class Library @Throws(IOException::class) constructor(
     fun clearTargetLanguages() {
         truncateTable("target_language")
         vacuum()
-    }
-
-    fun clearTempLanguages() {
-        truncateTable("temp_target_language")
-        vacuum()
-    }
-
-    fun clearNewLanguageQuestions() {
-        truncateTable("questionnaire_data_field")
-        truncateTable("question")
-        truncateTable("questionnaire")
-        vacuum()
-    }
-
-    fun clearApprovedTempLanguages() {
-        db.execSQL("update temp_target_language set approved_target_language_slug=null")
     }
 
     protected fun truncateTable(table: String) {

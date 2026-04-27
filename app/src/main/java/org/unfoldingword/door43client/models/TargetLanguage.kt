@@ -1,27 +1,20 @@
 package org.unfoldingword.door43client.models
 
-import org.json.JSONException
-import org.json.JSONObject
-import org.unfoldingword.resourcecontainer.Language
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
 /**
  * Represents a language that a resource will be translated into
  */
-class TargetLanguage(
-    slug: String,
-    name: String,
-    val anglicizedName: String,
-    direction: String,
-    val region: String,
-    val isGatewayLanguage: Boolean
-) : Language(slug, name, direction) {
-
-    @Throws(JSONException::class)
-    override fun toJSON(): JSONObject {
-        val json = super.toJSON()
-        json.put("anglicized_name", anglicizedName)
-        json.put("region", region)
-        json.put("is_gateway_language", isGatewayLanguage)
-        return json
-    }
-}
+@Serializable
+data class TargetLanguage(
+    @SerialName("id")
+    val slug: String,
+    val name: String,
+    val direction: String,
+    @SerialName("anglicized_name")
+    val anglicizedName: String = "",
+    val region: String = "",
+    @SerialName("is_gateway_language")
+    val isGatewayLanguage: Boolean = false
+)

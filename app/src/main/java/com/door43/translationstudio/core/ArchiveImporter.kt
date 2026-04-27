@@ -1,8 +1,10 @@
 package com.door43.translationstudio.core
 
+import com.door43.translationstudio.core.ArchiveDetails.Companion.archiveJson
 import com.door43.util.FileUtilities.readFileToString
-import org.json.JSONException
-import org.json.JSONObject
+import kotlinx.serialization.json.intOrNull
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import java.io.File
 
 
@@ -25,21 +27,27 @@ class ArchiveImporter(
 
         // retrieve target translations from archive
         val manifestFile = File(expandedArchiveDir, "manifest.json")
-        val targetTranslationDirs: List<File>
-        if (manifestFile.exists()) {
-            val manifestJson = JSONObject(readFileToString(manifestFile))
-            if (manifestJson.has("package_version")) {
-                val packageVersion = manifestJson.getInt("package_version")
-                targetTranslationDirs = when (packageVersion) {
-                    1 -> v1(manifestJson, expandedArchiveDir)
-                    2 -> v2(manifestJson, expandedArchiveDir)
-                    else -> listOf(expandedArchiveDir)
-                }
-            } else {
-                targetTranslationDirs = v1(manifestJson, expandedArchiveDir)
+        val targetTranslationDirs = if (manifestFile.exists()) {
+            val rawManifest = readFileToString(manifestFile)
+            val raw = archiveJson.parseToJsonElement(readFileToString(manifestFile)).jsonObject
+            val manifestVersion = raw["package_version"]?.jsonPrimitive?.intOrNull
+
+            when (manifestVersion) {
+                1 -> v1(
+                    archiveJson.decodeFromString(rawManifest),
+                    expandedArchiveDir
+                )
+                2 -> v2(
+                    archiveJson.decodeFromString(rawManifest),
+                    expandedArchiveDir
+                )
+                else -> v1(
+                    archiveJson.decodeFromString(rawManifest),
+                    expandedArchiveDir
+                )
             }
         } else {
-            targetTranslationDirs = legacy(expandedArchiveDir)
+            legacy(expandedArchiveDir)
         }
 
         // migrate target translations
@@ -55,36 +63,28 @@ class ArchiveImporter(
     /**
      * translation dirs in the archive are named after their id
      * so we only need to return the path.
-     * @param packageManifest
+     * @param manifest
      * @param dir
      * @return
-     * @throws JSONException
      */
-    @Throws(JSONException::class)
-    private fun v2(packageManifest: JSONObject, dir: File): List<File> {
+    private fun v2(manifest: ArchiveManifest, dir: File): List<File> {
         val files = arrayListOf<File>()
-        val translationsJson = packageManifest.getJSONArray("target_translations")
-        for (i in 0 until translationsJson.length()) {
-            val translation = translationsJson.getJSONObject(i)
-            files.add(File(dir, translation.getString("path")))
+        manifest.targetTranslations.forEach { translation ->
+            files.add(File(dir, translation.path))
         }
         return files
     }
 
     /**
-     * targetTranslations are in directories labled by id
+     * targetTranslations are in directories labeled by id
      * @param manifest
      * @param dir
      * @return
-     * @throws JSONException
      */
-    @Throws(JSONException::class)
-    private fun v1(manifest: JSONObject, dir: File): List<File> {
+    private fun v1(manifest: ArchiveManifestV1, dir: File): List<File> {
         val files = arrayListOf<File>()
-        val translationsJson = manifest.getJSONArray("projects")
-        for (i in 0 until translationsJson.length()) {
-            val translation = translationsJson.getJSONObject(i)
-            files.add(File(dir, translation.getString("path")))
+        manifest.targetTranslations.forEach { translation ->
+            files.add(File(dir, translation.path))
         }
         return files
     }

@@ -1,6 +1,6 @@
 package com.door43.translationstudio.core
 
-import org.unfoldingword.resourcecontainer.ResourceContainer
+import org.bibletranslationtools.resourcecontainer.ResourceContainer
 
 typealias ChunkConfig = Map<String, List<String>>
 
@@ -32,7 +32,7 @@ data class Chunk(
         get() = chapterSlug != "front" && chapterSlug != "back" && chunkSlug == "reference"
 
     val config: ChunkConfig
-        get() = ((source.config?.get("content") as? Map<*, *>)
+        get() = ((source.config["content"] as? Map<*, *>)
             ?.get(chapterSlug) as? Map<*, *>)
             ?.get(chunkSlug) as? ChunkConfig
             ?: emptyMap()

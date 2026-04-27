@@ -2,7 +2,6 @@ package com.door43.usecases
 
 import android.content.Context
 import android.net.Uri
-import com.door43.OnProgressListener
 import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.TargetTranslationMigrator
@@ -15,7 +14,7 @@ class MigrateTranslations(
     private val directoryProvider: IDirectoryProvider,
     private val targetTranslationMigrator: TargetTranslationMigrator
 ) {
-    fun execute(appDataFolder: Uri, progressListener: OnProgressListener? = null) {
+    fun execute(appDataFolder: Uri, onProgress: (Float, String?) -> Unit) {
         // Migrate translations
 
         val tempTranslations = directoryProvider.createTempDir("translations")
@@ -26,8 +25,8 @@ class MigrateTranslations(
             directoryProvider.translationsDir.name
         )
 
-        migrateTranslations(tempTranslations, progressListener)
-        importTranslations(tempTranslations, progressListener)
+        migrateTranslations(tempTranslations, onProgress)
+        importTranslations(tempTranslations, onProgress)
 
         // Migrate backups
         val tempBackups = directoryProvider.createTempDir("backups")
@@ -37,15 +36,15 @@ class MigrateTranslations(
             tempBackups,
             directoryProvider.backupsDir.name
         )
-        copyBackups(tempBackups, progressListener)
+        copyBackups(tempBackups, onProgress)
     }
 
-    private fun migrateTranslations(translationsDir: File, progressListener: OnProgressListener? = null) {
+    private fun migrateTranslations(translationsDir: File, onProgress: (Float, String?) -> Unit) {
         if (translationsDir.isDirectory) {
             translationsDir.listFiles()?.forEach { file ->
                 if (file.name == "cache") return@forEach
                 if (file.isDirectory) {
-                    progressListener?.onProgress(
+                    onProgress(
                         -1f,
                         context.getString(R.string.migrating_translation, file.name)
                     )
@@ -55,7 +54,7 @@ class MigrateTranslations(
         }
     }
 
-    private fun importTranslations(translationsDir: File, progressListener: OnProgressListener? = null) {
+    private fun importTranslations(translationsDir: File, onProgress: (Float, String?) -> Unit) {
         if (translationsDir.isDirectory) {
             val translations = arrayListOf<File>()
             translationsDir.listFiles()?.forEach { file ->
@@ -64,18 +63,18 @@ class MigrateTranslations(
                     translations.add(file)
                 }
             }
-            importProjects.importProjects(translations, false, progressListener)
+            importProjects.importProjects(translations, false, onProgress)
             FileUtilities.deleteQuietly(translationsDir)
         }
     }
 
-    private fun copyBackups(backupsDir: File, progressListener: OnProgressListener? = null) {
+    private fun copyBackups(backupsDir: File, onProgress: (Float, String?) -> Unit) {
         if (backupsDir.isDirectory) {
             backupsDir.listFiles()?.forEach { file ->
                 if (file.isFile) {
                     val destFile = File(directoryProvider.backupsDir, file.name)
                     FileUtilities.copyFile(file, destFile)
-                    progressListener?.onProgress(
+                    onProgress(
                         -1f,
                         context.getString(R.string.copying_file, destFile.name)
                     )

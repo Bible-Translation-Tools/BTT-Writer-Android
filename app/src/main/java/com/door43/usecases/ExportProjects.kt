@@ -4,7 +4,12 @@ import android.content.Context
 import android.net.Uri
 import android.util.Log
 import com.door43.data.IDirectoryProvider
+import com.door43.translationstudio.BuildConfig
 import com.door43.translationstudio.R
+import com.door43.translationstudio.core.ArchiveDetails.Companion.archiveJson
+import com.door43.translationstudio.core.ArchiveGenerator
+import com.door43.translationstudio.core.ArchiveManifest
+import com.door43.translationstudio.core.ArchiveTranslation
 import com.door43.translationstudio.core.FrameTranslation
 import com.door43.translationstudio.core.PdfPrinter
 import com.door43.translationstudio.core.TargetTranslation
@@ -18,8 +23,6 @@ import com.door43.util.FileUtilities
 import com.door43.util.RepoUtils
 import com.door43.util.Zip
 import org.eclipse.jgit.errors.TransportException
-import org.json.JSONArray
-import org.json.JSONObject
 import org.unfoldingword.door43client.Door43Client
 import java.io.File
 import java.io.FileInputStream
@@ -59,10 +62,13 @@ class ExportProjects(
         try {
             targetTranslation.commitSync(".", false)
 
-            val manifestJson = buildArchiveManifest(targetTranslation)
+            val manifest = buildArchiveManifest(targetTranslation)
             val manifestFile = File(tempDir, "manifest.json")
             manifestFile.createNewFile()
-            directoryProvider.writeStringToFile(manifestFile, manifestJson.toString())
+            directoryProvider.writeStringToFile(
+                manifestFile,
+                archiveJson.encodeToString(manifest)
+            )
 
             context.contentResolver.openOutputStream(fileUri)?.use { out ->
                 Zip.zipToStream(
@@ -73,7 +79,7 @@ class ExportProjects(
             } ?: run {
                 success = false
             }
-        } catch (e: TransportException) {
+        } catch (_: TransportException) {
             if (recoverBadRepo) {
                 // fix corrupt repo and try again
                 RepoUtils.recover(targetTranslation)
@@ -257,34 +263,31 @@ class ExportProjects(
     }
 
     /**
-     * creates a JSON object that contains the manifest.
+     * creates an archive manifest.
      * @param targetTranslation
      * @return
-     * @throws Exception
      */
-    @Throws(Exception::class)
-    private fun buildArchiveManifest(targetTranslation: TargetTranslation): JSONObject {
+    private fun buildArchiveManifest(targetTranslation: TargetTranslation): ArchiveManifest {
         targetTranslation.commit()
 
         // build manifest
-        val manifestJson = JSONObject()
-        val generatorJson = JSONObject()
-        generatorJson.put("name", GENERATOR_NAME)
-        val pInfo = context.packageManager.getPackageInfo(context.packageName, 0)
-        generatorJson.put("build", pInfo.versionCode)
-        manifestJson.put("generator", generatorJson)
-        manifestJson.put("package_version", TSTUDIO_PACKAGE_VERSION)
-        manifestJson.put("timestamp", Util.unixTime)
-        val translationsJson = JSONArray()
-        val translationJson = JSONObject()
-        translationJson.put("path", targetTranslation.id)
-        translationJson.put("id", targetTranslation.id)
-        translationJson.put("commit_hash", targetTranslation.commitHash)
-        translationJson.put("direction", targetTranslation.targetLanguageDirection)
-        translationJson.put("target_language_name", targetTranslation.targetLanguageName)
-        translationsJson.put(translationJson)
-        manifestJson.put("target_translations", translationsJson)
-        return manifestJson
+        return ArchiveManifest(
+            packageVersion = TSTUDIO_PACKAGE_VERSION,
+            timestamp = Util.unixTime.toInt(),
+            generator = ArchiveGenerator(
+                name = GENERATOR_NAME,
+                build = BuildConfig.VERSION_CODE.toString()
+            ),
+            targetTranslations = listOf(
+                ArchiveTranslation(
+                    id = targetTranslation.id,
+                    path = targetTranslation.id,
+                    commitHash = targetTranslation.commitHash ?: "invalid",
+                    direction = targetTranslation.targetLanguageDirection,
+                    targetLanguageName = targetTranslation.targetLanguageName
+                )
+            )
+        )
     }
 
     /**

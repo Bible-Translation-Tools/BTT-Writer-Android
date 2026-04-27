@@ -125,7 +125,6 @@ dependencies {
     implementation(libs.gogs.client)
     implementation(libs.resource.container)
     implementation(libs.bible.logger)
-    implementation(libs.http.tools)
     implementation(libs.foreground)
     implementation(libs.firebase.appindexing)
     implementation(libs.okhttp)
@@ -190,9 +189,7 @@ dependencies {
     // Koin
     androidTestImplementation(libs.koin.android.test)
 
-    // JSON
     testImplementation(libs.junit.jupiter)
-    testImplementation(libs.json)
 }
 
 tasks.register<Copy>("copyDebugGithubToken") {

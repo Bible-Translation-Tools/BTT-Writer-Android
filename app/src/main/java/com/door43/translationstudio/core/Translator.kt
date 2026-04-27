@@ -10,11 +10,11 @@ import com.door43.data.setPrivatePref
 import com.door43.translationstudio.rendering.USXtoUSFMConverter
 import com.door43.usecases.BackupRC
 import com.door43.util.FileUtilities
+import org.bibletranslationtools.logger.Logger
+import org.bibletranslationtools.resourcecontainer.Resource
+import org.bibletranslationtools.resourcecontainer.ResourceContainer
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.door43client.models.TargetLanguage
-import org.unfoldingword.resourcecontainer.Resource
-import org.unfoldingword.resourcecontainer.ResourceContainer
-import org.bibletranslationtools.logger.Logger
 import java.io.File
 import java.io.IOException
 import java.util.Locale
@@ -155,7 +155,6 @@ class Translator (
         if (targetTranslation == null) {
             val targetTranslationDir = File(this.path, targetTranslationId)
             try {
-                val pInfo = context.packageManager.getPackageInfo(context.packageName, 0)
                 return TargetTranslation.create(
                     this.context,
                     nativeSpeaker,
@@ -164,7 +163,6 @@ class Translator (
                     projectSlug,
                     resourceType,
                     resourceSlug,
-                    pInfo,
                     targetTranslationDir
                 )
             } catch (e: Exception) {

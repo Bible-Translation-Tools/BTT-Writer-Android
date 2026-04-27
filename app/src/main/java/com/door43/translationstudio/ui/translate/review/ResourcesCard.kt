@@ -30,8 +30,8 @@ import com.door43.translationstudio.core.TranslationType
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.getComposeTextStyle
 import com.door43.translationstudio.ui.translate.TranslationHelp
-import org.unfoldingword.resourcecontainer.Language
-import org.unfoldingword.resourcecontainer.Link
+import org.bibletranslationtools.resourcecontainer.Language
+import org.bibletranslationtools.resourcecontainer.Link
 
 data class HelpTab(val tag: String, val title: String)
 
@@ -146,9 +146,12 @@ fun ResourcesCard(
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             activeList.forEach {
-                                TextButton(onClick = {
-                                    onHelpClick(it)
-                                }) {
+                                TextButton(
+                                    onClick = {
+                                        onHelpClick(it)
+                                    },
+                                    shape = RoundedCornerShape(0.dp)
+                                ) {
                                     Text(
                                         text = it.title,
                                         textAlign = TextAlign.Start,

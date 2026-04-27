@@ -1,6 +1,5 @@
 package com.door43.usecases
 
-import com.door43.OnProgressListener
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TargetTranslation
 import org.bibletranslationtools.gogsclient.Repository
@@ -13,9 +12,9 @@ class GetRepository(
 ) {
     suspend fun execute(
         translation: TargetTranslation,
-        progressListener: OnProgressListener? = null
+        onProgress: (Float, String?) -> Unit
     ): Repository? {
-        progressListener?.onProgress(-1f, "Getting repository")
+        onProgress(-1f, "Getting repository")
 
         val user = profile.gogsUser ?: run {
             Logger.e(this.javaClass.name, "Gogs user is not set")
@@ -24,7 +23,7 @@ class GetRepository(
 
         // Create repository
         // If it exists, will do nothing
-        createRepository.execute(translation, progressListener)
+        createRepository.execute(translation, onProgress)
 
         // Search for repository
         // There could be more than one repo, which name can contain requested repo name.
@@ -34,7 +33,7 @@ class GetRepository(
             user.id,
             translation.id,
             100,
-            progressListener
+            onProgress
         )
 
         return repositories.find {

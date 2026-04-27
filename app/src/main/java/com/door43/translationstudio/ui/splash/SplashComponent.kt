@@ -30,9 +30,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
+import org.bibletranslationtools.logger.Logger
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import org.bibletranslationtools.logger.Logger
 
 interface SplashComponent {
     val state: StateFlow<State>

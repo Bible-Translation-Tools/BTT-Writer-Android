@@ -1,7 +1,7 @@
 package com.door43.translationstudio.ui.home
 
 import com.door43.translationstudio.core.TargetTranslation
-import org.unfoldingword.resourcecontainer.Resource
+import org.bibletranslationtools.resourcecontainer.Resource
 
 data class TranslationItem(
     val translation: TargetTranslation,

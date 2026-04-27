@@ -34,6 +34,7 @@ import com.door43.translationstudio.core.TranslationViewMode
 import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.core.entity.SourceTranslation
+import com.door43.translationstudio.core.entity.toSourceTranslation
 import com.door43.translationstudio.core.launchWithProgress
 import com.door43.translationstudio.getBestFontForLanguage
 import com.door43.translationstudio.ui.dialogs.export.DefaultExportComponent
@@ -68,14 +69,13 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
-import org.json.JSONException
+import org.bibletranslationtools.logger.Logger
+import org.bibletranslationtools.resourcecontainer.Project
+import org.bibletranslationtools.resourcecontainer.ResourceContainer
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.door43client.models.Translation
-import org.unfoldingword.resourcecontainer.Project
-import org.unfoldingword.resourcecontainer.ResourceContainer
-import org.bibletranslationtools.logger.Logger
 import java.util.Locale
 import java.util.Timer
 import java.util.TimerTask
@@ -571,13 +571,15 @@ class DefaultTranslateComponent(
                 }
             }
 
-            resourceContainer?.let { rc ->
+            val rc = resourceContainer?.let { rc ->
                 translator.setSelectedSourceTranslation(
                     targetTranslation.id,
                     rc.slug
                 )
-                _sharedState.update { it.copy(resourceContainer = rc) }
+                rc
             }
+
+            _sharedState.update { it.copy(resourceContainer = rc) }
         }
     }
 
@@ -626,6 +628,7 @@ class DefaultTranslateComponent(
                 }
             }
 
+            ContainerCache.empty()
             refreshSelectedResourceContainer()
         }
     }
@@ -648,13 +651,13 @@ class DefaultTranslateComponent(
             val translation = getTranslation(slug)
             if (translation != null) {
                 val modifiedAt = getResourceContainerLastModified(translation)
-                sources.add(SourceTranslation(translation, modifiedAt))
+                sources.add(translation.toSourceTranslation(modifiedAt))
             }
         }
 
         try {
             targetTranslation.setSourceTranslations(sources)
-        } catch (e: JSONException) {
+        } catch (e: Exception) {
             Logger.e(
                 this.javaClass.name,
                 "Failed to set source translations for the target translation ${targetTranslation.id}",

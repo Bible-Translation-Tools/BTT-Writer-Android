@@ -3,7 +3,7 @@
 agp = "9.1.1"
 kotlin = "2.2.21"
 dexcount = "4.0.0"
-composeBom = "2026.03.01"
+composeBom = "2026.04.01"
 decompose = "3.5.0"
 kotlinxSerialization = "1.11.0"
 
@@ -22,15 +22,14 @@ jgit = "5.13.5.202508271544-r"
 jsch = "0.1.55"
 itextg = "5.5.10"
 gogs-client = "2.0.1"
-resource-container = "0.7.19"
+resource-container = "1.0.0"
 logger = "3.0.0"
-http-tools = "2.5.0"
 foreground = "0.1.0"
 firebase-appindexing = "20.0.0"
 okhttp = "5.3.2"
 markdownj = "0.4"
-commons-io = "2.21.0"
-ktor = "3.4.2"
+commons-io = "2.22.0"
+ktor = "3.4.3"
 
 # Testing
 junit = "4.13.2"
@@ -90,9 +89,8 @@ itextg = { group = "com.itextpdf", name = "itextg", version.ref = "itextg" }
 
 # Bible Translation Tools
 gogs-client = { group = "org.bibletranslationtools", name = "gogs-client", version.ref = "gogs-client" }
-resource-container = { group = "org.unfoldingword.tools", name = "resource-container", version.ref = "resource-container" }
+resource-container = { group = "org.bibletranslationtools", name = "resource-container", version.ref = "resource-container" }
 bible-logger = { group = "org.bibletranslationtools", name = "logger", version.ref = "logger" }
-http-tools = { group = "org.unfoldingword.tools", name = "http", version.ref = "http-tools" }
 foreground = { group = "org.unfoldingword.tools", name = "foreground", version.ref = "foreground" }
 
 # Firebase

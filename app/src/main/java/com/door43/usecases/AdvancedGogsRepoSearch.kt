@@ -1,6 +1,5 @@
 package com.door43.usecases
 
-import com.door43.OnProgressListener
 import org.bibletranslationtools.gogsclient.Repository
 
 class AdvancedGogsRepoSearch(
@@ -11,28 +10,28 @@ class AdvancedGogsRepoSearch(
         userQuery: String,
         repoQuery: String,
         limit: Int,
-        progressListener: OnProgressListener? = null
+        onProgress: (Float, String?) -> Unit
     ): List<Repository> {
         val repositories = arrayListOf<Repository>()
 
-        progressListener?.onProgress(-1f, "Searching for repositories")
+        onProgress(-1f, "Searching for repositories")
 
         val repoNameQuery = repoQuery.ifEmpty { "_" }
 
         // user search or user and repo search
         if (userQuery.isNotEmpty()) {
             // start by searching user
-            val users = searchGogsUsers.execute(userQuery, limit, progressListener)
+            val users = searchGogsUsers.execute(userQuery, limit, onProgress)
             for (user in users) {
                 // search by repo
                 repositories.addAll(
-                    searchGogsRepositories.execute(user.id, repoNameQuery, limit, progressListener)
+                    searchGogsRepositories.execute(user.id, repoNameQuery, limit, onProgress)
                 )
             }
         } else {
             // just search repos
             repositories.addAll(
-                searchGogsRepositories.execute(0, repoNameQuery, limit, progressListener)
+                searchGogsRepositories.execute(0, repoNameQuery, limit, onProgress)
             )
         }
 

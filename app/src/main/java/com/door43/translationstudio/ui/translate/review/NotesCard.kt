@@ -27,7 +27,7 @@ import com.door43.translationstudio.core.TextStyleType
 import com.door43.translationstudio.core.TranslationType
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.getComposeTextStyle
-import org.unfoldingword.resourcecontainer.Language
+import org.bibletranslationtools.resourcecontainer.Language
 
 @Composable
 fun NotesCard(

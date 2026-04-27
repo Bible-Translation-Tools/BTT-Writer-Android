@@ -24,7 +24,7 @@ import com.door43.translationstudio.core.TextStyleType
 import com.door43.translationstudio.core.TranslationType
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.getComposeTextStyle
-import org.unfoldingword.resourcecontainer.Language
+import org.bibletranslationtools.resourcecontainer.Language
 
 @Composable
 fun IndexCard(
@@ -71,7 +71,10 @@ fun IndexCard(
                     .weight(1f)
             ) {
                 items(words, key = { it.slug }) {
-                    TextButton(onClick = { onItemClick(it) }) {
+                    TextButton(
+                        onClick = { onItemClick(it) },
+                        shape = RoundedCornerShape(0.dp)
+                    ) {
                         Text(
                             text = it.title,
                             style = titleStyle.copy(

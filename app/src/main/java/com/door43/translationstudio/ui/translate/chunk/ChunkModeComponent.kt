@@ -4,8 +4,8 @@ import android.app.Application
 import androidx.compose.ui.text.AnnotatedString
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.essenty.lifecycle.doOnDestroy
-import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Chunk
+import com.door43.translationstudio.core.ComponentScope
 import com.door43.translationstudio.core.ProgressManager
 import com.door43.translationstudio.core.ProgressOwner
 import com.door43.translationstudio.core.TargetTranslation
@@ -13,8 +13,6 @@ import com.door43.translationstudio.core.TaskHandle
 import com.door43.translationstudio.core.TranslationViewMode
 import com.door43.translationstudio.rendering.VerseDisplay
 import com.door43.translationstudio.rendering.model.RenderNode
-import com.door43.translationstudio.core.ComponentScope
-import com.door43.translationstudio.core.launchWithProgress
 import com.door43.translationstudio.ui.translate.ChunkItem
 import com.door43.translationstudio.ui.translate.Footnote
 import com.door43.translationstudio.ui.translate.FootnoteAction
@@ -34,9 +32,9 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.bibletranslationtools.resourcecontainer.ResourceContainer
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import org.unfoldingword.resourcecontainer.ResourceContainer
 
 interface ChunkModeComponent : ModeComponent<ChunkItem> {
     override val state: StateFlow<State>

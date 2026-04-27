@@ -8,10 +8,10 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.Typography
-import com.door43.translationstudio.ui.translate.ChunkItem
 import com.door43.translationstudio.ui.dialogs.source.SourceTabItem
+import com.door43.translationstudio.ui.translate.ChunkItem
 import com.door43.translationstudio.ui.translate.components.StackedCardFlipper
-import org.unfoldingword.resourcecontainer.ResourceContainer
+import org.bibletranslationtools.resourcecontainer.ResourceContainer
 
 @Composable
 fun ChunkCard(

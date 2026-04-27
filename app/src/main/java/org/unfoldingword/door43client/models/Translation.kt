@@ -1,10 +1,10 @@
 package org.unfoldingword.door43client.models
 
-import org.unfoldingword.resourcecontainer.ContainerTools
-import org.unfoldingword.resourcecontainer.Language
-import org.unfoldingword.resourcecontainer.Project
-import org.unfoldingword.resourcecontainer.Resource
-import org.unfoldingword.resourcecontainer.ResourceContainer
+import org.bibletranslationtools.resourcecontainer.ContainerTools
+import org.bibletranslationtools.resourcecontainer.Language
+import org.bibletranslationtools.resourcecontainer.Project
+import org.bibletranslationtools.resourcecontainer.Resource
+import org.bibletranslationtools.resourcecontainer.ResourceContainer
 
 /**
  * A Translation is a special abstraction of a ResourceContainer.

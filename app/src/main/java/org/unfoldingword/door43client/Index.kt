@@ -1,17 +1,15 @@
 package org.unfoldingword.door43client
 
+import org.bibletranslationtools.resourcecontainer.Project
+import org.bibletranslationtools.resourcecontainer.Resource
 import org.unfoldingword.door43client.models.Catalog
 import org.unfoldingword.door43client.models.Category
 import org.unfoldingword.door43client.models.CategoryEntry
 import org.unfoldingword.door43client.models.ChunkMarker
-import org.unfoldingword.door43client.models.Question
-import org.unfoldingword.door43client.models.Questionnaire
 import org.unfoldingword.door43client.models.SourceLanguage
 import org.unfoldingword.door43client.models.TargetLanguage
 import org.unfoldingword.door43client.models.Translation
 import org.unfoldingword.door43client.models.Versification
-import org.unfoldingword.resourcecontainer.Project
-import org.unfoldingword.resourcecontainer.Resource
 
 /**
  * Defines the public methods of the index
@@ -311,28 +309,6 @@ interface Index {
      * @return
      */
     fun getChunkMarkers(projectSlug: String, versificationSlug: String): List<ChunkMarker>
-
-    /**
-     * Returns a questionnaire
-     * @param tdId the translation database id (on the server) of the questionnaire
-     * @return
-     */
-    fun getQuestionnaire(tdId: Long): Questionnaire?
-
-    /**
-     * Returns a list of questionnaires
-     *
-     * @return a list of questionnaires
-     */
-    fun getQuestionnaires(): List<Questionnaire>
-
-    /**
-     * Returns a list of questions in the questionnaire
-     *
-     * @param questionnaireTDId the parent questionnaire translation database id (server side)
-     * @return a list of questions
-     */
-    fun getQuestions(questionnaireTDId: Long): List<Question>
 
     /**
      * Returns the category with it's localized title.

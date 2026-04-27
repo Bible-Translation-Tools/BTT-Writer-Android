@@ -29,10 +29,10 @@ import com.door43.translationstudio.ui.dialogs.BaseDialog
 import com.door43.translationstudio.ui.dialogs.ConfirmDialog
 import com.door43.translationstudio.ui.dialogs.ProgressDialog
 import com.door43.translationstudio.ui.translate.ModeScreenTemplate
+import com.door43.translationstudio.ui.translate.ScrollBindingEffect
 import com.door43.translationstudio.ui.translate.ScrollCoordinator
 import com.door43.translationstudio.ui.translate.TranslateComponent
-import com.door43.translationstudio.ui.translate.ScrollBindingEffect
-import org.unfoldingword.resourcecontainer.Language
+import org.bibletranslationtools.resourcecontainer.Language
 
 @Composable
 fun ReviewModeSection(

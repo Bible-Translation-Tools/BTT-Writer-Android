@@ -28,13 +28,12 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
-import org.json.JSONException
+import org.bibletranslationtools.resourcecontainer.ResourceContainer
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.door43client.models.SourceLanguage
 import org.unfoldingword.door43client.models.Translation
-import org.unfoldingword.resourcecontainer.ResourceContainer
 
 data class ChapterContent(
     val heading: String,
@@ -118,10 +117,8 @@ class DefaultDraftComponent(
 
     override fun getSourceLanguage(draftTranslation: ResourceContainer): SourceLanguage? {
         return try {
-            library.index.getSourceLanguage(
-                draftTranslation.info.getJSONObject("language").getString("slug")
-            )
-        } catch (e: JSONException) {
+            library.index.getSourceLanguage(draftTranslation.info.language.slug)
+        } catch (e: Exception) {
             e.printStackTrace()
             null
         }
@@ -134,8 +131,11 @@ class DefaultDraftComponent(
     ): ChapterContent = withContext(Dispatchers.IO) {
 
         var tempTitle = container.readChunk(chapterSlug, "title")
-        if (tempTitle == null) {
-            tempTitle = container.readChunk("front", "title") + " " + chapterSlug.toInt()
+        if (tempTitle.isEmpty()) {
+            tempTitle = container.readChunk(
+                "front",
+                "title"
+            ) + " " + chapterSlug.toInt()
         }
         val title = tempTitle
 
@@ -145,7 +145,7 @@ class DefaultDraftComponent(
             chapterBody += container.readChunk(chapterSlug, chunk)
         }
 
-        val mimeType = container.info.optString("content_mime_type")
+        val mimeType = container.info.contentMimeType
         val bodyFormat = TranslationFormat.parse(mimeType)
 
         val sourceRendering = RenderingGroup()
@@ -179,7 +179,7 @@ class DefaultDraftComponent(
             application.getString(R.string.please_wait)
         ) {
             val result = withContext(Dispatchers.IO) {
-                importDraft.execute(sourceContainer)
+                importDraft.execute(sourceContainer){_,_->}
             }
             _state.update { it.copy(importResult = result) }
         }

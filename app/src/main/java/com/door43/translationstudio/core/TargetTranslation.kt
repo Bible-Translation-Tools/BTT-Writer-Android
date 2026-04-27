@@ -1,27 +1,28 @@
 package com.door43.translationstudio.core
 
 import android.content.Context
-import android.content.pm.PackageInfo
+import com.door43.translationstudio.BuildConfig
 import com.door43.translationstudio.core.entity.SourceTranslation
+import com.door43.translationstudio.core.entity.toSourceTranslation
+import com.door43.translationstudio.core.manifest.Manifest
+import com.door43.translationstudio.core.manifest.ManifestAccessor
+import com.door43.translationstudio.core.manifest.buildManifest
+import com.door43.translationstudio.core.manifest.toSource
 import com.door43.translationstudio.git.Repo
 import com.door43.translationstudio.rendering.RenderingProvider
 import com.door43.util.FileUtilities
-import com.door43.util.Manifest
 import com.door43.util.NumericStringComparator
 import org.bibletranslationtools.logger.Logger
+import org.bibletranslationtools.resourcecontainer.ContainerTools
+import org.bibletranslationtools.resourcecontainer.ResourceContainer
 import org.eclipse.jgit.api.MergeCommand
 import org.eclipse.jgit.api.MergeResult
 import org.eclipse.jgit.api.ResetCommand
 import org.eclipse.jgit.api.errors.GitAPIException
 import org.eclipse.jgit.lib.PersonIdent
 import org.eclipse.jgit.revwalk.RevCommit
-import org.json.JSONArray
-import org.json.JSONException
-import org.json.JSONObject
 import org.unfoldingword.door43client.models.TargetLanguage
 import org.unfoldingword.door43client.models.Translation
-import org.unfoldingword.resourcecontainer.ContainerTools
-import org.unfoldingword.resourcecontainer.ResourceContainer
 import java.io.File
 import java.io.IOException
 import java.util.Arrays
@@ -31,7 +32,11 @@ import kotlin.concurrent.thread
 class TargetTranslation private constructor(
     val path: File
 ) {
-    val manifest: Manifest = Manifest.generate(path)
+    val manifestAccessor = ManifestAccessor(
+        File(path, Manifest.MANIFEST_JSON)
+    )
+    val manifest: Manifest
+        get() = manifestAccessor.manifest
 
     var targetLanguageId: String
         private set
@@ -57,45 +62,22 @@ class TargetTranslation private constructor(
 
     init {
         // target language
-        val targetLanguageJson = this.manifest.getJSONObject(FIELD_MANIFEST_TARGET_LANGUAGE)
-        this.targetLanguageId = targetLanguageJson.getString(FIELD_MANIFEST_ID)
-        this.targetLanguageName = if (Manifest.valueExists(targetLanguageJson, FIELD_MANIFEST_NAME)) {
-            targetLanguageJson.getString(FIELD_MANIFEST_NAME)
-        } else {
-            this.targetLanguageId.uppercase(Locale.getDefault())
-        }
-        this.targetLanguageDirection = targetLanguageJson.getString("direction")
-        if (targetLanguageJson.has("region")) {
-            this.targetLanguageRegion = targetLanguageJson.getString("region")
-        }
+        targetLanguageId = manifest.targetLanguage.slug
+        targetLanguageName = manifest.targetLanguage.name.ifEmpty { targetLanguageId.uppercase() }
+        targetLanguageDirection = manifest.targetLanguage.direction
 
         // project
-        val projectJson = this.manifest.getJSONObject(FIELD_MANIFEST_PROJECT)
-        this.projectId = projectJson.getString(FIELD_MANIFEST_ID)
-        this.projectName = if (Manifest.valueExists(projectJson, FIELD_MANIFEST_NAME)) {
-            projectJson.getString(FIELD_MANIFEST_NAME)
-        } else {
-            this.projectId.uppercase(Locale.getDefault())
-        }
+        projectId = manifest.project.slug
+        projectName = manifest.project.name.ifEmpty { projectId.uppercase() }
 
         // translation type
-        val typeJson = this.manifest.getJSONObject(FIELD_MANIFEST_TRANSLATION_TYPE)
-        this.translationType = ResourceType.get(typeJson.getString(FIELD_MANIFEST_ID))!!
-        this.translationTypeName = if (Manifest.valueExists(typeJson, FIELD_MANIFEST_NAME)) {
-            typeJson.getString(FIELD_MANIFEST_NAME)
-        } else {
-            this.translationType.toString().uppercase(Locale.getDefault())
-        }
+        translationType = ResourceType.get(manifest.type.slug)!!
+        translationTypeName = manifest.type.name.ifEmpty { translationType.title }
 
-        if (this.translationType == ResourceType.TEXT) {
+        if (translationType == ResourceType.TEXT) {
             // resource
-            val resourceJson = this.manifest.getJSONObject(FIELD_MANIFEST_RESOURCE)
-            this.resourceSlug = resourceJson.getString(FIELD_MANIFEST_ID)
-            this.resourceName = if (Manifest.valueExists(resourceJson, FIELD_MANIFEST_NAME)) {
-                resourceJson.getString(FIELD_MANIFEST_NAME)
-            } else {
-                this.resourceSlug?.uppercase(Locale.getDefault())
-            }
+            resourceSlug = manifest.resource.slug
+            resourceName = manifest.resource.name.ifEmpty { manifest.resource.slug.uppercase() }
         }
 
         format = readTranslationFormat()
@@ -111,12 +93,12 @@ class TargetTranslation private constructor(
 
     val targetLanguage: TargetLanguage
         get() = TargetLanguage(
-            targetLanguageId,
-            targetLanguageName,
-            "",
-            targetLanguageDirection,
-            targetLanguageRegion,
-            false
+            slug = targetLanguageId,
+            name = targetLanguageName,
+            direction = targetLanguageDirection,
+            anglicizedName = "",
+            region = targetLanguageRegion,
+            isGatewayLanguage = false
         )
 
     val repo: Repo
@@ -126,13 +108,13 @@ class TargetTranslation private constructor(
         get() = isObsProject(projectId)
 
     private fun readTranslationFormat(): TranslationFormat {
-        val parsedFormat = fetchTranslationFormat(manifest)
+        val parsedFormat = TranslationFormat.get(manifest.format)
         if (parsedFormat == TranslationFormat.UNKNOWN) {
-            val resType = fetchTranslationType(manifest)
+            val resType = ResourceType.get(manifest.type.slug)
             return if (resType != ResourceType.TEXT) {
                 TranslationFormat.MARKDOWN
             } else {
-                if (isObsProject(fetchProjectID(manifest))) {
+                if (isObsProject(manifest.project.slug)) {
                     TranslationFormat.MARKDOWN
                 } else {
                     TranslationFormat.USFM
@@ -142,145 +124,47 @@ class TargetTranslation private constructor(
         return parsedFormat
     }
 
-    @Throws(JSONException::class)
     fun addSourceTranslation(translation: Translation, modifiedAt: Int) {
-        var sourceTranslationsJson = manifest.getJSONArray(FIELD_SOURCE_TRANSLATIONS)
-        sourceTranslationsJson = cleanupDuplicateSources(sourceTranslationsJson)
+        val sourceTranslation = translation
+            .toSourceTranslation(modifiedAt)
+            .toSource()
+        val updatedTranslations = if (sourceTranslation !in manifest.sourceTranslations) {
+            manifest.sourceTranslations + sourceTranslation
+        } else manifest.sourceTranslations
 
-        // check for duplicate
-        var foundDuplicate = false
-        for (i in 0 until sourceTranslationsJson.length()) {
-            val obj = sourceTranslationsJson.getJSONObject(i)
-            if (obj.getString("language_id") == translation.language.slug && obj.getString("resource_id") == translation.resource.slug) {
-                foundDuplicate = true
-                break
-            }
-        }
-        if (!foundDuplicate) {
-            val translationJson = JSONObject().apply {
-                put("language_id", translation.language.slug)
-                put("resource_id", translation.resource.slug)
-                put("checking_level", translation.resource.checkingLevel)
-                put("date_modified", modifiedAt)
-                put("version", translation.resource.version)
-            }
-            sourceTranslationsJson.put(translationJson)
-            manifest.put(FIELD_SOURCE_TRANSLATIONS, sourceTranslationsJson)
-        }
+        manifestAccessor.save(manifest.copy(sourceTranslations = updatedTranslations.distinct()))
     }
 
-    @Throws(JSONException::class)
     fun setSourceTranslations(translations: List<SourceTranslation>) {
-        val sourcesJson = JSONArray()
-        for (src in translations) {
-            val translationJson = JSONObject().apply {
-                put("language_id", src.language.slug)
-                put("resource_id", src.resource.slug)
-                put("checking_level", src.resource.checkingLevel)
-                put("date_modified", src.modifiedTimestamp)
-                put("version", src.resource.version)
-            }
-            sourcesJson.put(translationJson)
-        }
-        manifest.put(FIELD_SOURCE_TRANSLATIONS, sourcesJson)
+        val manifest = manifest.copy(
+            sourceTranslations = translations.map { it.toSource() }.distinct()
+        )
+        manifestAccessor.save(manifest)
     }
 
-    @Throws(JSONException::class)
-    private fun cleanupDuplicateSources(sourceTranslationsJson: JSONArray): JSONArray {
-        var doCleanup = false
-        val sources = HashMap<String, JSONObject>()
-
-        val length = sourceTranslationsJson.length()
-        for (i in 0 until length) {
-            val obj = sourceTranslationsJson.optJSONObject(i)
-            if (obj == null) {
-                doCleanup = true // invalid type, skip
-                continue
-            }
-
-            val sourceLanguageSlug = obj.getString("language_id")
-            val resourceSlug = obj.getString("resource_id")
-
-            val containerSlug = ContainerTools.makeSlug(sourceLanguageSlug, this.projectId, resourceSlug)
-            if (sources.containsKey(containerSlug)) {
-                doCleanup = true // duplicate
-            }
-            sources[containerSlug] = obj // save most recent
+    val sourceTranslations: List<String>
+        get() = manifest.sourceTranslations.map {
+            ContainerTools.makeSlug(it.languageSlug, this.projectId, it.resourceSlug)
         }
 
-        var resultJson = sourceTranslationsJson
-        if (doCleanup) {
-            val newSourceTranslationsJson = JSONArray()
-            for (source in sources.values) {
-                newSourceTranslationsJson.put(source)
-            }
-            resultJson = newSourceTranslationsJson
-            Logger.i(TAG, "Cleaning up from $length items to ${newSourceTranslationsJson.length()}")
-            manifest.put(FIELD_SOURCE_TRANSLATIONS, resultJson)
-        }
-        return resultJson
-    }
-
-    val sourceTranslations: Array<String>
-        get() {
-            return try {
-                val sources = ArrayList<String>()
-                val sourceTranslationsJson = manifest.getJSONArray(FIELD_SOURCE_TRANSLATIONS)
-
-                for (i in 0 until sourceTranslationsJson.length()) {
-                    val obj = sourceTranslationsJson.getJSONObject(i)
-                    val sourceLanguageSlug = obj.getString("language_id")
-                    val resourceSlug = obj.getString("resource_id")
-                    val containerSlug = ContainerTools.makeSlug(sourceLanguageSlug, this.projectId, resourceSlug)
-                    sources.add(containerSlug)
-                }
-                sources.toTypedArray()
-            } catch (e: Exception) {
-                Logger.e(TAG, "Error reading sources", e)
-                emptyArray()
-            }
-        }
-
-    fun addContributor(speaker: NativeSpeaker?) {
-        if (speaker != null) {
-            removeContributor(speaker)
-            val translatorsJson = manifest.getJSONArray(FIELD_TRANSLATORS)
-            translatorsJson.put(speaker.name)
-            manifest.put(FIELD_TRANSLATORS, translatorsJson)
-        }
+    fun addContributor(speaker: NativeSpeaker) {
+        val updatedTranslators = if (speaker.name !in manifest.translators) {
+            manifest.translators + speaker.name
+        } else manifest.translators
+        manifestAccessor.save(manifest.copy(translators = updatedTranslators.sorted()))
     }
 
     fun removeContributor(speaker: NativeSpeaker) {
-        val translatorsJson = manifest.getJSONArray(FIELD_TRANSLATORS)
-        manifest.put(
-            FIELD_TRANSLATORS,
-            Manifest.removeValue(translatorsJson, speaker.name)
-        )
+        val updatedTranslators = manifest.translators - speaker.name
+        manifestAccessor.save(manifest.copy(translators = updatedTranslators.sorted()))
     }
 
     fun getContributor(name: String): NativeSpeaker? {
-        manifest.load()
         return contributors.find { it.name == name }
     }
 
-    val contributors: ArrayList<NativeSpeaker>
-        get() {
-            manifest.load()
-            val translatorsJson = manifest.getJSONArray(FIELD_TRANSLATORS)
-            val translators = ArrayList<NativeSpeaker>()
-
-            for (i in 0 until translatorsJson.length()) {
-                try {
-                    val name = translatorsJson.getString(i)
-                    if (name.isNotEmpty()) {
-                        translators.add(NativeSpeaker(name))
-                    }
-                } catch (e: JSONException) {
-                    e.printStackTrace()
-                }
-            }
-            return translators
-        }
+    val contributors: List<NativeSpeaker>
+        get() = manifest.translators.map { NativeSpeaker(it) }
 
     fun setDefaultContributor(speaker: NativeSpeaker?) {
         if (speaker != null) {
@@ -452,43 +336,36 @@ class TargetTranslation private constructor(
 
     private fun closeChunk(complexId: String): Boolean {
         if (!isChunkClosed(complexId)) {
-            val finishedChunks = manifest.getJSONArray(FIELD_FINISHED_CHUNKS)
-            finishedChunks.put(complexId)
-            manifest.put(FIELD_FINISHED_CHUNKS, finishedChunks)
+            val updatedChunks = manifest.finishedChunks + complexId
+            manifestAccessor.save(
+                manifest.copy(finishedChunks = updatedChunks.sorted())
+            )
         }
         return true
     }
 
     private fun openChunk(complexId: String): Boolean {
-        val finishedChunks = manifest.getJSONArray(FIELD_FINISHED_CHUNKS)
-        val updatedChunks = JSONArray()
+        val finishedChunks = manifest.finishedChunks
+        val updatedChunks = mutableListOf<String>()
         try {
-            for (i in 0 until finishedChunks.length()) {
-                val currId = finishedChunks.getString(i)
+            for (i in 0 until finishedChunks.size) {
+                val currId = finishedChunks[i]
                 if (currId != complexId) {
-                    updatedChunks.put(currId)
+                    updatedChunks.add(currId)
                 }
             }
-            manifest.put(FIELD_FINISHED_CHUNKS, updatedChunks)
+            manifestAccessor.save(
+                manifest.copy(finishedChunks = updatedChunks.sorted())
+            )
             return true
-        } catch (e: JSONException) {
+        } catch (e: Exception) {
             e.printStackTrace()
         }
         return false
     }
 
     private fun isChunkClosed(complexId: String): Boolean {
-        val finishedChunks = manifest.getJSONArray(FIELD_FINISHED_CHUNKS)
-        try {
-            for (i in 0 until finishedChunks.length()) {
-                if (finishedChunks.getString(i) == complexId) {
-                    return true
-                }
-            }
-        } catch (e: JSONException) {
-            e.printStackTrace()
-        }
-        return false
+        return manifest.finishedChunks.any { it == complexId }
     }
 
     @Throws(Exception::class)
@@ -569,15 +446,12 @@ class TargetTranslation private constructor(
     }
 
     fun setParentDraft(draftTranslation: ResourceContainer) {
-        val draftStatus = JSONObject()
-        try {
-            draftStatus.put("resource_id", draftTranslation.resource.slug)
-            draftStatus.put("checking_level", draftTranslation.resource.checkingLevel)
-            draftStatus.put("version", draftTranslation.resource.version)
-            manifest.put(FIELD_PARENT_DRAFT, draftStatus)
-        } catch (e: JSONException) {
-            e.printStackTrace()
-        }
+        val draft = Manifest.Draft(
+            resourceSlug = draftTranslation.resource.slug,
+            checkingLevel = draftTranslation.resource.status.checkingLevel,
+            version = draftTranslation.resource.status.version
+        )
+        manifestAccessor.save(manifest.copy(parentDraft = draft))
     }
 
     fun resetToMasterBackup(): Boolean {
@@ -600,7 +474,9 @@ class TargetTranslation private constructor(
         importedTargetTranslation?.commitSync()
         commitSync()
 
-        val importedManifest = Manifest.generate(newDir)
+        val importedManifest = ManifestAccessor(
+            File(newDir, Manifest.MANIFEST_JSON)
+        ).manifest
         val myRepo = repo
         val git = myRepo.git
 
@@ -626,24 +502,14 @@ class TargetTranslation private constructor(
         val result = merge.call()
 
         // merge manifests
-        mergeManifests(manifest, importedManifest)
+        val mergedManifest = mergeManifests(importedManifest)
+        manifestAccessor.save(mergedManifest)
 
         return result.mergeStatus != MergeResult.MergeStatus.CONFLICTING
     }
 
     fun changeTargetLanguage(targetLanguage: TargetLanguage) {
-        val languageJson = this.manifest.getJSONObject("target_language")
-        try {
-            languageJson.put("name", targetLanguage.name)
-            languageJson.put("direction", targetLanguage.direction)
-            languageJson.put("id", targetLanguage.slug)
-            this.manifest.put("target_language", languageJson)
-            this.targetLanguageDirection = targetLanguage.direction
-            this.targetLanguageId = targetLanguage.slug
-            this.targetLanguageName = targetLanguage.name
-        } catch (e: JSONException) {
-            e.printStackTrace()
-        }
+        manifestAccessor.save(manifest.copy(targetLanguage = targetLanguage))
     }
 
     fun unlockRepo(): Boolean {
@@ -716,11 +582,7 @@ class TargetTranslation private constructor(
         }
 
     val numFinished: Int
-        get() = if (manifest.has(FIELD_FINISHED_CHUNKS)) {
-            manifest.getJSONArray(FIELD_FINISHED_CHUNKS).length()
-        } else {
-            0
-        }
+        get() = manifest.finishedChunks.size
 
     val chapterTranslations: Array<ChapterTranslation>
         get() {
@@ -798,6 +660,31 @@ class TargetTranslation private constructor(
         return false
     }
 
+    fun updateGenerator(build: String) {
+        val manifest = manifest.copy(
+            generator = manifest.generator.copy(build = build)
+        )
+        manifestAccessor.save(manifest)
+    }
+
+    fun mergeManifests(imported: Manifest): Manifest {
+        val translators = (manifest.translators + imported.translators).distinct()
+        val finishedChunks = (manifest.finishedChunks + imported.finishedChunks).distinct()
+        val sources = (manifest.sourceTranslations + imported.sourceTranslations).distinct()
+        val parentDraft = if (manifest.parentDraft == null) {
+            imported.parentDraft
+        } else manifest.parentDraft
+
+        val mergedManifest = manifest.copy(
+            translators = translators,
+            finishedChunks = finishedChunks,
+            sourceTranslations = sources,
+            parentDraft = parentDraft
+        )
+
+        return mergedManifest
+    }
+
     interface OnCommitListener {
         fun onCommit(success: Boolean)
     }
@@ -842,43 +729,18 @@ class TargetTranslation private constructor(
         fun isObsProject(projectId: String): Boolean =
             OBS_PROJECT_TYPE.equals(projectId, ignoreCase = true)
 
-        fun fetchTranslationFormat(manifest: Manifest): TranslationFormat {
-            val formatStr = manifest.getString(FIELD_TRANSLATION_FORMAT)
-            return TranslationFormat.get(formatStr)
-        }
-
-        fun fetchProjectID(manifest: Manifest): String {
-            val projectIdJson = manifest.getJSONObject(FIELD_MANIFEST_PROJECT)
-            return try {
-                projectIdJson?.getString(FIELD_MANIFEST_ID) ?: ""
-            } catch (e: Exception) {
-                ""
-            }
-        }
-
-        fun fetchTranslationType(manifest: Manifest): ResourceType? {
-            val typeJson = manifest.getJSONObject(FIELD_MANIFEST_TRANSLATION_TYPE)
-            val translationTypeStr = try {
-                typeJson?.getString(FIELD_MANIFEST_ID) ?: ""
-            } catch (e: Exception) {
-                ""
-            }
-            return ResourceType.get(translationTypeStr)
-        }
-
         fun open(targetTranslationDir: File, onError: (() -> Unit)? = null): TargetTranslation? {
             if (targetTranslationDir.exists()) {
                 val manifestFile = File(targetTranslationDir, "manifest.json")
                 if (manifestFile.exists()) {
                     try {
-                        val manifestJson = JSONObject(manifestFile.readText())
-                        val version = manifestJson.getInt(FIELD_MANIFEST_PACKAGE_VERSION)
-                        if (version == PACKAGE_VERSION) {
+                        val manifest = ManifestAccessor(manifestFile).manifest
+                        if (manifest.packageVersion == PACKAGE_VERSION) {
                             return TargetTranslation(targetTranslationDir)
                         } else {
                             Logger.w(
                                 TargetTranslation::class.java.name,
-                                "Unsupported target translation version $version in ${targetTranslationDir.name}"
+                                "Unsupported target translation version ${manifest.packageVersion} in ${targetTranslationDir.name}"
                             )
                         }
                     } catch (e: Exception) {
@@ -904,62 +766,32 @@ class TargetTranslation private constructor(
             projectId: String,
             resourceType: ResourceType,
             resourceSlug: String,
-            packageInfo: PackageInfo,
             targetTranslationDir: File
         ): TargetTranslation {
             targetTranslationDir.mkdirs()
-            val manifest = Manifest.generate(targetTranslationDir)
+            val manifestAccessor = ManifestAccessor(
+                File(targetTranslationDir, Manifest.MANIFEST_JSON)
+            )
 
-            val projectJson = JSONObject().apply {
-                put(FIELD_MANIFEST_ID, projectId)
-                put(FIELD_MANIFEST_NAME, "")
+            val manifest = buildManifest {
+                packageVersion(PACKAGE_VERSION)
+                format(translationFormat.title)
+                generator(APPLICATION_NAME, BuildConfig.VERSION_CODE.toString())
+                targetLanguage(targetLanguage)
+                project(projectId, "")
+                type(resourceType)
+                resource(resourceSlug, getResourceName(resourceSlug))
+                addTranslator(translator)
             }
-            manifest.put(FIELD_MANIFEST_PROJECT, projectJson)
 
-            val typeJson = JSONObject().apply {
-                put(FIELD_MANIFEST_ID, resourceType)
-                put(FIELD_MANIFEST_NAME, resourceType.title)
-            }
-            manifest.put(FIELD_MANIFEST_TRANSLATION_TYPE, typeJson)
-
-            val generatorJson = JSONObject().apply {
-                put(FIELD_MANIFEST_NAME, APPLICATION_NAME)
-                put(FIELD_MANIFEST_BUILD, packageInfo.versionCode)
-            }
-            manifest.put(FIELD_MANIFEST_GENERATOR, generatorJson)
-            manifest.put(FIELD_MANIFEST_PACKAGE_VERSION, PACKAGE_VERSION)
-
-            val targetLanguageJson = targetLanguage.toJSON().apply {
-                put("id", targetLanguage.slug)
-                remove("slug")
-            }
-            manifest.put(FIELD_MANIFEST_TARGET_LANGUAGE, targetLanguageJson)
-            manifest.put(FIELD_MANIFEST_FORMAT, translationFormat)
-
-            val resourceJson = JSONObject().apply {
-                put(FIELD_MANIFEST_ID, resourceSlug)
-                put(FIELD_MANIFEST_NAME, getResourceName(resourceSlug))
-            }
-            manifest.put(FIELD_MANIFEST_RESOURCE, resourceJson)
+            manifestAccessor.save(manifest)
 
             val licenseFile = File(targetTranslationDir, LICENSE_FILE)
             context.assets.open(LICENSE_FILE).use { input ->
                 FileUtilities.copyInputStreamToFile(input, licenseFile)
             }
 
-            return TargetTranslation(targetTranslationDir).apply {
-                addContributor(translator)
-            }
-        }
-
-        @Throws(Exception::class)
-        fun updateGenerator(context: Context, targetTranslation: TargetTranslation) {
-            val generatorJson = JSONObject().apply {
-                put(FIELD_MANIFEST_NAME, "ts-android")
-                val pInfo = context.packageManager.getPackageInfo(context.packageName, 0)
-                put(FIELD_MANIFEST_BUILD, pInfo.versionCode)
-            }
-            targetTranslation.manifest.put(FIELD_MANIFEST_GENERATOR, generatorJson)
+            return TargetTranslation(targetTranslationDir)
         }
 
         @Throws(StringIndexOutOfBoundsException::class)
@@ -994,18 +826,6 @@ class TargetTranslation private constructor(
 
         fun generateTargetTranslationDir(targetTranslationId: String, rootDir: File): File {
             return File(rootDir, targetTranslationId)
-        }
-
-        fun mergeManifests(original: Manifest, imported: Manifest): Manifest {
-            original.join(imported.getJSONArray(FIELD_TRANSLATORS), FIELD_TRANSLATORS)
-            original.join(imported.getJSONArray(FIELD_FINISHED_CHUNKS), FIELD_FINISHED_CHUNKS)
-            original.join(imported.getJSONArray(FIELD_SOURCE_TRANSLATIONS), FIELD_SOURCE_TRANSLATIONS)
-
-            if ((!original.has(FIELD_PARENT_DRAFT) || !Manifest.valueExists(original.getJSONObject(FIELD_PARENT_DRAFT), "resource_id")) &&
-                imported.has(FIELD_PARENT_DRAFT)) {
-                original.put(FIELD_PARENT_DRAFT, imported.getJSONObject(FIELD_PARENT_DRAFT))
-            }
-            return original
         }
 
         private fun getResourceName(resourceSlug: String): String {

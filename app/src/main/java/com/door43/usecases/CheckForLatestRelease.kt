@@ -3,9 +3,11 @@ package com.door43.usecases
 import android.content.Context
 import android.content.pm.PackageManager
 import com.door43.data.IPreferenceRepository
+import com.door43.translationstudio.BuildConfig
 import com.door43.translationstudio.network.GetRequest
-import org.json.JSONException
-import org.json.JSONObject
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 import org.bibletranslationtools.logger.Logger
 import java.io.IOException
 
@@ -15,68 +17,58 @@ class CheckForLatestRelease(
 ) {
     data class Result(val release: Release?)
 
+    val json = Json {
+        ignoreUnknownKeys = true
+    }
+
     suspend fun execute(): Result {
-        var latestRelease: Release? = null
+
+
+        var release: Release? = null
 
         val githubApiUrl = prefRepository.getGithubRepoApi()
         val url = "$githubApiUrl/releases/latest"
-        var latestReleaseStr: String?
-        try {
+
+        val releaseStr = try {
             val request = GetRequest(url)
-            latestReleaseStr = request.read()
+            request.read()
         } catch (e: IOException) {
             Logger.e(
                 TAG,
                 "Failed to check for the latest release",
                 e
             )
-            latestReleaseStr = null
+            null
         }
-        if (latestReleaseStr != null) {
+
+        releaseStr?.let {
             try {
-                val latestReleaseJson = JSONObject(latestReleaseStr)
-                if (latestReleaseJson.has("tag_name")) {
-                    val tag = latestReleaseJson.getString("tag_name")
-                    val tagParts = tag.split("\\+".toRegex())
-                    if (tagParts.size == 2) {
-                        val build = tagParts[1].toInt()
-                        try {
-                            val pInfo = context.packageManager.getPackageInfo(
-                                context.packageName, 0
-                            )
-                            if (build > pInfo.versionCode) {
-                                var downloadUrl: String? = null
-                                var downloadSize = 0
-                                if (latestReleaseJson.has("assets")) {
-                                    val assetsJson = latestReleaseJson.getJSONArray("assets")
-                                    val assetJson = assetsJson.getJSONObject(0)
-                                    if (assetJson.has("browser_download_url")) {
-                                        downloadUrl = assetJson.getString("browser_download_url")
-                                    }
-                                    if (assetJson.has("size")) {
-                                        downloadSize = assetJson.getInt("size")
-                                    }
-                                }
-                                if (downloadUrl != null) {
-                                    latestRelease = Release(
-                                        latestReleaseJson.getString("name"),
-                                        downloadUrl,
-                                        downloadSize,
-                                        build
-                                    )
-                                }
+                val releaseInfo: ReleaseInfo = json.decodeFromString(it)
+                val tagParts = releaseInfo.tagName.split("\\+".toRegex())
+
+                if (tagParts.size == 2) {
+                    val build = tagParts[1].toInt()
+                    try {
+                        if (build > BuildConfig.VERSION_CODE) {
+                            releaseInfo.assets.firstOrNull()?.let { asset ->
+                                release = Release(
+                                    releaseInfo.name,
+                                    asset.browserDownloadUrl,
+                                    asset.size,
+                                    build
+                                )
                             }
-                        } catch (e: PackageManager.NameNotFoundException) {
-                            Logger.e(TAG, "Failed to fetch the package info", e)
                         }
+                    } catch (e: PackageManager.NameNotFoundException) {
+                        Logger.e(TAG, "Failed to fetch the package info", e)
                     }
                 }
-            } catch (e: JSONException) {
+            } catch (e: Exception) {
                 Logger.e(TAG, "Failed to parse the latest release", e)
             }
         }
 
-        return Result(latestRelease)
+        return Result(release)
     }
 
     companion object {
@@ -90,3 +82,18 @@ class CheckForLatestRelease(
         val build: Int
     )
 }
+
+@Serializable
+private data class ReleaseInfo(
+    @SerialName("tag_name")
+    val tagName: String,
+    val name: String,
+    val assets: List<Asset>
+)
+
+@Serializable
+private data class Asset(
+    @SerialName("browser_download_url")
+    val browserDownloadUrl: String,
+    val size: Int
+)

@@ -30,7 +30,7 @@ import com.door43.translationstudio.getComposeTextStyle
 import com.door43.translationstudio.ui.dialogs.source.SourceTabItem
 import com.door43.translationstudio.ui.translate.components.SourceTabRow
 import com.door43.translationstudio.ui.translate.components.withSearchHighlight
-import org.unfoldingword.resourcecontainer.ResourceContainer
+import org.bibletranslationtools.resourcecontainer.ResourceContainer
 
 @Composable
 fun ChunkSourceCard(
@@ -42,8 +42,8 @@ fun ChunkSourceCard(
     onSourceTabClick: (String) -> Unit,
     onAddNewSourceClick: () -> Unit,
     onRemoveSourceClick: (String) -> Unit,
-    searchQuery: String? = null,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    searchQuery: String? = null
 ) {
     val displayText = remember(text, searchQuery) {
         text.withSearchHighlight(searchQuery)

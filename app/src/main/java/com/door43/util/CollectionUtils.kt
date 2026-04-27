@@ -8,8 +8,8 @@ val sortNumericallyComparator = Comparator<String> { o1, o2 ->
     lhInt.compareTo(rhInt)
 }
 
-fun Array<String>.sortNumerically() {
-    sortWith(sortNumericallyComparator)
+fun List<String>.sortNumerically() {
+    sortedWith(sortNumericallyComparator)
 }
 
 fun ArrayList<String>.sortNumerically() {

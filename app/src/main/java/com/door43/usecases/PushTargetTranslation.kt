@@ -1,7 +1,6 @@
 package com.door43.usecases
 
 import android.content.Context
-import com.door43.OnProgressListener
 import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
@@ -33,14 +32,14 @@ class PushTargetTranslation(
 
     suspend fun execute(
         targetTranslation: TargetTranslation,
-        progressListener: OnProgressListener? = null
+        onProgress: (Float, String?) -> Unit
     ): Result {
         if (profile.gogsUser != null) {
-            val repository = getRepository.execute(targetTranslation, progressListener)
+            val repository = getRepository.execute(targetTranslation, onProgress)
             try {
                 targetTranslation.commitSync()
                 val repo: Repo = targetTranslation.repo
-                return push(repo, repository!!.sshUrl, progressListener)
+                return push(repo, repository!!.sshUrl, onProgress)
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -52,8 +51,8 @@ class PushTargetTranslation(
     }
 
     @Throws(JGitInternalException::class)
-    private fun push(repo: Repo, remote: String, progressListener: OnProgressListener?): Result {
-        progressListener?.onProgress(-1f, "Uploading translation")
+    private fun push(repo: Repo, remote: String, onProgress: (Float, String?) -> Unit): Result {
+        onProgress(-1f, "Uploading translation")
 
         var status = Status.UNKNOWN
         val git: Git

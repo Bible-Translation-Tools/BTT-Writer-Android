@@ -9,6 +9,7 @@ import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.App.Companion.deviceLanguageCode
 import com.door43.translationstudio.R
+import com.door43.translationstudio.core.ComponentScope
 import com.door43.translationstudio.core.MergeConflictsHandler
 import com.door43.translationstudio.core.MissingNameItem
 import com.door43.translationstudio.core.ProcessUSFM
@@ -19,7 +20,6 @@ import com.door43.translationstudio.core.ProgressOwner
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.TaskHandle
 import com.door43.translationstudio.core.Translator
-import com.door43.translationstudio.core.ComponentScope
 import com.door43.translationstudio.core.launchWithProgress
 import com.door43.usecases.ImportProjects
 import com.door43.util.FileUtilities
@@ -211,8 +211,9 @@ class DefaultImportUsfmComponent(
         if (isUsfm || isTxt || isZip) {
             launchWithProgress {
                 val languages = withContext(Dispatchers.IO) {
-                    library.index.getTargetLanguages().sorted()
+                    library.index.getTargetLanguages().sortedBy { it.slug }
                 }
+
                 _state.update {
                     ImportUsfmComponent.State(
                         started = true,

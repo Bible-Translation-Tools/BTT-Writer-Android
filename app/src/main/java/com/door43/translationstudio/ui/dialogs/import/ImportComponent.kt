@@ -43,7 +43,6 @@ import org.unfoldingword.door43client.Door43Client
 import java.io.File
 import java.io.IOException
 import java.security.InvalidParameterException
-import kotlin.collections.map
 
 data class MergeConflict(
     val translation: TargetTranslation,

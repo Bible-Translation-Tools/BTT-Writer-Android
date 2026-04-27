@@ -1,18 +1,14 @@
 package com.door43.usecases
 
-import com.door43.OnProgressListener
-import org.unfoldingword.door43client.Door43Client
 import org.bibletranslationtools.logger.Logger
+import org.unfoldingword.door43client.Door43Client
 
 class UpdateCatalogs(
     private val library: Door43Client
 ) {
     data class Result(val success: Boolean, val addedCount: Int)
 
-    suspend fun execute(
-        updateCatalogs: Boolean,
-        progressListener: OnProgressListener? = null
-    ): Result {
+    suspend fun execute(updateCatalogs: Boolean, onProgress: (Float, String?) -> Unit): Result {
         var addedCount = 0
         var success = false
 
@@ -29,10 +25,8 @@ class UpdateCatalogs(
         )
 
         try {
-            library.updateCatalogs(updateCatalogs) { tag, max, complete ->
-                val progress = complete / max.toFloat()
-                progressListener?.onProgress(progress, tag)
-                true
+            library.updateCatalogs(updateCatalogs) { value, message ->
+                onProgress(value, message)
             }
             success = true
         } catch (e: Exception) {

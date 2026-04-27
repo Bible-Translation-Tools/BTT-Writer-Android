@@ -1,12 +1,12 @@
 package com.door43.translationstudio.core
 
 import org.bibletranslationtools.logger.Logger
+import org.bibletranslationtools.resourcecontainer.ContainerTools
+import org.bibletranslationtools.resourcecontainer.Language
+import org.bibletranslationtools.resourcecontainer.Link
+import org.bibletranslationtools.resourcecontainer.ResourceContainer
+import org.bibletranslationtools.resourcecontainer.errors.InvalidRCException
 import org.unfoldingword.door43client.Door43Client
-import org.unfoldingword.resourcecontainer.ContainerTools
-import org.unfoldingword.resourcecontainer.Language
-import org.unfoldingword.resourcecontainer.Link
-import org.unfoldingword.resourcecontainer.ResourceContainer
-import org.unfoldingword.resourcecontainer.errors.InvalidRCException
 import java.util.Collections
 import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
@@ -128,7 +128,7 @@ object ContainerCache {
         while (loadingContainers.contains(containerSlug)) {
             try {
                 Thread.sleep(500)
-            } catch (e: InterruptedException) {
+            } catch (_: InterruptedException) {
                 Thread.currentThread().interrupt()
                 break
             }
@@ -148,16 +148,29 @@ object ContainerCache {
      * Links that have a matching container will be returned.
      */
     @Deprecated("TRICKY: only english RCs have links, this won't matter for rc0.1 spec")
-    fun cacheClosestFromLinks(client: Door43Client, linkData: List<String>): List<Link> {
+    fun cacheClosestFromLinks(
+        client: Door43Client,
+        linkData: List<String>
+    ): List<Link> {
         val links = mutableListOf<Link>()
         for (rawLink in linkData) {
             try {
-                val link = Link.parseLink(rawLink)
-                val container = cacheClosest(client, link.language, link.project, link.resource)
-                if (container != null) {
-                    links.add(link)
-                } else {
-                    Logger.w("ContainerCache", "RC not found for link $rawLink")
+                Link.parseLink(rawLink)?.let { link ->
+                    val container = link.project?.let { project ->
+                        link.resource?.let { resource ->
+                            cacheClosest(
+                                client,
+                                link.language,
+                                project,
+                                resource
+                            )
+                        }
+                    }
+                    if (container != null) {
+                        links.add(link)
+                    } else {
+                        Logger.w("ContainerCache", "RC not found for link $rawLink")
+                    }
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -169,17 +182,31 @@ object ContainerCache {
     /**
      * Same as cacheClosestFromLinks except it requires an exact match.
      */
-    fun cacheFromLinks(client: Door43Client, linkData: List<String>, language: Language): List<Link> {
+    fun cacheFromLinks(
+        client: Door43Client,
+        linkData: List<String>,
+        language: Language
+    ): List<Link> {
         val links = mutableListOf<Link>()
         for (rawLink in linkData) {
             try {
-                val link = Link.parseLink(rawLink)
-                val lang = link.language ?: language.slug
-                val container = cache(client, ContainerTools.makeSlug(lang, link.project, link.resource))
-                if (container != null) {
-                    links.add(link)
-                } else {
-                    Logger.w("ContainerCache", "RC not found for link $rawLink")
+                Link.parseLink(rawLink)?.let { link ->
+                    val lang = link.language ?: language.slug
+                    val container = link.project?.let { project ->
+                        link.resource?.let { resource ->
+                            val slug = ContainerTools.makeSlug(
+                                lang,
+                                project,
+                                resource
+                            )
+                            cache(client, slug)
+                        }
+                    }
+                    if (container != null) {
+                        links.add(link)
+                    } else {
+                        Logger.w("ContainerCache", "RC not found for link $rawLink")
+                    }
                 }
             } catch (e: Exception) {
                 e.printStackTrace()

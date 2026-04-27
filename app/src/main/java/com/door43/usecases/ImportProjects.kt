@@ -2,8 +2,8 @@ package com.door43.usecases
 
 import android.content.Context
 import android.net.Uri
-import com.door43.OnProgressListener
 import com.door43.data.IDirectoryProvider
+import com.door43.translationstudio.BuildConfig
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.ArchiveImporter
 import com.door43.translationstudio.core.MergeConflictsHandler
@@ -13,9 +13,9 @@ import com.door43.util.FileUtilities
 import com.door43.util.FileUtilities.moveOrCopyQuietly
 import com.door43.util.FileUtilities.safeDelete
 import com.door43.util.Zip
-import org.unfoldingword.door43client.Door43Client
-import org.unfoldingword.resourcecontainer.ResourceContainer
 import org.bibletranslationtools.logger.Logger
+import org.bibletranslationtools.resourcecontainer.ResourceContainer
+import org.unfoldingword.door43client.Door43Client
 import java.io.File
 import java.io.FileInputStream
 import java.io.InputStream
@@ -44,9 +44,9 @@ class ImportProjects(
     fun importProject(
         projectUri: Uri,
         overwrite: Boolean = false,
-        progressListener: OnProgressListener? = null
+        onProgress: (Float, String?) -> Unit
     ): ImportUriResult {
-        progressListener?.onProgress(-1f, "Importing...")
+        onProgress(-1f, "Importing...")
 
         var alreadyExists = false
         var success = false
@@ -99,9 +99,9 @@ class ImportProjects(
     fun importProjects(
         projects: List<File>,
         overwrite: Boolean,
-        progressListener: OnProgressListener? = null
+        onProgress: (Float, String?) -> Unit
     ): ImportFilesResult {
-        progressListener?.onProgress(-1f, context.getString(R.string.importing_file))
+        onProgress(-1f, context.getString(R.string.importing_file))
 
         var count = 0
         val size = projects.size
@@ -117,7 +117,7 @@ class ImportProjects(
                 val dirName = project.name
                 val progress = count++ / size.toFloat()
 
-                progressListener?.onProgress(progress, dirName)
+                onProgress(progress, dirName)
 
                 val newTargetTranslation = TargetTranslation.open(project) {
                     deleteProject(project)
@@ -126,7 +126,7 @@ class ImportProjects(
                 if (newTargetTranslation != null) {
                     newTargetTranslation.commitSync()
 
-                    progressListener?.onProgress((progress + subStepSize), dirName)
+                    onProgress((progress + subStepSize), dirName)
 
                     val destTargetTranslationDir = File(translator.path, newTargetTranslation.id)
 
@@ -137,7 +137,7 @@ class ImportProjects(
                         // commit local changes to history
                         conflictingTargetTranslation.commitSync()
 
-                        progressListener?.onProgress((progress + 2 * subStepSize), dirName)
+                        onProgress((progress + 2 * subStepSize), dirName)
 
                         // merge translations
                         try {
@@ -156,12 +156,12 @@ class ImportProjects(
                     // update the generator info. TRICKY: we re-open to get the updated manifest.
                     TargetTranslation.open(destTargetTranslationDir)?.let { targetTranslation ->
                         importedTargetTranslations.add(targetTranslation)
-                        TargetTranslation.updateGenerator(context, targetTranslation)
+                        targetTranslation.updateGenerator(BuildConfig.VERSION_CODE.toString())
                     }
                 }
             }
 
-            progressListener?.onProgress(1f, "Completed!")
+            onProgress(1f, "Completed!")
         } catch (e: Exception) {
             Logger.e(this::javaClass.name, "Failed to import folder $projects", e)
             success = false
@@ -327,9 +327,8 @@ class ImportProjects(
                         } catch (ex: java.lang.Exception) {
                             ex.printStackTrace()
                         }
-                    }?.let { targetTranslation ->
-                        TargetTranslation.updateGenerator(context, targetTranslation)
                     }
+                        ?.updateGenerator(BuildConfig.VERSION_CODE.toString())
 
                     importedSlug = targetTranslationId
                 }

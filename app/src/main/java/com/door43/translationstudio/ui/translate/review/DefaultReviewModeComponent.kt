@@ -56,12 +56,12 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.bibletranslationtools.logger.Logger
+import org.bibletranslationtools.resourcecontainer.ResourceContainer
 import org.eclipse.jgit.revwalk.RevCommit
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.unfoldingword.door43client.Door43Client
-import org.unfoldingword.resourcecontainer.ResourceContainer
-import org.bibletranslationtools.logger.Logger
 import java.util.Locale
 import java.util.regex.Pattern
 
@@ -184,7 +184,7 @@ class DefaultReviewModeComponent(
     override fun openHelp(item: HelpItem) {
         when (item) {
             is HelpItem.Note -> renderTranslationHelp(item.data)
-            is HelpItem.Word -> openWord(item.rcSlug, item.data.chapter)
+            is HelpItem.Word -> item.data.chapter?.let { openWord(item.rcSlug, it) }
             is HelpItem.Question -> renderTranslationHelp(item.data, true)
         }
     }
@@ -194,7 +194,7 @@ class DefaultReviewModeComponent(
             val words = withContext(Dispatchers.IO) {
                 getResourceContainer(rcSlug)?.let { rc ->
                     val chapters = rc.chapters()
-                    val words = listOf(*chapters).sorted()
+                    val words = chapters.sorted()
                     val titlePattern = Pattern.compile("#(.*)")
 
                     words.map { slug ->

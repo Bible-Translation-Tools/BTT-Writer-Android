@@ -1,7 +1,6 @@
 package com.door43.usecases
 
 import android.content.Context
-import com.door43.OnProgressListener
 import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
 import com.door43.translationstudio.R
@@ -16,9 +15,9 @@ class SearchGogsRepositories(
         uid: Int,
         query: String,
         limit: Int,
-        progressListener: OnProgressListener? = null
+        onProgress: (Float, String?) -> Unit
     ): List<Repository> {
-        progressListener?.onProgress(-1f, "Searching for repositories")
+        onProgress(-1f, "Searching for repositories")
         val repositories = arrayListOf<Repository>()
 
         val repoQuery = query.ifEmpty { "_" }

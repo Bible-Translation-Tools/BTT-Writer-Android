@@ -125,9 +125,13 @@ fun SourceItemRow(
         if (item.downloaded) {
             Spacer(modifier = Modifier.width(16.dp))
             Icon(
-                imageVector = if (item.selected) Icons.Default.CheckBox else Icons.Default.CheckBoxOutlineBlank,
+                imageVector = if (item.selected) {
+                    Icons.Default.CheckBox
+                } else Icons.Default.CheckBoxOutlineBlank,
                 contentDescription = null,
-                tint = if (item.selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                tint = if (item.selected) {
+                    MaterialTheme.colorScheme.primary
+                } else MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(24.dp)
             )
         }

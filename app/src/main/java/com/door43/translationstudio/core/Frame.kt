@@ -3,8 +3,6 @@ package com.door43.translationstudio.core
 import com.door43.translationstudio.rendering.Clickables
 import com.door43.translationstudio.rendering.spannables.USFMVerseSpan
 import com.door43.translationstudio.rendering.spannables.USXVerseSpan
-import org.json.JSONException
-import org.json.JSONObject
 
 data class Frame(
     val id: String,
@@ -16,33 +14,6 @@ data class Frame(
     private var verses: IntArray? = null
 
     companion object {
-        /**
-         * Generates a new frame from JSON
-         */
-        @Throws(JSONException::class)
-        fun generate(chapterId: String, json: JSONObject?): Frame? {
-            if (json == null) return null
-
-            val format = if (json.has("format")) {
-                TranslationFormat.get(json.getString("format"))
-            } else {
-                TranslationFormat.UNKNOWN
-            }
-
-            val img = if (json.has("img")) json.getString("img") else ""
-
-            val complexId = json.getString("id").split("-")
-            val frameId = if (complexId.size > 1) complexId[1] else complexId[0]
-
-            return Frame(
-                frameId,
-                chapterId,
-                json.getString("text"),
-                format,
-                img
-            )
-        }
-
         /**
          * Parses the text for the verse title e.g. 1-5
          */

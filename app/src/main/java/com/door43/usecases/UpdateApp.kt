@@ -1,10 +1,8 @@
 package com.door43.usecases
 
 import android.content.Context
-import android.content.pm.PackageManager
 import android.os.Looper
 import androidx.preference.PreferenceManager
-import com.door43.OnProgressListener
 import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
@@ -12,15 +10,15 @@ import com.door43.data.getPrivatePref
 import com.door43.data.setDefaultPref
 import com.door43.data.setPrivatePref
 import com.door43.translationstudio.App
+import com.door43.translationstudio.BuildConfig
 import com.door43.translationstudio.R
-import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.TargetTranslationMigrator
 import com.door43.translationstudio.core.Translator
 import com.door43.util.FileUtilities
 import kotlinx.io.IOException
-import org.unfoldingword.door43client.Door43Client
-import org.unfoldingword.resourcecontainer.ResourceContainer
 import org.bibletranslationtools.logger.Logger
+import org.bibletranslationtools.resourcecontainer.ResourceContainer
+import org.unfoldingword.door43client.Door43Client
 import java.io.File
 
 class UpdateApp(
@@ -34,34 +32,25 @@ class UpdateApp(
 ) {
     private var updateLibrary = true
 
-    suspend fun execute(progressListener: OnProgressListener? = null) {
+    suspend fun execute(onProgress: (Float, String?) -> Unit) {
         var lastVersionCode = prefRepository.getPrivatePref(
             "last_version_code",
             0
         )
         val newInstall = lastVersionCode == 0
 
-        val pInfo = try {
-            context.packageManager.getPackageInfo(context.packageName, 0)
-        } catch (e: PackageManager.NameNotFoundException) {
-            e.printStackTrace()
-            null
-        }
+        // use current version if fresh install
+        lastVersionCode = if (lastVersionCode == 0) BuildConfig.VERSION_CODE else lastVersionCode
 
-        pInfo?.let { info ->
-            // use current version if fresh install
-            lastVersionCode = if (lastVersionCode == 0) info.versionCode else lastVersionCode
+        // record latest version
+        prefRepository.setPrivatePref("last_version_code", BuildConfig.VERSION_CODE)
 
-            // record latest version
-            prefRepository.setPrivatePref("last_version_code", pInfo.versionCode)
-
-            // check if update is possible
-            if (info.versionCode > lastVersionCode) {
-                performUpdates(lastVersionCode, progressListener)
-            } else {
-                // update if not deployed or if a fresh install
-                updateLibrary = !library.isLibraryDeployed || newInstall
-            }
+        // check if update is possible
+        if (BuildConfig.VERSION_CODE > lastVersionCode) {
+            performUpdates(lastVersionCode, onProgress)
+        } else {
+            // update if not deployed or if a fresh install
+            updateLibrary = !library.isLibraryDeployed || newInstall
         }
 
         if (updateLibrary) {
@@ -130,13 +119,13 @@ class UpdateApp(
      * @param lastVersion
      * @param progressListener
      */
-    private fun performUpdates(lastVersion: Int, progressListener: OnProgressListener?) {
+    private fun performUpdates(lastVersion: Int, onProgress: (Float, String?) -> Unit) {
         // perform migrations
         if (lastVersion < 87) {
-            upgradePre87(progressListener)
+            upgradePre87(onProgress)
         }
         if (lastVersion < 103) {
-            upgradePre103(progressListener)
+            upgradePre103(onProgress)
         }
         if (lastVersion < 111) {
             upgradePre111()
@@ -155,7 +144,7 @@ class UpdateApp(
         }
 
         if (lastVersion < 175) {
-            upgradePre175(progressListener)
+            upgradePre175(onProgress)
         }
 
         // this should always be the latest version in which the library was updated
@@ -211,8 +200,8 @@ class UpdateApp(
     private fun updateBuildNumbers() {
         for (tt in translator.targetTranslations) {
             try {
-                TargetTranslation.updateGenerator(context, tt)
-            } catch (e: java.lang.Exception) {
+                tt.updateGenerator(BuildConfig.VERSION_CODE.toString())
+            } catch (_: java.lang.Exception) {
                 Logger.e(
                     this.javaClass.name,
                     "Failed to update the generator in the target translation " + tt.id
@@ -258,8 +247,8 @@ class UpdateApp(
      * Major changes.
      * Moved to the new object management system.
      */
-    private fun upgradePre103(progressListener: OnProgressListener?) {
-        progressListener?.onProgress(-1f, "Updating translations")
+    private fun upgradePre103(onProgress: (Float, String?) -> Unit) {
+        onProgress(-1f, "Updating translations")
         Logger.i(this.javaClass.name, "Upgrading source data management from pre 103")
 
         // migrate target translations and profile
@@ -305,8 +294,8 @@ class UpdateApp(
     /**
      * Change default font to noto because most of the others do not work
      */
-    private fun upgradePre87(progressListener: OnProgressListener?) {
-        progressListener?.onProgress(-1f, "Updating fonts")
+    private fun upgradePre87(onProgress: (Float, String?) -> Unit) {
+        onProgress(-1f, "Updating fonts")
         Logger.i(this.javaClass.name, "Upgrading fonts from pre 87")
 
         prefRepository.setDefaultPref(
@@ -318,8 +307,8 @@ class UpdateApp(
     /**
      * "NotoSans-Regular.ttf" font has been removed, replace with new default font
      */
-    private fun upgradePre175(progressListener: OnProgressListener?) {
-        progressListener?.onProgress(-1f, "Updating fonts")
+    private fun upgradePre175(onProgress: (Float, String?) -> Unit) {
+        onProgress(-1f, "Updating fonts")
         Logger.i(this.javaClass.name, "Upgrading fonts from pre 175")
         // this has been removed, replace with new default font
         val oldDefault = "NotoSans-Regular.ttf"

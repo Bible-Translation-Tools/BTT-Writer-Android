@@ -30,8 +30,8 @@ import com.itextpdf.text.pdf.PdfTemplate
 import com.itextpdf.text.pdf.PdfWriter
 import com.itextpdf.text.pdf.draw.LineSeparator
 import com.itextpdf.text.pdf.draw.VerticalPositionMark
+import org.bibletranslationtools.resourcecontainer.ResourceContainer
 import org.unfoldingword.door43client.Door43Client
-import org.unfoldingword.resourcecontainer.ResourceContainer
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream

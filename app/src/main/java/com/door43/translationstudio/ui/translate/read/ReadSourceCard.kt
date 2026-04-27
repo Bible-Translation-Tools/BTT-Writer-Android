@@ -29,7 +29,7 @@ import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.getComposeTextStyle
 import com.door43.translationstudio.ui.dialogs.source.SourceTabItem
 import com.door43.translationstudio.ui.translate.components.SourceTabRow
-import org.unfoldingword.resourcecontainer.ResourceContainer
+import org.bibletranslationtools.resourcecontainer.ResourceContainer
 
 @Composable
 fun ReadSourceCard(

@@ -9,10 +9,9 @@ import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.core.Validation
 import com.door43.util.StringUtilities
 import com.door43.util.sortNumerically
-import org.json.JSONException
-import org.unfoldingword.door43client.Door43Client
-import org.unfoldingword.resourcecontainer.ResourceContainer
 import org.bibletranslationtools.logger.Logger
+import org.bibletranslationtools.resourcecontainer.ResourceContainer
+import org.unfoldingword.door43client.Door43Client
 
 class ValidateProject(
     private val context: Context,
@@ -39,8 +38,8 @@ class ValidateProject(
             }
 
             val sourceFormat = try {
-                TranslationFormat.parse(container.info.getString("content_mime_type"))
-            } catch (e: JSONException) {
+                TranslationFormat.parse(container.info.contentMimeType)
+            } catch (e: Exception) {
                 Logger.e(
                     "ValidationTask",
                     "Failed to read the translation format from the container",

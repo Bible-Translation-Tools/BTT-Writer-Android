@@ -4,20 +4,21 @@ import android.content.Context
 import com.door43.translationstudio.network.GetRequest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.json.JSONArray
-import org.json.JSONException
-import org.json.JSONObject
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import org.bibletranslationtools.resourcecontainer.ContainerTools
+import org.bibletranslationtools.resourcecontainer.PackageInfo
+import org.bibletranslationtools.resourcecontainer.Resource
+import org.bibletranslationtools.resourcecontainer.ResourceContainer
+import org.bibletranslationtools.resourcecontainer.errors.InvalidRCException
+import org.bibletranslationtools.resourcecontainer.errors.MissingRCException
+import org.bibletranslationtools.resourcecontainer.json
 import org.unfoldingword.door43client.models.Catalog
 import org.unfoldingword.door43client.models.Category
-import org.unfoldingword.door43client.models.Question
-import org.unfoldingword.door43client.models.Questionnaire
 import org.unfoldingword.door43client.models.SourceLanguage
 import org.unfoldingword.door43client.models.TargetLanguage
-import org.unfoldingword.resourcecontainer.ContainerTools
-import org.unfoldingword.resourcecontainer.Resource
-import org.unfoldingword.resourcecontainer.ResourceContainer
-import org.unfoldingword.resourcecontainer.errors.InvalidRCException
-import org.unfoldingword.resourcecontainer.errors.MissingRCException
+import org.unfoldingword.door43client.models.toLanguage
 import java.io.File
 import java.io.IOException
 
@@ -97,21 +98,18 @@ internal class API @Throws(IOException::class) constructor(
      * Indexes the source content.
      *
      * @param url the entry resource api catalog
-     * @param listener an optional progress listener
+     * @param onProgress an optional progress listener
      */
     @Throws(Exception::class)
-    suspend fun updateSources(url: String, listener: OnProgressListener?) {
-        // Download catalog entry point
-        val data = withContext(networkDispatcher) {
-            GetRequest(url).read()
-        }
-        // Download all language/resource data
-        val catalogData = withContext(networkDispatcher) {
-            LegacyTools.downloadCatalogData(data, listener)
+    suspend fun updateSources(url: String, onProgress: (Float, String?) -> Unit) {
+        // Download catalog data
+        val projects = withContext(networkDispatcher) {
+            val data  = GetRequest(url).read()
+            LegacyTools.downloadCatalog(Json.decodeFromString(data), onProgress)
         }
         // Index everything in one transaction
         withTransaction {
-            LegacyTools.indexCatalogData(library, catalogData)
+            LegacyTools.indexCatalog(library, projects)
         }
     }
 
@@ -122,13 +120,13 @@ internal class API @Throws(IOException::class) constructor(
      * a single short-lived transaction.
      */
     @Throws(Exception::class)
-    suspend fun updateChunks(listener: OnProgressListener?) {
+    suspend fun updateChunks(onProgress: (Float, String?) -> Unit) {
         // Collect chunk URLs and versification
         val (markers, versificationRowId) = withContext(dbDispatcher) {
             val result = mutableMapOf<String, String>()
             for (l in library.getSourceLanguages()) {
                 for (p in library.getProjects(l.slug)) {
-                    if (!p.chunksUrl.isNullOrEmpty()) {
+                    if (p.chunksUrl.isNotEmpty()) {
                         result[p.slug] = p.chunksUrl
                     }
                 }
@@ -144,7 +142,7 @@ internal class API @Throws(IOException::class) constructor(
 
         // Download ALL chunk data
         val downloadedChunks = withContext(networkDispatcher) {
-            LegacyTools.downloadAllChunks(markers, listener)
+            LegacyTools.downloadAllChunks(markers, onProgress)
         }
 
         // Write everything in one fast transaction
@@ -157,10 +155,10 @@ internal class API @Throws(IOException::class) constructor(
      * Updates all the global catalogs.
      *
      * @param force Should we update/insert catalogs
-     * @param listener Progress Listener
+     * @param onProgress Progress Listener
      */
     @Throws(Exception::class)
-    suspend fun updateCatalogs(force: Boolean, listener: OnProgressListener?) {
+    suspend fun updateCatalogs(force: Boolean, onProgress: (Float, String?) -> Unit) {
         if (force) {
             withContext(dbDispatcher) {
                 LegacyTools.injectGlobalCatalogs(library, globalCatalogHost)
@@ -170,7 +168,7 @@ internal class API @Throws(IOException::class) constructor(
             library.getCatalogs()
         }
         for (c in catalogs) {
-            updateCatalog(c, listener)
+            updateCatalog(c, onProgress)
         }
     }
 
@@ -185,7 +183,7 @@ internal class API @Throws(IOException::class) constructor(
         val c = withContext(dbDispatcher) {
             library.getCatalog(slug)
         }
-        updateCatalog(c, null)
+        c?.let { updateCatalog(it) }
     }
 
     fun updateLanguageUrl(url: String) {
@@ -198,9 +196,10 @@ internal class API @Throws(IOException::class) constructor(
      * Pattern: download first (network), then index (DB transaction).
      */
     @Throws(Exception::class)
-    private suspend fun updateCatalog(catalog: Catalog?, listener: OnProgressListener?) {
-        if (catalog == null) throw Exception("Unknown catalog")
-
+    private suspend fun updateCatalog(
+        catalog: Catalog,
+        onProgress: ((Float, String?) -> Unit) = {_,_ ->}
+    ) {
         // Download catalog
         val data = withContext(networkDispatcher) {
             GetRequest(catalog.url).read()
@@ -211,19 +210,7 @@ internal class API @Throws(IOException::class) constructor(
             when (catalog.slug) {
                 "langnames" -> {
                     library.clearTargetLanguages()
-                    indexTargetLanguageCatalog(data, listener)
-                }
-                "new-language-questions" -> {
-                    library.clearNewLanguageQuestions()
-                    indexNewLanguageQuestionsCatalog(data, listener)
-                }
-                "temp-langnames" -> {
-                    library.clearTempLanguages()
-                    indexTempLanguagesCatalog(data, listener)
-                }
-                "approved-temp-langnames" -> {
-                    library.clearApprovedTempLanguages()
-                    indexApprovedTempLanguagesCatalog(data, listener)
+                    indexTargetLanguageCatalog(data, onProgress)
                 }
                 else -> throw Exception("Parsing this catalog has not been implemented")
             }
@@ -231,110 +218,18 @@ internal class API @Throws(IOException::class) constructor(
     }
 
     @Throws(Exception::class)
-    private fun indexTargetLanguageCatalog(data: String, listener: OnProgressListener?) {
-        val languages = JSONArray(data)
-        for (i in 0 until languages.length()) {
-            val l = languages.getJSONObject(i)
-            val isGateway = if (l.has("gl")) l.getBoolean("gl") else false
-            val language = TargetLanguage(
-                l.getString("lc"), l.getString("ln"),
-                l.getString("ang"), l.getString("ld"), l.getString("lr"), isGateway
-            )
-            if (!library.addTargetLanguage(language)) {
+    private fun indexTargetLanguageCatalog(
+        data: String,
+        onProgress: (Float, String?) -> Unit
+    ) {
+        val languages = json.decodeFromString<List<CatalogLanguage>>(data)
+        languages.forEachIndexed { index, language ->
+            if (!library.addTargetLanguage(language.toTargetLanguage())) {
                 logListener.onWarning("Failed to add the target language: " + language.slug)
             }
-            if (listener != null) {
-                if (!listener.onProgress("langnames", languages.length(), i + 1)) break
-            }
-            library.yieldSafely()
-        }
-    }
 
-    @Throws(Exception::class)
-    private fun indexNewLanguageQuestionsCatalog(data: String, listener: OnProgressListener?) {
-        val obj = JSONObject(data)
-        val languages = obj.getJSONArray("languages")
-        for (i in 0 until languages.length()) {
-            val qJson = languages.getJSONObject(i)
-            val dataFields = HashMap<String, Long>()
-            if (qJson.has("language_data")) {
-                val dataFieldJson = qJson.getJSONObject("language_data")
-                val keyIter = dataFieldJson.keys()
-                while (keyIter.hasNext()) {
-                    val key = keyIter.next()
-                    dataFields[key] = dataFieldJson.getLong(key)
-                }
-            }
-            val questionnaire = Questionnaire(
-                qJson.getString("slug"),
-                qJson.getString("name"),
-                qJson.getString("dir"),
-                qJson.getLong("questionnaire_id"),
-                dataFields
-            )
-            val questionnaireId = library.addQuestionnaire(questionnaire)
+            onProgress((index + 1) / languages.size.toFloat(), "langnames")
 
-            val questionsArray = qJson.getJSONArray("questions")
-            for (j in 0 until questionsArray.length()) {
-                val questionJson = questionsArray.getJSONObject(j)
-                val dependsOnId = if (questionJson.isNull("depends_on")) -1L else questionJson.getLong("depends_on")
-                val question = Question(
-                    questionJson.getString("text"),
-                    questionJson.getString("help"),
-                    questionJson.getBoolean("required"),
-                    Question.InputType.get(questionJson.getString("input_type")),
-                    questionJson.getInt("sort"),
-                    dependsOnId, questionJson.getLong("id")
-                )
-                library.addQuestion(question, questionnaireId)
-
-                if (languages.length() == 1 && listener != null) {
-                    if (!listener.onProgress("new-language-questions", questionsArray.length(), j + 1)) break
-                }
-                library.yieldSafely()
-            }
-            if (languages.length() > 1 && listener != null) {
-                if (!listener.onProgress("new-language-questions", questionsArray.length(), i + 1)) break
-            }
-            library.yieldSafely()
-        }
-    }
-
-    @Throws(Exception::class)
-    private fun indexTempLanguagesCatalog(data: String, listener: OnProgressListener?) {
-        val languages = JSONArray(data)
-        for (i in 0 until languages.length()) {
-            val l = languages.getJSONObject(i)
-            val isGateway = if (l.has("gl")) l.getBoolean("gl") else false
-            val language = TargetLanguage(
-                l.getString("lc"), l.getString("ln"),
-                l.getString("ang"), l.getString("ld"), l.getString("lr"), isGateway
-            )
-            if (!library.addTempTargetLanguage(language)) {
-                logListener.onWarning("Failed to add the temp target language: " + language.slug)
-            }
-            if (listener != null) {
-                if (!listener.onProgress("temp-langnames", languages.length(), i + 1)) break
-            }
-            library.yieldSafely()
-        }
-    }
-
-    @Throws(Exception::class)
-    private fun indexApprovedTempLanguagesCatalog(data: String, listener: OnProgressListener?) {
-        val languages = JSONArray(data)
-        for (i in 0 until languages.length()) {
-            val l = languages.getJSONObject(i)
-            val keys = l.keys()
-            while (keys.hasNext()) {
-                val key = keys.next()
-                if (!library.setApprovedTargetLanguage(key, l.getString(key))) {
-                    logListener.onWarning("Failed to approve the temp target language: $key as ${l.getString(key)}")
-                }
-            }
-            if (listener != null) {
-                if (!listener.onProgress("approved-temp-langnames", languages.length(), i + 1)) break
-            }
             library.yieldSafely()
         }
     }
@@ -351,31 +246,12 @@ internal class API @Throws(IOException::class) constructor(
         projectSlug: String,
         resourceSlug: String
     ): ResourceContainer {
-        val path = downloadFutureCompatibleResourceContainer(sourceLanguageSlug, projectSlug, resourceSlug)
-
         withContext(dbDispatcher) {
             library.getResource(sourceLanguageSlug, projectSlug, resourceSlug)
         } ?: run {
-            FileUtil.deleteQuietly(path)
-            throw Exception("Unknown resource")
+            throw Exception("Unknown resource: ${sourceLanguageSlug}_${projectSlug}_$resourceSlug")
         }
 
-        val data = FileUtil.readFileToString(path)
-        FileUtil.deleteQuietly(path)
-        return convertLegacyResource(sourceLanguageSlug, projectSlug, resourceSlug, data)
-    }
-
-    /**
-     * Downloads a resource container.
-     * This expects a correctly formatted resource container
-     * and will download it directly to the disk.
-     */
-    @Throws(Exception::class)
-    suspend fun downloadFutureCompatibleResourceContainer(
-        sourceLanguageSlug: String,
-        projectSlug: String,
-        resourceSlug: String
-    ): File {
         // Read resource metadata
         val (containerFormat, containerSlug) = withContext(dbDispatcher) {
             val r = library.getResource(sourceLanguageSlug, projectSlug, resourceSlug)
@@ -387,14 +263,14 @@ internal class API @Throws(IOException::class) constructor(
         }
 
         val containerDir = File(resourceDir, containerSlug)
-        val destFile = File(resourceDir, "$containerSlug.${ResourceContainer.fileExtension}")
+        val destFile = File(resourceDir, "$containerSlug.${ResourceContainer.FILE_EXTENSION}")
 
         FileUtil.deleteQuietly(destFile)
         FileUtil.deleteQuietly(containerDir)
         destFile.parentFile?.mkdirs()
 
         val url = containerFormat.url
-        if (url.isNullOrEmpty()) throw Exception("Missing resource format url")
+        if (url.isEmpty()) throw Exception("Missing resource format url")
 
         // Download
         withContext(networkDispatcher) {
@@ -411,15 +287,12 @@ internal class API @Throws(IOException::class) constructor(
             }
         }
 
-        return destFile
+        val data = FileUtil.readFileToString(destFile)
+        FileUtil.deleteQuietly(destFile)
+
+        return convertLegacyResource(sourceLanguageSlug, projectSlug, resourceSlug, data)
     }
 
-    /**
-     * Converts a legacy resource catalog into a resource container.
-     *
-     * This will be deprecated once the api is updated to support proper resource containers.
-     */
-    @Deprecated("This will be deprecated once the api is updated to support proper resource containers.")
     @Throws(Exception::class)
     suspend fun convertLegacyResource(
         sourceLanguageSlug: String,
@@ -431,87 +304,67 @@ internal class API @Throws(IOException::class) constructor(
         val containerDir = File(resourceDir, containerSlug)
 
         // Gather all metadata from DB
-        val (properties, legacyUrl) = withContext(dbDispatcher) {
+        val (packageInfo, legacyUrl) = withContext(dbDispatcher) {
             val language = library.getSourceLanguage(sourceLanguageSlug)
                 ?: throw Exception("Missing language")
-            val lJson = language.toJSON()
-
             val project = library.getProject(sourceLanguageSlug, projectSlug)
                 ?: throw Exception("Missing project")
-            val pJson = project.toJSON()
-            val pCatJson = JSONArray()
             val categories = library.getCategories(sourceLanguageSlug, projectSlug)
-            for (cat in categories) {
-                pCatJson.put(cat.slug)
-            }
-            pJson.put("categories", pCatJson)
-
             val resource = library.getResource(sourceLanguageSlug, projectSlug, resourceSlug)
                 ?: throw Exception("Missing resource")
             val format = getResourceContainerFormat(resource.formats)
                 ?: throw Exception("Missing resource container format")
-            val rJson = resource.toJSON()
 
-            val props = JSONObject().apply {
-                put("language", lJson)
-                put("project", pJson)
-                put("resource", rJson)
-                put("modified_at", format.modifiedAt)
-            }
+            val mimeType = if (project.slug != "obs" && resource.type == "book") {
+               "text/usx"
+            } else "text/markdown"
 
-            val url = resource._legacyData[LEGACY_WORDS_ASSIGNMENTS_URL] as? String
-            props to url
+            val packageInfo = PackageInfo(
+                packageVersion = ResourceContainer.VERSION,
+                modifiedAt = format.modifiedAt,
+                contentMimeType = mimeType,
+                language = language.toLanguage(),
+                project = project.copy(categories = categories.map { it.slug }),
+                resource = resource
+            )
+
+            val url = resource.legacyData[LEGACY_WORDS_ASSIGNMENTS_URL] as? String
+            packageInfo to url
         }
+
+        val content = ContainerTools.decodeContent(
+            data,
+            packageInfo.resource.type,
+            packageInfo.resource.slug
+        )
 
         // Download tW assignments
-        if (!legacyUrl.isNullOrEmpty()) {
-            val wordsData = withContext(networkDispatcher) {
-                try {
-                    val request = GetRequest(legacyUrl)
-                    val result = request.read()
-                    if (request.responseCode < 300) result else null
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                    null
-                }
-            }
-
-            if (wordsData != null) {
-                try {
-                    val words = JSONObject(wordsData)
-                    val assignmentsJson = JSONObject()
-                    val chapters = words.getJSONArray("chapters")
-                    for (c in 0 until chapters.length()) {
-                        val chapter = chapters.getJSONObject(c)
-                        val chapterAssignment = JSONObject()
-                        val frames = chapter.getJSONArray("frames")
-                        for (f in 0 until frames.length()) {
-                            val frame = frames.getJSONObject(f)
-                            val frameAssignment = JSONArray()
-                            val items = frame.getJSONArray("items")
-                            for (w in 0 until items.length()) {
-                                val word = items.getJSONObject(w)
-                                val twProjSlug = if (projectSlug == "obs") "bible-obs" else "bible"
-                                frameAssignment.put("//$twProjSlug/tw/${word.getString("id")}")
-                            }
-                            chapterAssignment.put(
-                                LegacyTools.normalizeSlug(frame.getString("id")),
-                                frameAssignment
-                            )
-                        }
-                        assignmentsJson.put(
-                            LegacyTools.normalizeSlug(chapter.getString("id")),
-                            chapterAssignment
-                        )
+        val wordAssignments = try {
+            if (!legacyUrl.isNullOrEmpty()) {
+                withContext(networkDispatcher) {
+                    try {
+                        val request = GetRequest(legacyUrl)
+                        val result = request.read()
+                        if (request.responseCode < 300) result else null
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        null
                     }
-                    properties.put("tw_assignments", assignmentsJson)
-                } catch (e: Exception) {
-                    logListener.onWarning(e.message ?: e.toString())
+                }?.let { wordsData ->
+                    ContainerTools.decodeWordAssignments(wordsData)
                 }
-            }
+            } else null
+        } catch (e: Exception) {
+            logListener.onWarning(e.message ?: e.toString())
+            null
         }
 
-        return ContainerTools.convertResource(data, containerDir, properties)
+        return ContainerTools.convertResource(
+            content,
+            packageInfo,
+            wordAssignments,
+            containerDir
+        )
     }
 
     /**
@@ -532,7 +385,6 @@ internal class API @Throws(IOException::class) constructor(
                 throw InvalidRCException("Unsupported project")
             }
         }
-        if (!rc.info.has("project")) throw InvalidRCException("Missing field: project")
 
         deleteResourceContainer(rc.slug)
         FileUtil.copyDirectory(directory, destination, null)
@@ -543,16 +395,12 @@ internal class API @Throws(IOException::class) constructor(
 
             val categories = ArrayList<Category>()
             try {
-                if (rc.info.has("project") && rc.info.getJSONObject("project").has("categories")) {
-                    val catJson = rc.info.getJSONObject("project").getJSONArray("categories")
-                    for (i in 0 until catJson.length()) {
-                        val catSlug = catJson.getString(i)
-                        val existingCat = library.getCategory(rc.language.slug, catSlug)
-                        val catName = existingCat?.name ?: catSlug
-                        categories.add(Category(catSlug, catName))
-                    }
+                rc.info.project.categories.forEach { category ->
+                    val existingCat = library.getCategory(rc.language.slug, category)
+                    val catName = existingCat?.name ?: category
+                    categories.add(Category(category, catName))
                 }
-            } catch (e: JSONException) {
+            } catch (e: Exception) {
                 e.printStackTrace()
             }
 
@@ -560,17 +408,21 @@ internal class API @Throws(IOException::class) constructor(
             val resource = rc.resource
             resource.addFormat(
                 Resource.Format(
-                    rc.info.getString("package_version"),
-                    resource.type,
-                    rc.modifiedAt,
-                    "",
-                    true
+                    packageVersion = rc.info.packageVersion,
+                    mimeType = resource.type,
+                    modifiedAt = rc.modifiedAt,
+                    url = "",
+                    imported = true
                 )
             )
             library.addResource(resource, projectId)
         }
 
-        return openResourceContainer(rc.language.slug, rc.project.slug, rc.resource.slug)
+        return openResourceContainer(
+            rc.language.slug,
+            rc.project.slug,
+            rc.resource.slug
+        )
     }
 
     /**
@@ -585,7 +437,7 @@ internal class API @Throws(IOException::class) constructor(
     ) {
         val slug = ContainerTools.makeSlug(languageSlug, projectSlug, resourceSlug)
         val srcDir = File(resourceDir, slug)
-        val srcFile = File("$srcDir.${ResourceContainer.fileExtension}")
+        val srcFile = File("$srcDir.${ResourceContainer.FILE_EXTENSION}")
 
         if (!srcFile.exists() && srcDir.isDirectory) ResourceContainer.close(srcDir)
         if (!srcFile.exists()) throw MissingRCException("The resource container could not be found at $srcFile")
@@ -616,7 +468,7 @@ internal class API @Throws(IOException::class) constructor(
     @Throws(Exception::class)
     fun openResourceContainer(containerSlug: String): ResourceContainer {
         val directory = File(resourceDir, containerSlug)
-        val archive = File("$directory.${ResourceContainer.fileExtension}")
+        val archive = File("$directory.${ResourceContainer.FILE_EXTENSION}")
 
         // try to load already-opened container first
         try {
@@ -667,7 +519,7 @@ internal class API @Throws(IOException::class) constructor(
      */
     fun resourceContainerExists(containerSlug: String): Boolean {
         val directory = File(resourceDir, containerSlug)
-        val archive = File("$directory.${ResourceContainer.fileExtension}")
+        val archive = File("$directory.${ResourceContainer.FILE_EXTENSION}")
         return (directory.exists() && directory.isDirectory) || (archive.exists() && archive.isFile)
     }
 
@@ -685,7 +537,7 @@ internal class API @Throws(IOException::class) constructor(
      */
     fun deleteResourceContainer(containerSlug: String) {
         val directory = File(resourceDir, containerSlug)
-        val archive = File("$directory.${ResourceContainer.fileExtension}")
+        val archive = File("$directory.${ResourceContainer.FILE_EXTENSION}")
         if (directory.exists() && directory.isDirectory) {
             FileUtil.deleteQuietly(directory)
         }
@@ -732,8 +584,33 @@ internal class API @Throws(IOException::class) constructor(
          * Returns the first resource container format found in the list.
          */
         private fun getResourceContainerFormat(formats: List<Resource.Format>): Resource.Format? {
-            val regex = "${ResourceContainer.baseMimeType}\\+.+".toRegex()
+            val regex = "${ResourceContainer.BASE_MIME_TYPE}\\+.+".toRegex()
             return formats.firstOrNull { it.mimeType.matches(regex) }
         }
     }
 }
+
+@Serializable
+private data class CatalogLanguage(
+    @SerialName("lc")
+    val slug: String,
+    @SerialName("ln")
+    val name: String,
+    @SerialName("ld")
+    val direction: String,
+    @SerialName("ang")
+    val anglicized: String,
+    @SerialName("lr")
+    val region: String,
+    @SerialName("gl")
+    val isGateway: Boolean = false
+)
+
+private fun CatalogLanguage.toTargetLanguage() = TargetLanguage(
+    slug = slug,
+    name = name,
+    direction = direction,
+    anglicizedName = anglicized,
+    region = region,
+    isGatewayLanguage = isGateway
+)

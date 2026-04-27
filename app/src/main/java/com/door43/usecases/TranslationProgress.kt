@@ -3,9 +3,9 @@ package com.door43.usecases
 import com.door43.translationstudio.App
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.Translator
+import org.bibletranslationtools.resourcecontainer.ResourceContainer
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.door43client.models.Translation
-import org.unfoldingword.resourcecontainer.ResourceContainer
 
 class TranslationProgress(
     private val library: Door43Client,

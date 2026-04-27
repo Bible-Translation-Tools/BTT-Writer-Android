@@ -1,12 +1,11 @@
 package com.door43.usecases
 
 import android.content.Context
-import com.door43.OnProgressListener
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.Translator
-import org.unfoldingword.resourcecontainer.ResourceContainer
+import org.bibletranslationtools.resourcecontainer.ResourceContainer
 
 class ImportDraft(
     private val context: Context,
@@ -15,9 +14,9 @@ class ImportDraft(
 ) {
     fun execute(
         draftTranslation: ResourceContainer,
-        progressListener: OnProgressListener? = null
+        onProgress: (Float, String?) -> Unit
     ): Result {
-        progressListener?.onProgress(-1f, context.getString(R.string.importing_draft))
+        onProgress(-1f, context.getString(R.string.importing_draft))
 
         val targetTranslation = translator.importDraftTranslation(
             profile.nativeSpeaker,

@@ -1,10 +1,8 @@
 package com.door43.translationstudio.core
 
 import android.content.Context
-import android.content.pm.PackageInfo
 import android.net.Uri
 import android.text.TextUtils
-import com.door43.OnProgressListener
 import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.R
@@ -17,10 +15,10 @@ import com.door43.util.Zip
 import com.door43.util.sortNumerically
 import com.door43.util.sortNumericallyComparator
 import org.bibletranslationtools.logger.Logger
+import org.bibletranslationtools.resourcecontainer.Resource
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.door43client.models.ChunkMarker
 import org.unfoldingword.door43client.models.TargetLanguage
-import org.unfoldingword.resourcecontainer.Resource
 import java.io.File
 import java.io.FileInputStream
 import java.io.InputStream
@@ -37,7 +35,7 @@ class ProcessUSFM {
     private val library: Door43Client
     private val assetsProvider: AssetsProvider
     private var targetLanguage: TargetLanguage? = null
-    private var progressListener: OnProgressListener? = null
+    private var onProgress: (Float, String?) -> Unit = { _, _->}
 
     private var tempDir: File? = null
     private var tempDest: File? = null
@@ -81,7 +79,7 @@ class ProcessUSFM {
         library: Door43Client,
         assetsProvider: AssetsProvider,
         targetLanguage: TargetLanguage?,
-        progressListener: OnProgressListener?
+        onProgress: (Float, String?) -> Unit = {_,_->}
     ) {
         this.context = context
         this.directoryProvider = directoryProvider
@@ -89,7 +87,7 @@ class ProcessUSFM {
         this.library = library
         this.assetsProvider = assetsProvider
         this.targetLanguage = targetLanguage
-        this.progressListener = progressListener
+        this.onProgress = onProgress
     }
 
     /**
@@ -105,7 +103,7 @@ class ProcessUSFM {
         assetsProvider: AssetsProvider,
         targetLanguage: TargetLanguage,
         file: File,
-        progressListener: OnProgressListener?
+        onProgress: (Float, String?) -> Unit = {_,_->}
     ): this(
         context,
         directoryProvider,
@@ -113,7 +111,7 @@ class ProcessUSFM {
         library,
         assetsProvider,
         targetLanguage,
-        progressListener
+        onProgress
     ) {
         createTempFolders()
         readFile(file)
@@ -127,7 +125,7 @@ class ProcessUSFM {
         assetsProvider: AssetsProvider,
         targetLanguage: TargetLanguage,
         uri: Uri,
-        progressListener: OnProgressListener?
+        onProgress: (Float, String?) -> Unit = {_,_->}
     ): this(
         context,
         directoryProvider,
@@ -135,7 +133,7 @@ class ProcessUSFM {
         library,
         assetsProvider,
         targetLanguage,
-        progressListener
+        onProgress
     ) {
         createTempFolders()
         readUri(uri)
@@ -149,7 +147,7 @@ class ProcessUSFM {
         assetsProvider: AssetsProvider,
         targetLanguage: TargetLanguage,
         rcPath: String,
-        progressListener: OnProgressListener?
+        onProgress: (Float, String?) -> Unit = {_,_->}
     ): this(
         context,
         directoryProvider,
@@ -157,7 +155,7 @@ class ProcessUSFM {
         library,
         assetsProvider,
         targetLanguage,
-        progressListener
+        onProgress
     ) {
         createTempFolders()
         readResourceFile(rcPath)
@@ -170,7 +168,7 @@ class ProcessUSFM {
         private val library: Door43Client,
         private val assetsProvider: AssetsProvider
     ) {
-        private var progressListener: OnProgressListener? = null
+        private var onProgress: (Float, String?) -> Unit = {_,_->}
         private var targetLanguage: TargetLanguage? = null
         private var file: File? = null
         private var uri: Uri? = null
@@ -179,33 +177,33 @@ class ProcessUSFM {
         fun fromFile(
             targetLanguage: TargetLanguage,
             file: File,
-            progressListener: OnProgressListener? = null
+            onProgress: (Float, String?) -> Unit = {_,_->}
         ): Builder {
             this.targetLanguage = targetLanguage
             this.file = file
-            this.progressListener = progressListener
+            this.onProgress = onProgress
             return this
         }
 
         fun fromUri(
             targetLanguage: TargetLanguage,
             uri: Uri,
-            progressListener: OnProgressListener? = null
+            onProgress: (Float, String?) -> Unit = {_,_->}
         ): Builder {
             this.targetLanguage = targetLanguage
             this.uri = uri
-            this.progressListener = progressListener
+            this.onProgress = onProgress
             return this
         }
 
         fun fromRc(
             targetLanguage: TargetLanguage,
             filePath: String,
-            progressListener: OnProgressListener? = null
+            onProgress: (Float, String?) -> Unit = {_,_->}
         ): Builder {
             this.targetLanguage = targetLanguage
             this.rcPath = filePath
-            this.progressListener = progressListener
+            this.onProgress = onProgress
             return this
         }
 
@@ -225,7 +223,7 @@ class ProcessUSFM {
                         assetsProvider,
                         currentLang,
                         currentFile,
-                        progressListener
+                        onProgress
                     )
                     currentLang != null && currentUri != null -> ProcessUSFM(
                         context,
@@ -235,7 +233,7 @@ class ProcessUSFM {
                         assetsProvider,
                         currentLang,
                         currentUri,
-                        progressListener
+                        onProgress
                     )
                     currentLang != null && currentRcPath != null -> ProcessUSFM(
                         context,
@@ -245,7 +243,7 @@ class ProcessUSFM {
                         assetsProvider,
                         currentLang,
                         currentRcPath,
-                        progressListener
+                        onProgress
                     )
                     else -> null
                 }
@@ -289,7 +287,7 @@ class ProcessUSFM {
         if (!isMissing(bookShortName)) {
             status = "$bookShortName - $status"
         }
-        progressListener?.onProgress(progress, status)
+        onProgress(progress, status)
     }
 
     /**
@@ -762,9 +760,7 @@ class ProcessUSFM {
      * create the manifest for a project
      */
     private fun buildManifest(): Boolean {
-        val pInfo: PackageInfo
         try {
-            pInfo = context.packageManager.getPackageInfo(context.packageName, 0)
             val projectId = bookShortName
             val resourceSlug = Resource.REGULAR_SLUG
             TargetTranslation.create(
@@ -775,7 +771,6 @@ class ProcessUSFM {
                 projectId!!,
                 ResourceType.TEXT,
                 resourceSlug,
-                pInfo,
                 projectFolder!!
             )
         } catch (e: Exception) {
@@ -813,6 +808,7 @@ class ProcessUSFM {
             val chapterNumber = matcher.group(1) ?: "0" // chapter number for next section
 
             currentChapter = chapterNumber.toInt()
+
             if (currentChapter > chapters.size) { //make sure in range
                 break
             }

@@ -1,205 +1,124 @@
 package com.door43.translationstudio.core
 
-import android.content.Context
 import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
+import com.door43.translationstudio.core.manifest.Manifest
+import com.door43.translationstudio.core.manifest.toType
 import com.door43.translationstudio.rendering.USXtoUSFMConverter
-import com.door43.util.FileUtilities.copyInputStreamToFile
-import com.door43.util.FileUtilities.deleteQuietly
-import com.door43.util.FileUtilities.moveOrCopyQuietly
-import com.door43.util.FileUtilities.readFileToString
-import com.door43.util.FileUtilities.safeDelete
-import com.door43.util.FileUtilities.writeStringToFile
-import com.door43.util.Manifest
-import org.json.JSONArray
-import org.json.JSONException
-import org.json.JSONObject
-import org.unfoldingword.door43client.Door43Client
-import org.unfoldingword.resourcecontainer.Resource
-import org.unfoldingword.resourcecontainer.ResourceContainer
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.decodeFromJsonElement
+import kotlinx.serialization.json.intOrNull
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import org.bibletranslationtools.logger.Logger
+import org.bibletranslationtools.resourcecontainer.ResourceContainer
+import org.unfoldingword.door43client.Door43Client
+import org.unfoldingword.door43client.models.TargetLanguage
 import java.io.File
-import java.io.IOException
-import java.util.Arrays
-import java.util.Locale
 
-/**
- * Created by joel on 11/4/2015.
- */
 class TargetTranslationMigrator(
-    private val context: Context,
     private val directoryProvider: IDirectoryProvider,
     private val library: Door43Client,
-    private val assetProvider: AssetsProvider
+    private val assetProvider: AssetsProvider,
 ) {
-
     companion object {
         private const val MANIFEST_FILE = "manifest.json"
-        const val LICENSE: String = "LICENSE"
-        const val TAG: String = "TargetTranslationMigrator"
+        const val LICENSE = "LICENSE"
+        const val TAG = "TargetTranslationMigrator"
+
+        private val json = Json {
+            prettyPrint = true
+            prettyPrintIndent = "  "
+            ignoreUnknownKeys = true
+            isLenient = true
+        }
     }
 
-    /**
-     * Performs a migration on a manifest object.
-     * We just throw it into a temporary directory and run the normal migration on it.
-     * @param manifestJson
-     * @return
-     */
-    fun migrateManifest(manifestJson: JSONObject): JSONObject? {
+    fun migrateManifest(manifest: String): String? {
         val tempDir = directoryProvider.createTempDir(System.currentTimeMillis().toString())
-        // TRICKY: the migration can change the name of the translation dir so we nest it to avoid conflicts.
         val fakeTranslationDir = File(tempDir, "translation")
         fakeTranslationDir.mkdirs()
-        var migratedManifest: JSONObject? = null
-        try {
+        return try {
             val manifestFile = File(fakeTranslationDir, MANIFEST_FILE)
-            writeStringToFile(manifestFile, manifestJson.toString())
+            manifestFile.writeText(manifest)
             migrate(fakeTranslationDir, manifestFile)
-            migratedManifest = JSONObject(
-                readFileToString(manifestFile)
-            )
+            manifestFile.readText()
         } catch (e: Exception) {
             e.printStackTrace()
+            null
         } finally {
-            // clean up
-            deleteQuietly(tempDir)
+            tempDir.deleteRecursively()
         }
-        return migratedManifest
     }
 
-    /**
-     * Performs necessary migration operations on a target translation
-     * @param targetTranslationDir
-     * @return the target translation dir. Null if the migration failed
-     */
     fun migrate(
         targetTranslationDir: File,
-        manifestFile: File = File(targetTranslationDir, MANIFEST_FILE)
+        manifestFile: File = File(targetTranslationDir, MANIFEST_FILE),
     ): File? {
-        var migratedDir: File?
-        try {
-            val manifest = JSONObject(readFileToString(manifestFile))
-            var packageVersion = 2 // default to version 2 if no package version is available
-            if (manifest.has("package_version")) {
-                packageVersion = manifest.getInt("package_version")
-            }
-            migratedDir = when (packageVersion) {
-                2 -> {
-                    v2(targetTranslationDir)
-                    v3(targetTranslationDir)
-                    v4(targetTranslationDir)
-                    v5(targetTranslationDir)
-                    v6(targetTranslationDir)
-                    v7(targetTranslationDir)
-                    v8(targetTranslationDir)
-                }
-                3 -> {
-                    v3(targetTranslationDir)
-                    v4(targetTranslationDir)
-                    v5(targetTranslationDir)
-                    v6(targetTranslationDir)
-                    v7(targetTranslationDir)
-                    v8(targetTranslationDir)
-                }
-                4 -> {
-                    v4(targetTranslationDir)
-                    v5(targetTranslationDir)
-                    v6(targetTranslationDir)
-                    v7(targetTranslationDir)
-                    v8(targetTranslationDir)
-                }
-                5 -> {
-                    v5(targetTranslationDir)
-                    v6(targetTranslationDir)
-                    v7(targetTranslationDir)
-                    v8(targetTranslationDir)
-                }
-                6 -> {
-                    v6(targetTranslationDir)
-                    v7(targetTranslationDir)
-                    v8(targetTranslationDir)
-                }
-                7 -> {
-                    v7(targetTranslationDir)
-                    v8(targetTranslationDir)
-                }
+        return try {
+            val raw = json.parseToJsonElement(manifestFile.readText()).jsonObject
+            val packageVersion = raw["package_version"]?.jsonPrimitive?.intOrNull ?: 2
+
+            var migratedDir: File? = when (packageVersion) {
+                2 -> v8(v7(v6(v5(v4(v3(v2(targetTranslationDir)))))))
+                3 -> v8(v7(v6(v5(v4(v3(targetTranslationDir))))))
+                4 -> v8(v7(v6(v5(v4(targetTranslationDir)))))
+                5 -> v8(v7(v6(v5(targetTranslationDir))))
+                6 -> v8(v7(v6(targetTranslationDir)))
+                7 -> v8(v7(targetTranslationDir))
                 8 -> v8(targetTranslationDir)
                 else -> targetTranslationDir
             }
+
             if (!validateTranslationType(targetTranslationDir)) {
                 migratedDir = null
             }
+            migratedDir
         } catch (e: Exception) {
             e.printStackTrace()
-            migratedDir = null
-        }
-        return migratedDir
-    }
-
-    /**
-     * current version
-     * @param path the path to the translation directory
-     * @return the path to the translation directory
-     * @throws Exception
-     */
-    @Throws(Exception::class)
-    private fun v8(path: File): File {
-        return path
-    }
-
-    /**
-     * Adds resource name
-     * @param path the path to the translation directory
-     * @return the path to the translation directory
-     * @throws Exception
-     */
-    @Throws(Exception::class)
-    private fun v7(path: File): File {
-        val manifestFile = File(path, MANIFEST_FILE)
-        val manifest = JSONObject(readFileToString(manifestFile))
-        val resource = manifest.getJSONObject("resource")
-        val resourceId = resource.getString("id")
-        var resourceName = try {
-            resource.getString("name")
-        } catch (_: JSONException) {
             null
         }
+    }
 
-        if (resourceName == null) {
-            resourceName = when (resourceId) {
+    private fun v8(path: File): File = path
+
+    private fun v7(path: File): File {
+        val manifestFile = File(path, MANIFEST_FILE)
+        val v7 = json.decodeFromString<ManifestV7>(manifestFile.readText())
+
+        val resourceName = v7.resource.name.ifEmpty {
+            when (v7.resource.slug) {
                 "reg" -> "Regular"
                 "obs" -> "Open Bible Stories"
                 "udb" -> "Unlocked Dynamic Bible"
                 "ulb" -> "Unlocked Literal Bible"
-                else -> resourceId
+                else -> v7.resource.slug
             }
-            resource.put("name", resourceName)
-            manifest.put("resource", resource)
         }
-        manifest.put("package_version", 8)
 
-        writeStringToFile(manifestFile, manifest.toString(2))
-
+        val updated = v7.copy(
+            packageVersion = 8,
+            resource = v7.resource.copy(name = resourceName),
+        )
+        manifestFile.writeText(json.encodeToString(updated))
         return path
     }
 
-    /**
-     * Fixes the chunk 00.txt bug and moves front matter out of the 00 directory and into the
-     * front directory.
-     * @param path
-     * @return
-     * @throws Exception
-     */
-    @Throws(Exception::class)
     private fun v6(path: File): File {
         val manifestFile = File(path, MANIFEST_FILE)
-        val manifest = JSONObject(readFileToString(manifestFile))
-        val projectSlug = manifest.getJSONObject("project").getString("id")
+        val v6 = json.decodeFromString<ManifestV6>(manifestFile.readText())
+        val projectSlug = v6.project.slug
+
         val chapters = path.listFiles { file ->
             file.isDirectory && file.name != ".git" && file.name != "cache"
-        }
-        // migrate 00 chunk
-        // TRICKY: ts android only supports book translations right now
+        } ?: emptyArray()
+
         val translations = library.index.findTranslations(
             "en",
             projectSlug,
@@ -209,362 +128,176 @@ class TargetTranslationMigrator(
             3,
             -1
         )
+        var updatedFinishedChunks = v6.finishedChunks.toMutableList()
+
         if (translations.isNotEmpty()) {
-            val sourceTranslation = translations.find {
-                it.resource.slug == "ulb"
-            } ?: translations.first()
+            val sourceTranslation = translations.find { it.resource.slug == "ulb" } ?: translations.first()
             val container = library.open(sourceTranslation.resourceContainerSlug)
+
             for (dir in chapters) {
                 val chunk00 = File(dir, "00.txt")
                 if (chunk00.exists()) {
-                    // find verse in source text
-
-                    val chunkIds = container.chunks(dir.name)
-                    val chunkId = largestIntVal(chunkIds)
-
-                    // move the chunk
-                    val chunk = File(dir, "$chunkId.txt")
-                    if (moveOrCopyQuietly(chunk00, chunk)) {
-                        deleteQuietly(chunk00)
-
-                        // migrate finished chunks
-                        if (manifest.has("finished_chunks")) {
-                            val finished = manifest.getJSONArray("finished_chunks")
-                            val finishedChunk00 = dir.name + "-00"
-                            val newFinished = JSONArray()
-                            for (i in 0 until finished.length()) {
-                                if (finished.getString(i) == finishedChunk00) {
-                                    newFinished.put(dir.name + "-" + chunkId)
-                                } else {
-                                    newFinished.put(finished[i])
-                                }
-                            }
-                            manifest.put("finished_chunks", newFinished)
+                    val chunkId = largestIntVal(container.chunks(dir.name).toList())
+                    if (chunkId != null) {
+                        val chunk = File(dir, "$chunkId.txt")
+                        if (chunk00.renameTo(chunk)) {
+                            val old = "${dir.name}-00"
+                            val new = "${dir.name}-$chunkId"
+                            updatedFinishedChunks = updatedFinishedChunks
+                                .map { if (it == old) new else it }
+                                .toMutableList()
                         }
                     }
                 }
             }
         }
 
-        // migrate 00 chapter
+        // migrate 00 chapter -> front
         val chapter00 = File(path, "00")
         if (chapter00.exists() && chapter00.isDirectory) {
-            if (moveOrCopyQuietly(chapter00, File(path, "front"))) {
-                deleteQuietly(chapter00)
-            }
+            chapter00.renameTo(File(path, "front"))
         }
 
-        manifest.put("package_version", 7)
-        writeStringToFile(manifestFile, manifest.toString(2))
+        val updated = v6.copy(
+            packageVersion = 7,
+            finishedChunks = updatedFinishedChunks,
+        )
+        manifestFile.writeText(json.encodeToString(updated))
         return path
     }
 
-    /**
-     * Returns the largest numeric value in the list
-     * @param list a list of strings to compare
-     * @return the largest numeric string
-     */
-    private fun largestIntVal(list: Array<String>): String? {
-        var largest: String? = null
-        for (item in list) {
-            try {
-                if (largest == null || item.toInt() > largest.toInt()) {
-                    largest = item
-                }
-            } catch (_: NumberFormatException) {
-            }
-        }
-        return largest
-    }
-
-    /**
-     * Updated the id format of target translations
-     * @param path
-     * @return
-     */
-    @Throws(Exception::class)
     private fun v5(path: File): File {
         val manifestFile = File(path, MANIFEST_FILE)
-        val manifest = JSONObject(readFileToString(manifestFile))
+        val v5 = json.decodeFromString<ManifestV5>(manifestFile.readText())
 
-        // pull info to build id
-        val targetLanguageCode = manifest.getJSONObject("target_language").getString("id")
-        val projectSlug = manifest.getJSONObject("project").getString("id")
-        val translationTypeSlug = manifest.getJSONObject("type").getString("id")
-        var resourceSlug: String? = null
-        if (translationTypeSlug == "text") {
-            resourceSlug = manifest.getJSONObject("resource").getString("id")
+        val targetLanguageCode = v5.targetLanguage.slug
+        val projectSlug = v5.project.slug
+        val translationTypeSlug = v5.type.slug
+        val resourceSlug = if (translationTypeSlug == "text") v5.resource?.slug else null
+
+        val id = buildString {
+            append("${targetLanguageCode}_${projectSlug}_$translationTypeSlug")
+            if (translationTypeSlug == "text" && resourceSlug != null) append("_$resourceSlug")
         }
 
-        // build new id
-        var id = targetLanguageCode + "_" + projectSlug + "_" + translationTypeSlug
-        if (translationTypeSlug == "text" && resourceSlug != null) {
-            id += "_$resourceSlug"
-        }
-
-        // add license file
         val licenseFile = File(path, "LICENSE.md")
         if (!licenseFile.exists()) {
-            try {
-                assetProvider.open("LICENSE.md").use { input ->
-                    copyInputStreamToFile(input, licenseFile)
-                }
-            } catch (e: Exception) {
-                throw Exception("Failed to open the template license file")
+            assetProvider.open("LICENSE.md").use { input ->
+                input.copyTo(licenseFile.outputStream())
             }
         }
 
-        // update package version
-        manifest.put("package_version", 6)
-        writeStringToFile(manifestFile, manifest.toString(2))
+        val updated = v5.copy(packageVersion = 6)
+        manifestFile.writeText(json.encodeToString(updated))
 
-        // update target translation dir name
-        val newPath = File(path.parentFile, id.lowercase(Locale.getDefault()))
-        safeDelete(newPath)
-        moveOrCopyQuietly(path, newPath)
+        val newPath = File(path.parentFile, id.lowercase())
+        newPath.deleteRecursively()
+        path.renameTo(newPath)
         return newPath
     }
 
-    /**
-     * major restructuring of the manifest to provide better support for future front/back matter, drafts, rendering,
-     * and resolves issues between desktop and android platforms.
-     * @param path
-     * @return
-     */
-    @Throws(Exception::class)
     private fun v4(path: File): File {
         val manifestFile = File(path, MANIFEST_FILE)
-        val manifest = JSONObject(readFileToString(manifestFile))
+        val v3 = json.decodeFromString<ManifestV3>(manifestFile.readText())
 
-        // type
-        run {
-            var typeId = "text"
-            if (manifest.has("project")) {
-                try {
-                    val projectJson = manifest.getJSONObject("project")
-                    typeId = projectJson.getString("type")
-                    projectJson.remove("type")
-                    manifest.put("project", projectJson)
-                } catch (e: JSONException) {
-                    e.printStackTrace()
+        // resolve type
+        val typeSlug = v3.type?.slug ?: "text"
+        val type = ResourceType.get(typeSlug)?.toType() ?: Manifest.Type(typeSlug, "")
+
+        // resolve project
+        val project = v3.project
+            ?: v3.projectId?.let { Manifest.Project(it, it.uppercase()) }
+            ?: Manifest.Project("", "")
+
+        // resolve resource
+        val resource: Manifest.Resource? = if (type.slug == "text") {
+            v3.resource ?: v3.resourceId?.let { id ->
+                when (id) {
+                    "ulb" -> Manifest.Resource("ulb", "Unlocked Literal Bible")
+                    "udb" -> Manifest.Resource("udb", "Unlocked Dynamic Bible")
+                    "obs" -> Manifest.Resource("obs", "Open Bible Stories")
+                    else -> Manifest.Resource("reg", "Regular")
                 }
-            }
-            val typeJson = JSONObject()
-            val resourceType = ResourceType.get(typeId)
-            typeJson.put("id", typeId)
-            if (resourceType != null) {
-                typeJson.put("name", resourceType.title)
+            } ?: if (project.slug == "obs") {
+                Manifest.Resource("obs", "Open Bible Stories")
             } else {
-                typeJson.put("name", "")
+                Manifest.Resource("reg", "Regular")
             }
-            manifest.put("type", typeJson)
-        }
+        } else null
 
-        // update project
-        // NOTE: this was actually in v3, but we missed it so we need to catch it here
-        if (manifest.has("project_id")) {
-            val projectId = manifest.getString("project_id")
-            manifest.remove("project_id")
-            val projectJson = JSONObject()
-            projectJson.put("id", projectId)
-            projectJson.put(
-                "name",
-                projectId.uppercase(Locale.getDefault())
-            ) // we don't know the full name at this point
-            manifest.put("project", projectJson)
-        }
-
-        // update resource
-        if (manifest.getJSONObject("type").getString("id") == "text") {
-            if (manifest.has("resource_id")) {
-                var resourceId = manifest.getString("resource_id")
-                manifest.remove("resource_id")
-                val resourceJson = JSONObject()
-                // TRICKY: supported resource id's (or now types) are "reg", "obs", "ulb", and "udb".
-                if (resourceId == "ulb") {
-                    resourceJson.put("name", "Unlocked Literal Bible")
-                } else if (resourceId == "udb") {
-                    resourceJson.put("name", "Unlocked Dynamic Bible")
-                } else if (resourceId == "obs") {
-                    resourceJson.put("name", "Open Bible Stories")
-                } else {
-                    // everything else changes to "reg"
-                    resourceId = "reg"
-                    resourceJson.put("name", "Regular")
-                }
-                resourceJson.put("id", resourceId)
-                manifest.put("resource", resourceJson)
-            } else if (!manifest.has("resource")) {
-                // add missing resource
-                val resourceJson = JSONObject()
-                val projectJson = manifest.getJSONObject("project")
-                val typeJson = manifest.getJSONObject("type")
-                if (typeJson.getString("id") == "text") {
-                    val resourceId = projectJson.getString("id")
-                    if (resourceId == "obs") {
-                        resourceJson.put("id", "obs")
-                        resourceJson.put("name", "Open Bible Stories")
-                    } else {
-                        // everything else changes to reg
-                        resourceJson.put("id", "reg")
-                        resourceJson.put("name", "Regular")
-                    }
-                    manifest.put("resource", resourceJson)
-                }
+        // resolve source translations
+        val sourceTranslations = when (val st = v3.sourceTranslations) {
+            is JsonArray -> json.decodeFromJsonElement<List<Manifest.Source>>(st)
+            is JsonObject -> st.entries.mapNotNull { (key, value) ->
+                runCatching {
+                    val parts = key.split("-", limit = 2)
+                    if (parts.size != 2) return@mapNotNull null
+                    val languageResourceId = parts[1]
+                    val pieces = languageResourceId.split("-")
+                    if (pieces.isEmpty()) return@mapNotNull null
+                    val resId = pieces.last()
+                    val langId = languageResourceId.dropLast(resId.length + 1)
+                    val obj = value.jsonObject
+                    Manifest.Source(
+                        languageSlug = langId,
+                        resourceSlug = resId,
+                        checkingLevel = obj["checking_level"]!!.jsonPrimitive.content,
+                        modifiedAt = obj["date_modified"]!!.jsonPrimitive.content,
+                        version = obj["version"]!!.jsonPrimitive.content,
+                    )
+                }.getOrNull()
             }
-        } else {
-            // non-text translation types do not have resources
-            manifest.remove("resource_id")
-            manifest.remove("resource")
+            else -> emptyList()
         }
 
-        // update source translations
-        if (manifest.has("source_translations")) {
-            val oldSourceTranslationsJson = manifest.getJSONObject("source_translations")
-            manifest.remove("source_translations")
-            val newSourceTranslationsJson = JSONArray()
-            val keys = oldSourceTranslationsJson.keys()
-            while (keys.hasNext()) {
-                try {
-                    val key = keys.next()
-                    val oldObj = oldSourceTranslationsJson.getJSONObject(key)
-                    val sourceTranslation = JSONObject()
-                    val parts = key.split("-".toRegex(), limit = 2)
-                    if (parts.size == 2) {
-                        val languageResourceId = parts[1]
-                        val pieces =
-                            languageResourceId.split("-".toRegex())
-                        if (pieces.isNotEmpty()) {
-                            val resId = pieces[pieces.size - 1]
-                            sourceTranslation.put("resource_id", resId)
-                            sourceTranslation.put(
-                                "language_id",
-                                languageResourceId.substring(
-                                    0,
-                                    languageResourceId.length - resId.length - 1
-                                )
-                            )
-                            sourceTranslation.put(
-                                "checking_level",
-                                oldObj.getString("checking_level")
-                            )
-                            sourceTranslation.put("date_modified", oldObj.getInt("date_modified"))
-                            sourceTranslation.put("version", oldObj.getString("version"))
-                            newSourceTranslationsJson.put(sourceTranslation)
-                        }
-                    }
-                } catch (e: Exception) {
-                    // don't fail migration just because a source translation was invalid
-                    e.printStackTrace()
-                }
-            }
-            manifest.put("source_translations", newSourceTranslationsJson)
+        // resolve parent draft
+        val parentDraft = v3.parentDraftResourceId?.let {
+            Manifest.Draft(
+                resourceSlug = it,
+                comments = "The parent draft is unknown",
+            )
+        } ?: Manifest.Draft()
+
+        // resolve finished chunks
+        val finishedChunks = v3.finishedFrames.toMutableList().also { chunks ->
+            v3.finishedTitles.forEach { chunks.add("$it-title") }
+            v3.finishedReferences.forEach { chunks.add("$it-reference") }
+            v3.finishedProjectComponents.forEach { chunks.add("00-$it") }
         }
 
-        // update parent draft
-        if (manifest.has("parent_draft_resource_id")) {
-            val draftStatus = JSONObject()
-            draftStatus.put("resource_id", manifest.getString("parent_draft_resource_id"))
-            draftStatus.put("checking_entity", "")
-            draftStatus.put("checking_level", "")
-            draftStatus.put("comments", "The parent draft is unknown")
-            draftStatus.put("contributors", "")
-            draftStatus.put("publish_date", "")
-            draftStatus.put("source_text", "")
-            draftStatus.put("source_text_version", "")
-            draftStatus.put("version", "")
-            manifest.put("parent_draft", draftStatus)
-            manifest.remove("parent_draft_resource_id")
-        }
+        // resolve format
+        val format = v3.format?.takeIf { it.isNotEmpty() && it != "usx" && it != "default" }
+            ?: if (type.slug != "text" || project.slug == "obs") "markdown" else "usfm"
 
-        // update finished chunks
-        if (manifest.has("finished_frames")) {
-            val finishedFrames = manifest.getJSONArray("finished_frames")
-            manifest.remove("finished_frames")
-            manifest.put("finished_chunks", finishedFrames)
-        }
-
-        // remove finished titles
-        if (manifest.has("finished_titles")) {
-            val finishedChunks = manifest.getJSONArray("finished_chunks")
-            val finishedTitles = manifest.getJSONArray("finished_titles")
-            manifest.remove("finished_titles")
-            for (i in 0 until finishedTitles.length()) {
-                val chapterId = finishedTitles.getString(i)
-                finishedChunks.put("$chapterId-title")
-            }
-            manifest.put("finished_chunks", finishedChunks)
-        }
-
-        // remove finished references
-        if (manifest.has("finished_references")) {
-            val finishedChunks = manifest.getJSONArray("finished_chunks")
-            val finishedReferences = manifest.getJSONArray("finished_references")
-            manifest.remove("finished_references")
-            for (i in 0 until finishedReferences.length()) {
-                val chapterId = finishedReferences.getString(i)
-                finishedChunks.put("$chapterId-reference")
-            }
-            manifest.put("finished_chunks", finishedChunks)
-        }
-
-        // remove project components
-        // NOTE: this was never quite official, just in android
-        if (manifest.has("finished_project_components")) {
-            val finishedChunks = manifest.getJSONArray("finished_chunks")
-            val finishedProjectComponents = manifest.getJSONArray("finished_project_components")
-            manifest.remove("finished_project_components")
-            for (i in 0 until finishedProjectComponents.length()) {
-                val component = finishedProjectComponents.getString(i)
-                finishedChunks.put("00-$component")
-            }
-            manifest.put("finished_chunks", finishedChunks)
-        }
-
-        // add format
-        if (!Manifest.valueExists(
-                manifest,
-                "format"
-            ) || manifest.getString("format") == "usx" || manifest.getString("format") == "default"
-        ) {
-            val typeId = manifest.getJSONObject("type").getString("id")
-            val projectId = manifest.getJSONObject("project").getString("id")
-            if (typeId != "text" || projectId == "obs") {
-                manifest.put("format", "markdown")
-            } else {
-                manifest.put("format", "usfm")
-            }
-        }
-
-        // update where project title is saved.
+        // migrate project title
         val oldProjectTitle = File(path, "title.txt")
         val newProjectTitle = File(path, "00/title.txt")
         if (oldProjectTitle.exists()) {
             newProjectTitle.parentFile?.mkdirs()
-            moveOrCopyQuietly(oldProjectTitle, newProjectTitle)
+            oldProjectTitle.renameTo(newProjectTitle)
         }
 
-        // update package version
-        manifest.put("package_version", 5)
+        val v4 = ManifestV4(
+            packageVersion = 5,
+            project = project,
+            type = type,
+            resource = resource,
+            targetLanguage = v3.targetLanguage,
+            translators = v3.translators,
+            finishedChunks = finishedChunks,
+            sourceTranslations = sourceTranslations,
+            parentDraft = parentDraft,
+            format = format,
+        )
+        manifestFile.writeText(json.encodeToString(v4))
 
-        writeStringToFile(manifestFile, manifest.toString(2))
-
-        // migrate usx to usfm
-        val format = manifest.getString("format")
-        // TRICKY: we just added the new format field, anything marked as usfm may have residual usx and needs to be migrated
+        // migrate usx -> usfm
         if (format == "usfm") {
-            val chapterDirs =
-                path.listFiles { pathname -> pathname.isDirectory && pathname.name != ".git" }
-            for (cDir in chapterDirs) {
-                val chunkFiles = cDir.listFiles()
-                for (chunkFile in chunkFiles) {
-                    try {
-                        val usx = readFileToString(chunkFile)
-                        val usfm = USXtoUSFMConverter.doConversion(usx).toString()
-                        writeStringToFile(chunkFile, usfm)
-                    } catch (e: IOException) {
-                        // this conversion may have failed but don't stop the rest of the migration
-                        e.printStackTrace()
+            path.listFiles { f -> f.isDirectory && f.name != ".git" }?.forEach { cDir ->
+                cDir.listFiles()?.forEach { chunkFile ->
+                    runCatching {
+                        val usfm = USXtoUSFMConverter.doConversion(chunkFile.readText()).toString()
+                        chunkFile.writeText(usfm)
                     }
                 }
             }
@@ -573,298 +306,311 @@ class TargetTranslationMigrator(
         return path
     }
 
-    /**
-     * We changed how the translator information is stored
-     * we no longer store sensitive information like email and phone number
-     * @param path
-     * @return
-     */
-    @Throws(Exception::class)
     private fun v3(path: File): File {
         val manifestFile = File(path, MANIFEST_FILE)
-        val manifest = JSONObject(readFileToString(manifestFile))
-        if (manifest.has("translators")) {
-            val legacyTranslators = manifest.getJSONArray("translators")
-            val translators = JSONArray()
-            for (i in 0 until legacyTranslators.length()) {
-                val obj = legacyTranslators[i]
-                if (obj is JSONObject) {
-                    translators.put(obj.getString("name"))
-                } else if (obj is String) {
-                    translators.put(obj)
-                }
+        val v2 = json.decodeFromString<ManifestV3>(manifestFile.readText())
+
+        val translators = v2.translators.mapNotNull { element ->
+            when {
+                element is JsonPrimitive && element.isString -> element.content
+                element is JsonObject -> element["name"]?.jsonPrimitive?.content
+                else -> null
             }
-            manifest.put("translators", translators)
-            manifest.put("package_version", 4)
-            writeStringToFile(manifestFile, manifest.toString(2))
         }
-        val projectSlug = manifest.getString("project_id")
+
+        val updated = v2.copy(
+            packageVersion = 4,
+            translators = translators,
+        )
+        manifestFile.writeText(json.encodeToString(updated))
+
+        val projectSlug = v2.projectId ?: ""
         migrateChunkChanges(path, projectSlug)
         return path
     }
 
-    /**
-     * upgrade from v2
-     * @param path
-     * @return
-     */
-    @Throws(Exception::class)
     private fun v2(path: File): File {
         val manifestFile = File(path, MANIFEST_FILE)
-        val manifest = JSONObject(readFileToString(manifestFile))
-        // fix finished frames
-        if (manifest.has("frames")) {
-            val legacyFrames = manifest.getJSONObject("frames")
-            val keys = legacyFrames.keys()
-            val finishedFrames = JSONArray()
-            while (keys.hasNext()) {
-                val key = keys.next()
-                val frameState = legacyFrames.getJSONObject(key)
-                var finished = false
-                if (frameState.has("finished")) {
-                    finished = frameState.getBoolean("finished")
-                }
-                if (finished) {
-                    finishedFrames.put(key)
-                }
-            }
-            manifest.remove("frames")
-            manifest.put("finished_frames", finishedFrames)
-        }
-        // fix finished chapter titles and references
-        if (manifest.has("chapters")) {
-            val legacyChapters = manifest.getJSONObject("chapters")
-            val keys = legacyChapters.keys()
-            val finishedTitles = JSONArray()
-            val finishedReferences = JSONArray()
-            while (keys.hasNext()) {
-                val key = keys.next()
-                val chapterState = legacyChapters.getJSONObject(key)
-                var finishedTitle = false
-                val finishedReference = false
-                if (chapterState.has("finished_title")) {
-                    finishedTitle = chapterState.getBoolean("finished_title")
-                }
-                if (chapterState.has("finished_reference")) {
-                    finishedTitle = chapterState.getBoolean("finished_reference")
-                }
-                if (finishedTitle) {
-                    finishedTitles.put(key)
-                }
-                if (finishedReference) {
-                    finishedReferences.put(key)
-                }
-            }
-            manifest.remove("chapters")
-            manifest.put("finished_titles", finishedTitles)
-            manifest.put("finished_references", finishedReferences)
-        }
-        // fix project id
-        if (manifest.has("slug")) {
-            val projectSlug = manifest.getString("slug")
-            manifest.remove("slug")
-            manifest.put("project_id", projectSlug)
-        }
-        // fix target language id
-        val targetLanguage = manifest.getJSONObject("target_language")
-        if (targetLanguage.has("slug")) {
-            val targetLanguageSlug = targetLanguage.getString("slug")
-            targetLanguage.remove("slug")
-            targetLanguage.put("id", targetLanguageSlug)
-            manifest.put("target_language", targetLanguage)
-        }
+        val v2 = json.decodeFromString<ManifestV2>(manifestFile.readText())
 
-        manifest.put("package_version", 3)
-        writeStringToFile(manifestFile, manifest.toString(2))
+        val finishedFrames = v2.frames
+            .filter { it.value.finished }
+            .map { it.key }
+            .toMutableList()
+            .also { it.addAll(v2.finishedFrames) }
+
+        val finishedTitles = v2.chapters
+            .filter { it.value.finishedTitle }
+            .map { it.key }
+            .toMutableList()
+            .also { it.addAll(v2.finishedTitles) }
+
+        val finishedReferences = v2.chapters
+            .filter { it.value.finishedReference }
+            .map { it.key }
+            .toMutableList()
+            .also { it.addAll(v2.finishedReferences) }
+
+        val projectId = v2.projectId ?: v2.slug ?: ""
+        val targetLanguageId = v2.targetLanguage.id ?: v2.targetLanguage.slug ?: ""
+        val targetLanguage = TargetLanguage(
+            slug = targetLanguageId,
+            name = v2.targetLanguage.name,
+            direction = v2.targetLanguage.direction,
+        )
+
+        val v3 = ManifestV3(
+            packageVersion = 3,
+            projectId = projectId,
+            targetLanguage = targetLanguage,
+            translators = emptyList(), // v3() will fix these
+            finishedFrames = finishedFrames,
+            finishedTitles = finishedTitles,
+            finishedReferences = finishedReferences,
+        )
+        manifestFile.writeText(json.encodeToString(v3))
         return path
     }
 
-    /**
-     * Merges chunks found in a target translation Project that do not exist in the source translation
-     * to a sibling chunk so that no data is lost.
-     * @param targetTranslationDir
-     * @param projectSlug
-     * @return
-     */
-    private fun migrateChunkChanges(targetTranslationDir: File, projectSlug: String): Boolean {
-        var resourceContainer: ResourceContainer? = null
-        val p = library.index.getProject("en", projectSlug, true)
-        p?.let { project ->
-            val resources = library.index.getResources(project.languageSlug, project.slug)
-            try {
-                var resource: Resource? = null
-                for (i in resources.indices) {
-                    val r = resources[i]
-                    if ("book".equals(r.type, ignoreCase = true)) {
-                        resource = r
-                        break
-                    }
-                }
-                resource?.let { r ->
-                    resourceContainer = library.open(project.languageSlug, project.slug, r.slug)
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-                return true
-            }
-        }
+    private fun largestIntVal(list: List<String>): String? =
+        list.mapNotNull { it.toIntOrNull() }.maxOrNull()?.toString()
 
-        val chapterDirs = targetTranslationDir.listFiles { pathname ->
-            pathname.isDirectory && pathname.name != ".git" && pathname.name != "00" // 00 contains project title translations
-        }
-        resourceContainer?.let { rc ->
-            chapterDirs?.let { cDirs ->
-                for (cDir in cDirs) {
-                    mergeInvalidChunksInChapter(
-                        File(targetTranslationDir, "manifest.json"),
-                        rc,
-                        cDir
-                    )
-                }
-            }
-        }
+    private fun migrateChunkChanges(targetTranslationDir: File, projectSlug: String): Boolean {
+        val p = library.index.getProject("en", projectSlug, true) ?: return true
+        val resources = library.index.getResources(p.languageSlug, p.slug)
+        val resource = resources.firstOrNull { it.type.equals("book", ignoreCase = true) } ?: return true
+
+        val resourceContainer = runCatching {
+            library.open(p.languageSlug, p.slug, resource.slug)
+        }.getOrElse { return true }
+
+        val chapterDirs = targetTranslationDir.listFiles { f ->
+            f.isDirectory && f.name != ".git" && f.name != "00"
+        } ?: return true
+
+        val manifestFile = File(targetTranslationDir, MANIFEST_FILE)
+        chapterDirs.forEach { mergeInvalidChunksInChapter(manifestFile, resourceContainer, it) }
         return true
     }
 
-    /**
-     * Merges invalid chunks found in the target translation with a valid sibling chunk in order
-     * to preserve translation data. Merged chunks are marked as not finished to force
-     * translators to review the changes.
-     * @param manifestFile
-     * @param resourceContainer
-     * @param chapterDir
-     * @return
-     */
     private fun mergeInvalidChunksInChapter(
         manifestFile: File,
         resourceContainer: ResourceContainer,
-        chapterDir: File
+        chapterDir: File,
     ): Boolean {
-        val manifest: JSONObject
-        try {
-            manifest = JSONObject(readFileToString(manifestFile))
-        } catch (e: Exception) {
-            e.printStackTrace()
-            return false
-        }
+        val manifestV3 = runCatching {
+            json.decodeFromString<ManifestV3>(manifestFile.readText())
+        }.getOrElse { return false }
 
         val chunkMergeMarker = "\n----------\n"
-        var frameFiles =
-            chapterDir.listFiles { pathname -> pathname.name != "title.txt" && pathname.name != "reference.txt" }
-        Arrays.sort(frameFiles)
+        var frameFiles = chapterDir.listFiles { f ->
+            f.name != "title.txt" && f.name != "reference.txt"
+        }?.sortedArray() ?: return true
+
         var invalidChunks = ""
         var lastValidFrameFile: File? = null
         val chapterId = chapterDir.name
-        for (frameFile in frameFiles!!) {
-            val frameFileName = frameFile.name
-            val parts =
-                frameFileName.split(".txt".toRegex())
-            val frameId = parts[0]
+        val updatedFinishedFrames = manifestV3.finishedFrames.toMutableList()
+
+        for (frameFile in frameFiles) {
+            val frameId = frameFile.nameWithoutExtension
             val chunkText = resourceContainer.readChunk(chapterId, frameId)
-            var frameBody = ""
-            try {
-                frameBody = readFileToString(frameFile).trim { it <= ' ' }
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
+            val frameBody = runCatching { frameFile.readText().trim() }.getOrDefault("")
+
             if (chunkText.isNotEmpty()) {
                 lastValidFrameFile = frameFile
-                // merge invalid frames into the existing frame
                 if (invalidChunks.isNotEmpty()) {
-                    try {
-                        writeStringToFile(frameFile, invalidChunks + frameBody)
-                    } catch (e: IOException) {
-                        e.printStackTrace()
-                    }
+                    frameFile.writeText(invalidChunks + frameBody)
                     invalidChunks = ""
-                    try {
-                        Manifest.removeValue(
-                            manifest.getJSONArray("finished_frames"),
-                            "$chapterId-$frameId"
-                        )
-                    } catch (e: JSONException) {
-                        e.printStackTrace()
-                    }
+                    updatedFinishedFrames.remove("$chapterId-$frameId")
                 }
             } else if (frameBody.isNotEmpty()) {
-                // collect invalid frame
                 if (lastValidFrameFile == null) {
                     invalidChunks += frameBody + chunkMergeMarker
                 } else {
-                    // append to last valid frame
-                    var lastValidFrameBody = ""
-                    try {
-                        lastValidFrameBody = readFileToString(lastValidFrameFile)
-                    } catch (e: IOException) {
-                        e.printStackTrace()
-                    }
-                    try {
-                        writeStringToFile(
-                            lastValidFrameFile,
-                            lastValidFrameBody + chunkMergeMarker + frameBody
-                        )
-                    } catch (e: IOException) {
-                        e.printStackTrace()
-                    }
-                    try {
-                        Manifest.removeValue(
-                            manifest.getJSONArray("finished_frames"),
-                            chapterId + "-" + lastValidFrameFile.name
-                        )
-                    } catch (e: JSONException) {
-                        e.printStackTrace()
-                    }
+                    val lastBody = runCatching { lastValidFrameFile.readText() }.getOrDefault("")
+                    lastValidFrameFile.writeText(lastBody + chunkMergeMarker + frameBody)
+                    updatedFinishedFrames.remove("$chapterId-${lastValidFrameFile.name}")
                 }
-                // delete invalid frame
-                deleteQuietly(frameFile)
+                frameFile.delete()
             }
         }
-        // clean up remaining invalid chunks
+
         if (invalidChunks.isNotEmpty()) {
-            // grab updated list of frames
-            frameFiles =
-                chapterDir.listFiles { pathname -> pathname.name != "title.txt" && pathname.name != "reference.txt" }
-            if (frameFiles != null && frameFiles.isNotEmpty()) {
-                var frameBody = ""
-                try {
-                    frameBody = readFileToString(frameFiles[0])
-                } catch (e: IOException) {
-                    e.printStackTrace()
-                }
-                try {
-                    writeStringToFile(frameFiles[0], invalidChunks + chunkMergeMarker + frameBody)
-                    try {
-                        Manifest.removeValue(
-                            manifest.getJSONArray("finished_frames"),
-                            chapterId + "-" + frameFiles[0].name
-                        )
-                    } catch (e: JSONException) {
-                        e.printStackTrace()
-                    }
-                } catch (e: IOException) {
-                    e.printStackTrace()
-                }
+            frameFiles = chapterDir.listFiles { f ->
+                f.name != "title.txt" && f.name != "reference.txt"
+            }?.sortedArray() ?: return true
+
+            if (frameFiles.isNotEmpty()) {
+                val firstBody = runCatching { frameFiles[0].readText() }.getOrDefault("")
+                frameFiles[0].writeText(invalidChunks + chunkMergeMarker + firstBody)
+                updatedFinishedFrames.remove("$chapterId-${frameFiles[0].name}")
             }
         }
+
+        val updated = manifestV3.copy(finishedFrames = updatedFinishedFrames)
+        manifestFile.writeText(json.encodeToString(updated))
         return true
     }
 
-    /**
-     * Checks if the android app can support this translation type.
-     * Example: ts-desktop can translate tW but ts-android cannot.
-     * @param path
-     * @return
-     */
-    @Throws(Exception::class)
     private fun validateTranslationType(path: File): Boolean {
-        val manifest = JSONObject(readFileToString(File(path, MANIFEST_FILE)))
-        val typeId = manifest.getJSONObject("type").getString("id")
-        // android only supports TEXT translations for now
-        if (ResourceType.get(typeId) == ResourceType.TEXT) {
-            return true
+        val manifest = json.decodeFromString<ManifestV7>(File(path, MANIFEST_FILE).readText())
+        return if (ResourceType.get(manifest.type.slug) == ResourceType.TEXT) {
+            true
         } else {
             Logger.w(TAG, "Only text translation types are supported")
-            return false
+            false
         }
     }
 }
+
+// Version-specific manifest shapes
+
+@Serializable
+data class ManifestV2(
+    @SerialName("package_version")
+    val packageVersion: Int = 2,
+    val slug: String? = null,
+    @SerialName("project_id")
+    val projectId: String? = null,
+    val frames: Map<String, FrameState> = emptyMap(),
+    val chapters: Map<String, ChapterState> = emptyMap(),
+    @SerialName("target_language")
+    val targetLanguage: TargetLanguageV2,
+    val translators: List<JsonElement> = emptyList(),
+    @SerialName("finished_frames")
+    val finishedFrames: List<String> = emptyList(),
+    @SerialName("finished_titles")
+    val finishedTitles: List<String> = emptyList(),
+    @SerialName("finished_references")
+    val finishedReferences: List<String> = emptyList(),
+) {
+    @Serializable
+    data class FrameState(val finished: Boolean = false)
+
+    @Serializable
+    data class ChapterState(
+        @SerialName("finished_title")
+        val finishedTitle: Boolean = false,
+        @SerialName("finished_reference")
+        val finishedReference: Boolean = false,
+    )
+
+    @Serializable
+    data class TargetLanguageV2(
+        val id: String? = null,
+        val slug: String? = null,
+        val name: String,
+        val direction: String,
+    )
+}
+
+@Serializable
+data class ManifestV3(
+    @SerialName("package_version")
+    val packageVersion: Int = 3,
+    @SerialName("project_id")
+    val projectId: String,
+    @SerialName("target_language")
+    val targetLanguage: TargetLanguage,
+    val translators: List<String> = emptyList(),
+    @SerialName("finished_frames")
+    val finishedFrames: List<String> = emptyList(),
+    @SerialName("finished_titles")
+    val finishedTitles: List<String> = emptyList(),
+    @SerialName("finished_references")
+    val finishedReferences: List<String> = emptyList(),
+    @SerialName("finished_project_components")
+    val finishedProjectComponents: List<String> = emptyList(),
+    @SerialName("source_translations")
+    val sourceTranslations: JsonElement? = null,
+    @SerialName("parent_draft_resource_id")
+    val parentDraftResourceId: String? = null,
+    val format: String? = null,
+    val resource: Manifest.Resource? = null,
+    @SerialName("resource_id")
+    val resourceId: String? = null,
+    val project: Manifest.Project? = null,
+    val type: Manifest.Type? = null,
+)
+
+@Serializable
+data class ManifestV4(
+    @SerialName("package_version")
+    val packageVersion: Int = 4,
+    @SerialName("project_id")
+    val projectId: String? = null,
+    val project: Manifest.Project,
+    val type: Manifest.Type,
+    val resource: Manifest.Resource? = null,
+    @SerialName("target_language")
+    val targetLanguage: TargetLanguage,
+    val translators: List<String> = emptyList(),
+    @SerialName("finished_chunks")
+    val finishedChunks: List<String> = emptyList(),
+    @SerialName("source_translations")
+    val sourceTranslations: List<Manifest.Source> = emptyList(),
+    @SerialName("parent_draft")
+    val parentDraft: Manifest.Draft = Manifest.Draft(),
+    val format: String = "",
+)
+
+@Serializable
+data class ManifestV5(
+    @SerialName("package_version")
+    val packageVersion: Int = 5,
+    val project: Manifest.Project,
+    val type: Manifest.Type,
+    val resource: Manifest.Resource? = null,
+    @SerialName("target_language")
+    val targetLanguage: TargetLanguage,
+    val translators: List<String> = emptyList(),
+    @SerialName("finished_chunks")
+    val finishedChunks: List<String> = emptyList(),
+    @SerialName("source_translations")
+    val sourceTranslations: List<Manifest.Source> = emptyList(),
+    @SerialName("parent_draft")
+    val parentDraft: Manifest.Draft = Manifest.Draft(),
+    val format: String = "",
+    val generator: Manifest.Generator = Manifest.Generator("", ""),
+)
+
+@Serializable
+data class ManifestV6(
+    @SerialName("package_version")
+    val packageVersion: Int = 6,
+    val project: Manifest.Project,
+    val type: Manifest.Type,
+    val resource: Manifest.Resource? = null,
+    @SerialName("target_language")
+    val targetLanguage: TargetLanguage,
+    val translators: List<String> = emptyList(),
+    @SerialName("finished_chunks")
+    val finishedChunks: List<String> = emptyList(),
+    @SerialName("source_translations")
+    val sourceTranslations: List<Manifest.Source> = emptyList(),
+    @SerialName("parent_draft")
+    val parentDraft: Manifest.Draft = Manifest.Draft(),
+    val format: String = "",
+    val generator: Manifest.Generator = Manifest.Generator("", ""),
+)
+
+@Serializable
+data class ManifestV7(
+    @SerialName("package_version")
+    val packageVersion: Int = 7,
+    val project: Manifest.Project,
+    val type: Manifest.Type,
+    val resource: Manifest.Resource,
+    @SerialName("target_language")
+    val targetLanguage: TargetLanguage,
+    val translators: List<String> = emptyList(),
+    @SerialName("finished_chunks")
+    val finishedChunks: List<String> = emptyList(),
+    @SerialName("source_translations")
+    val sourceTranslations: List<Manifest.Source> = emptyList(),
+    @SerialName("parent_draft")
+    val parentDraft: Manifest.Draft = Manifest.Draft(),
+    val format: String = "",
+    val generator: Manifest.Generator = Manifest.Generator("", ""),
+)

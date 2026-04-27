@@ -1,6 +1,5 @@
 package com.door43.usecases
 
-import com.door43.OnProgressListener
 import com.door43.translationstudio.App
 import com.door43.translationstudio.core.BibleCodes
 import org.unfoldingword.door43client.Door43Client
@@ -18,11 +17,11 @@ class GetAvailableSources(
         val otherBooks: Map<String, List<Int>>,
     )
 
-    fun execute(progressListener: OnProgressListener? = null): Result {
+    fun execute(onProgress: (Float, String?) -> Unit): Result {
         val ntBookList = BibleCodes.getNtBooks()
         val otBookList = BibleCodes.getOtBooks()
 
-        progressListener?.onProgress(-1f, "")
+        onProgress(-1f, "")
 
         val allSources = mutableListOf<Translation>()
 
@@ -76,7 +75,7 @@ class GetAvailableSources(
 
             if (i % 16 == 0) {
                 val progress = i / maxProgress.toFloat()
-                progressListener?.onProgress(progress, null)
+                onProgress(progress, null)
             }
 
             val language = t.language.slug

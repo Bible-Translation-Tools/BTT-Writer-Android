@@ -1,7 +1,6 @@
 package com.door43.usecases
 
 import android.content.Context
-import com.door43.OnProgressListener
 import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
 import com.door43.translationstudio.R
@@ -15,9 +14,9 @@ class SearchGogsUsers(
     suspend fun execute(
         userQuery: String,
         limit: Int,
-        progressListener: OnProgressListener? = null
+        onProgress: (Float, String?) -> Unit
     ): List<User> {
-        progressListener?.onProgress(-1f, "Searching for users")
+        onProgress(-1f, "Searching for users")
 
         val api = GogsAPI(
             apiUrl = prefRepository.getDefaultPref(

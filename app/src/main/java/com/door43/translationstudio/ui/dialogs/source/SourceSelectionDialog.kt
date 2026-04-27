@@ -247,9 +247,9 @@ private fun prepareSourceState(
 
     val sortedItems = filtered.sortedBy { it.sourceTranslation?.language?.slug ?: "" }
 
-    val selected = sortedItems.filter { it.selected && it.downloaded }
+    val selected = sortedItems.filter { it.selected }
     val available = sortedItems.filter { !it.selected && it.downloaded }
-    val downloadable = sortedItems.filter { !it.downloaded }
+    val downloadable = sortedItems.filter { !it.selected && !it.downloaded }
 
     val flatList = mutableListOf<RCItem>()
     val headers = mutableSetOf<Int>()

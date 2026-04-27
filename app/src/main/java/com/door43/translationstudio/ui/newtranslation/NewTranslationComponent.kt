@@ -27,12 +27,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
+import org.bibletranslationtools.resourcecontainer.Project
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.door43client.models.CategoryEntry
 import org.unfoldingword.door43client.models.TargetLanguage
-import org.unfoldingword.resourcecontainer.Project
 import java.util.Locale
 
 enum class ScreenStep {
@@ -117,7 +117,7 @@ class DefaultNewTranslationComponent(
     init {
         launchWithProgress {
             val languages = withContext(Dispatchers.IO) {
-                library.index.getTargetLanguages().sorted()
+                library.index.getTargetLanguages().sortedBy { it.slug }
             }
             _state.value = _state.value.copy(
                 languages = languages,

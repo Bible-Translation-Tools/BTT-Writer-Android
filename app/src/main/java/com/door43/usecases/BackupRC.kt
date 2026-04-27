@@ -8,9 +8,9 @@ import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.TargetTranslationMigrator
 import com.door43.translationstudio.core.Translator
 import com.door43.util.FileUtilities
+import org.bibletranslationtools.resourcecontainer.ResourceContainer
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.door43client.models.Translation
-import org.unfoldingword.resourcecontainer.ResourceContainer
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -27,7 +27,7 @@ class BackupRC (
     fun backupResourceContainer(translation: Translation): File {
         val dest = File(
             directoryProvider.backupsDir,
-            translation.resourceContainerSlug + "." + ResourceContainer.fileExtension
+            translation.resourceContainerSlug + "." + ResourceContainer.FILE_EXTENSION
         )
         library.exportResourceContainer(
             dest,
@@ -58,9 +58,9 @@ class BackupRC (
             // backup locations
             val backup = File(directoryProvider.backupsDir, "$name.$archiveExtension")
 
-            // check if we need to backup
+            // check if we need to back up
             if (!orphaned) {
-                val details = ArchiveDetails.Builder(application, directoryProvider, migrator, library)
+                val details = ArchiveDetails.Builder(directoryProvider, migrator, library)
                     .fromFile(backup, "en")
                     .build()
 

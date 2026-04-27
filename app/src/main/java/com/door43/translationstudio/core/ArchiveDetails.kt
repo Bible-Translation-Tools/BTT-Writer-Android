@@ -1,15 +1,22 @@
 package com.door43.translationstudio.core
 
-import android.content.Context
 import android.util.Log
 import com.door43.data.IDirectoryProvider
+import com.door43.translationstudio.core.manifest.Manifest
+import com.door43.translationstudio.core.manifest.manifestJson
 import com.door43.util.FileUtilities.copyInputStreamToFile
 import com.door43.util.Zip
-import org.json.JSONException
-import org.json.JSONObject
+import kotlinx.serialization.Contextual
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.intOrNull
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.modules.SerializersModule
+import org.bibletranslationtools.resourcecontainer.IntAsStringSerializer
 import org.unfoldingword.door43client.Door43Client
 import java.io.File
-import java.io.FileInputStream
 import java.io.IOException
 import java.io.InputStream
 import java.util.Locale
@@ -19,7 +26,7 @@ import java.util.Locale
  * TODO: this duplicates a lot of code from ArchiveImporter. Eventually it might be nice to refactor both so that there is less duplication.
  */
 class ArchiveDetails private constructor(
-    val createdAt: Long,
+    val createdAt: Int,
     val targetTranslationDetails: List<TargetTranslationDetails>
 ) {
     /**
@@ -36,7 +43,6 @@ class ArchiveDetails private constructor(
     )
 
     class Builder(
-        private val context: Context,
         private val directoryProvider: IDirectoryProvider,
         private val migrator: TargetTranslationMigrator,
         private val library: Door43Client
@@ -91,14 +97,19 @@ class ArchiveDetails private constructor(
 
             val rawManifest = Zip.read(tempFile, MANIFEST_JSON)
             if (rawManifest != null) {
-                val json = JSONObject(rawManifest)
-                if (json.has(PACKAGE_VERSION)) {
-                    val manifestVersion = json.getInt(PACKAGE_VERSION)
-                    when (manifestVersion) {
-                        1 -> return parseV1Manifest(json)
-                        2 -> return parseV2Manifest(
-                            FileInputStream(tempFile),
-                            json,
+                val raw = archiveJson.parseToJsonElement(rawManifest).jsonObject
+                val manifestVersion = raw["package_version"]?.jsonPrimitive?.intOrNull ?: 2
+
+                when (manifestVersion) {
+                    1 -> {
+                        return parseV1Manifest(
+                            archiveJson.decodeFromString(rawManifest)
+                        )
+                    }
+                    2 -> {
+                        return parseV2Manifest(
+                            tempFile,
+                            archiveJson.decodeFromString(rawManifest),
                             preferredLocale
                         )
                     }
@@ -111,14 +122,18 @@ class ArchiveDetails private constructor(
             if (archive.exists()) {
                 val rawManifest = Zip.read(archive, MANIFEST_JSON)
                 if (rawManifest != null) {
-                    val json = JSONObject(rawManifest)
-                    if (json.has(PACKAGE_VERSION)) {
-                        val manifestVersion = json.getInt(PACKAGE_VERSION)
-                        when (manifestVersion) {
-                            1 -> return parseV1Manifest(json)
-                            2 -> return parseV2Manifest(
-                                FileInputStream(archive),
-                                json,
+                    val raw = archiveJson.parseToJsonElement(rawManifest).jsonObject
+                    val manifestVersion = raw["package_version"]?.jsonPrimitive?.intOrNull ?: 2
+                    when (manifestVersion) {
+                        1 -> {
+                            return parseV1Manifest(
+                                archiveJson.decodeFromString(rawManifest)
+                            )
+                        }
+                        2 -> {
+                            return parseV2Manifest(
+                                archive,
+                                archiveJson.decodeFromString(rawManifest),
                                 preferredLocale
                             )
                         }
@@ -128,80 +143,61 @@ class ArchiveDetails private constructor(
             return null
         }
 
-        private fun parseV1Manifest(json: JSONObject): ArchiveDetails? {
+        private fun parseV1Manifest(archiveManifest: ArchiveManifestV1): ArchiveDetails? {
             return null
         }
 
-        @Throws(JSONException::class, IOException::class)
+        @Throws(IOException::class)
         private fun parseV2Manifest(
-            ais: InputStream,
-            archiveManifest: JSONObject,
+            archive: File,
+            archiveManifest: ArchiveManifest,
             preferredLocale: String
         ): ArchiveDetails {
             val targetDetails = arrayListOf<TargetTranslationDetails>()
-            val timestamp = archiveManifest.getLong("timestamp")
-            val translationsJson = archiveManifest.getJSONArray("target_translations")
-            for (i in 0 until translationsJson.length()) {
-                val translationRecordJson = translationsJson.getJSONObject(i)
-                val path = translationRecordJson.getString("path")
+            val timestamp = archiveManifest.timestamp
+            archiveManifest.targetTranslations.forEach { translation ->
+                val path = translation.path
 
-                ais.use { stream ->
+                archive.inputStream().use { stream ->
                     val rawTranslationManifest = Zip.readInputStream(
                         stream,
                         path.replace("/+$".toRegex(), "") + "/manifest.json"
                     )
                     if (rawTranslationManifest != null) {
-                        var manifest: JSONObject? = JSONObject(rawTranslationManifest)
-
                         // migrate the manifest
-                        manifest = migrator.migrateManifest(manifest!!)
+                        val manifestStr = migrator.migrateManifest(rawTranslationManifest)
 
-                        if (manifest != null) {
-                            val targetLanguageJson = manifest.getJSONObject("target_language")
-                            val projectJson = manifest.getJSONObject("project")
+                        if (manifestStr != null) {
+                            val manifest = manifestJson.decodeFromString<Manifest>(manifestStr)
 
                             // get target language
-                            val targetLanguageName: String?
-                            val targetLanguageSlug = targetLanguageJson.getString("id")
-                            val targetLanguageDirection = targetLanguageJson.getString("direction")
+                            val tlName: String?
+                            val targetLanguageSlug = manifest.targetLanguage.slug
+                            val targetLanguageDirection = manifest.targetLanguage.direction
                             val tl = library.index.getTargetLanguage(targetLanguageSlug)
-                            targetLanguageName = if (tl != null) {
-                                tl.name
-                            } else {
-                                targetLanguageSlug.uppercase(Locale.getDefault())
-                            }
+                            tlName = tl?.name ?: targetLanguageSlug.uppercase(Locale.getDefault())
 
                             // get project
                             val projectName: String?
-                            val projectSlug = projectJson.getString("id")
+                            val projectSlug = manifest.project.slug
                             val project = library.index.getProject(
                                 preferredLocale,
                                 projectSlug,
                                 true
                             )
-                            projectName = if (project != null) {
-                                project.name
-                            } else {
-                                projectSlug.uppercase(Locale.getDefault())
-                            }
+                            projectName = project?.name ?: projectSlug.uppercase(Locale.getDefault())
 
                             // git commit hash
-                            val commit = translationRecordJson.getString("commit_hash")
+                            val commit = translation.commitHash
 
                             // translation type
-                            var resourceType = ResourceType.get(
-                                manifest.getJSONObject("type").getString("id")
-                            )
+                            var resourceType = ResourceType.get(manifest.type.slug)
                             if (resourceType == null) {
                                 resourceType = ResourceType.TEXT
                             }
 
                             // resource
-                            var resourceSlug: String? = null
-                            if (manifest.has("resource")) {
-                                resourceSlug = manifest.getJSONObject("resource")
-                                    .getString("id")
-                            }
+                            val resourceSlug = manifest.resource.slug
 
                             // build id
                             val targetTranslationId = TargetTranslation.generateTargetTranslationId(
@@ -215,7 +211,7 @@ class ArchiveDetails private constructor(
                                 TargetTranslationDetails(
                                     targetTranslationId,
                                     targetLanguageSlug,
-                                    targetLanguageName,
+                                    tlName,
                                     projectSlug,
                                     projectName,
                                     targetLanguageDirection,
@@ -226,10 +222,8 @@ class ArchiveDetails private constructor(
                     }
                 }
             }
-            return ArchiveDetails(
-                timestamp,
-                targetDetails
-            )
+
+            return ArchiveDetails(timestamp, targetDetails)
         }
 
         fun build(): ArchiveDetails? {
@@ -248,7 +242,17 @@ class ArchiveDetails private constructor(
 
     companion object {
         const val MANIFEST_JSON: String = "manifest.json"
-        const val PACKAGE_VERSION: String = "package_version"
+
+        val archiveJson = Json {
+            prettyPrint = true
+            prettyPrintIndent = "  "
+            ignoreUnknownKeys = true
+            encodeDefaults = true
+
+            serializersModule = SerializersModule {
+                contextual(String::class, IntAsStringSerializer)
+            }
+        }
 
         /**
          * Returns an empty archive
@@ -259,3 +263,41 @@ class ArchiveDetails private constructor(
         }
     }
 }
+
+@Serializable
+data class ArchiveManifestV1(
+    @SerialName("package_version")
+    val packageVersion: Int,
+    val timestamp: Int,
+    val generator: ArchiveGenerator,
+    @SerialName("projects")
+    val targetTranslations: List<ArchiveTranslation> = emptyList()
+)
+
+@Serializable
+data class ArchiveManifest(
+    @SerialName("package_version")
+    val packageVersion: Int,
+    val timestamp: Int,
+    val generator: ArchiveGenerator,
+    @SerialName("target_translations")
+    val targetTranslations: List<ArchiveTranslation> = emptyList()
+)
+
+@Serializable
+data class ArchiveGenerator(
+    val name: String,
+    @Contextual
+    val build: String
+)
+
+@Serializable
+data class ArchiveTranslation(
+    val id: String,
+    val path: String,
+    @SerialName("commit_hash")
+    val commitHash: String,
+    val direction: String,
+    @SerialName("target_language_name")
+    val targetLanguageName: String
+)
