@@ -3,7 +3,6 @@ package com.door43.translationstudio.usecases
 import android.content.Context
 import android.net.Uri
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.door43.OnProgressListener
 import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.IntegrationTest
@@ -45,14 +44,14 @@ class MigrateTranslationsTest : KoinAndroidTest() {
     @Test
     fun migrateOldAppDataEmpty() {
         var progressMessage: String? = null
-        val progressListener = OnProgressListener { _, message ->
+        val onProgress: (Float, String?) -> Unit = { _, message ->
             progressMessage = message
         }
 
         val sourceDir = Uri.fromFile(directoryProvider.createTempDir("BTTWriter"))
 
         MigrateTranslations(appContext, importProjects, directoryProvider, targetTranslationMigrator)
-            .execute(sourceDir, progressListener)
+            .execute(sourceDir, onProgress)
 
         assertEquals("Completed!", progressMessage)
         assertEquals(0, directoryProvider.translationsDir.listFiles()?.size ?: 0)
@@ -61,7 +60,7 @@ class MigrateTranslationsTest : KoinAndroidTest() {
     @Test
     fun migrateOldAppDataWithTranslations() {
         var progressMessage: String? = null
-        val progressListener = OnProgressListener { _, message ->
+        val onProgress: (Float, String?) -> Unit = { _, message ->
             progressMessage = message
         }
 
@@ -77,7 +76,7 @@ class MigrateTranslationsTest : KoinAndroidTest() {
         }
 
         MigrateTranslations(appContext, importProjects, directoryProvider, targetTranslationMigrator)
-            .execute(sourceDir, progressListener)
+            .execute(sourceDir, onProgress)
 
         assertEquals("Completed!", progressMessage)
         assertEquals(1, directoryProvider.translationsDir.listFiles()?.size ?: 0)
@@ -86,7 +85,7 @@ class MigrateTranslationsTest : KoinAndroidTest() {
     @Test
     fun migrateOldAppDataWithBackups() {
         var progressMessage: String? = null
-        val progressListener = OnProgressListener { _, message ->
+        val onProgress: (Float, String?) -> Unit = { _, message ->
             progressMessage = message
         }
 
@@ -99,7 +98,7 @@ class MigrateTranslationsTest : KoinAndroidTest() {
         }
 
         MigrateTranslations(appContext, importProjects, directoryProvider, targetTranslationMigrator)
-            .execute(sourceDir, progressListener)
+            .execute(sourceDir, onProgress)
 
         val expectedMessage = appContext.getString(R.string.copying_file, "aa_jud_text_reg.tstudio")
 

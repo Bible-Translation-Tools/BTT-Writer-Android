@@ -17,7 +17,7 @@ class CreateRepository(
 ) {
     suspend fun execute(
         targetTranslation: TargetTranslation,
-        onProgress: (Float, String?) -> Unit
+        onProgress: (Float, String?) -> Unit = {_,_->}
     ): Boolean {
         onProgress(-1f, "Preparing location on server")
 

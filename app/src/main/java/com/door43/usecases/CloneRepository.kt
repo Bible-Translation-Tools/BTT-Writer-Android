@@ -20,7 +20,7 @@ class CloneRepository(
 ) {
     fun execute(
         cloneUrl: String,
-        onProgress: (Float, String?) -> Unit
+        onProgress: (Float, String?) -> Unit = {_,_->}
     ): Result {
         onProgress(-1f, context.resources.getString(R.string.downloading))
 

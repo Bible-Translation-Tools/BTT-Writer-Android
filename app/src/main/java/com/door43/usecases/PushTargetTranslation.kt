@@ -32,7 +32,7 @@ class PushTargetTranslation(
 
     suspend fun execute(
         targetTranslation: TargetTranslation,
-        onProgress: (Float, String?) -> Unit
+        onProgress: (Float, String?) -> Unit = {_,_->}
     ): Result {
         if (profile.gogsUser != null) {
             val repository = getRepository.execute(targetTranslation, onProgress)
@@ -51,7 +51,11 @@ class PushTargetTranslation(
     }
 
     @Throws(JGitInternalException::class)
-    private fun push(repo: Repo, remote: String, onProgress: (Float, String?) -> Unit): Result {
+    private fun push(
+        repo: Repo,
+        remote: String,
+        onProgress: (Float, String?) -> Unit = {_,_->}
+    ): Result {
         onProgress(-1f, "Uploading translation")
 
         var status = Status.UNKNOWN

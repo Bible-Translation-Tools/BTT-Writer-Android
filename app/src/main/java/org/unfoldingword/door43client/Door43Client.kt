@@ -75,7 +75,7 @@ class Door43Client @Throws(IOException::class) constructor(
      * @param onProgress progress listener. This should receive progress id, value
      */
     @Throws(Exception::class)
-    suspend fun updateSources(url: String, onProgress: (Float, String?) -> Unit) {
+    suspend fun updateSources(url: String, onProgress: (Float, String?) -> Unit = {_,_->}) {
         api.updateSources(url, onProgress)
     }
 
@@ -83,7 +83,7 @@ class Door43Client @Throws(IOException::class) constructor(
      * Indexes the supplementary catalogs
      */
     @Throws(Exception::class)
-    suspend fun updateCatalogs(force: Boolean, onProgress: (Float, String?) -> Unit) {
+    suspend fun updateCatalogs(force: Boolean, onProgress: (Float, String?) -> Unit = {_,_->}) {
         api.updateCatalogs(force, onProgress)
     }
 
@@ -96,7 +96,7 @@ class Door43Client @Throws(IOException::class) constructor(
      * Indexes the chunk markers
      */
     @Throws(Exception::class)
-    suspend fun updateChunks(onProgress: (Float, String?) -> Unit) {
+    suspend fun updateChunks(onProgress: (Float, String?) -> Unit = {_,_->}) {
         api.updateChunks(onProgress)
     }
 

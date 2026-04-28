@@ -1,7 +1,6 @@
 package com.door43.translationstudio.usecases
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.door43.OnProgressListener
 import com.door43.data.IPreferenceRepository
 import com.door43.data.setDefaultPref
 import com.door43.translationstudio.IntegrationTest
@@ -97,10 +96,10 @@ class SearchGogsRepositoriesTest : KoinAndroidTest() {
             .setResponseCode(200))
 
         var progressMessage: String? = null
-        val progressListener = OnProgressListener { _, message ->
+        val onProgress: (Float, String?) -> Unit = { _, message ->
             progressMessage = message
         }
-        val repos = searchGogsRepositories.execute(gogsUser!!.id, "", 3, progressListener)
+        val repos = searchGogsRepositories.execute(gogsUser!!.id, "", 3, onProgress)
 
         assertTrue("Repos should not be empty", repos.isNotEmpty())
         assertFalse("Progress message should not be empty", progressMessage.isNullOrEmpty())

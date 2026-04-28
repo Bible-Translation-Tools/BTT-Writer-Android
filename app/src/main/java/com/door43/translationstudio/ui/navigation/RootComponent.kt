@@ -121,13 +121,13 @@ interface RootComponent {
 
 class DefaultRootComponent(
     componentContext: ComponentContext,
-    private val platform: Platform,
     private val onExitApp: () -> Unit
 ) : RootComponent, ComponentContext by componentContext,
     KoinComponent {
 
     private val application: Application by inject()
     private val prefRepository: IPreferenceRepository by inject()
+    private val platform: Platform by inject()
 
     private val navigation = StackNavigation<Config>()
 
@@ -174,7 +174,6 @@ class DefaultRootComponent(
         is Config.Home -> RootComponent.Child.Home(
             component = DefaultHomeComponent(
                 componentContext = componentContext,
-                platform = platform,
                 sharedFlow = sharedFlow,
                 onResult = ::onHomeResult
             )
@@ -193,7 +192,6 @@ class DefaultRootComponent(
                 translationId = config.translationId,
                 initialViewMode = null,
                 conflictFilterOn = config.conflictFilterOn,
-                platform = platform,
                 sharedFlow = sharedFlow,
                 onResult = ::onTranslateResult
             )
@@ -214,7 +212,6 @@ class DefaultRootComponent(
         is Config.DevTools -> RootComponent.Child.DevTools(
             component = DefaultDevToolsComponent(
                 componentContext = componentContext,
-                platform = platform,
                 onResult = ::onDevToolsResult
             )
         )
@@ -228,7 +225,6 @@ class DefaultRootComponent(
         is Config.Publish -> RootComponent.Child.Publish(
             component = DefaultPublishComponent(
                 componentContext = componentContext,
-                platform = platform,
                 translationId = config.translationId,
                 onResult = ::onPublishResult
             )

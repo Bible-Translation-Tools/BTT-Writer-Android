@@ -45,7 +45,7 @@ class ImportProjects(
     fun importProject(
         projectUri: Uri,
         overwrite: Boolean = false,
-        onProgress: (Float, String?) -> Unit
+        onProgress: (Float, String?) -> Unit = {_,_->}
     ): ImportUriResult {
         onProgress(-1f, "Importing...")
 
@@ -100,7 +100,7 @@ class ImportProjects(
     fun importProjects(
         projects: List<File>,
         overwrite: Boolean,
-        onProgress: (Float, String?) -> Unit
+        onProgress: (Float, String?) -> Unit = {_,_->}
     ): ImportFilesResult {
         onProgress(-1f, context.getString(R.string.importing_file))
 

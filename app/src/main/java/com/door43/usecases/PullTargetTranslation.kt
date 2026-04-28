@@ -34,7 +34,7 @@ class PullTargetTranslation(
         targetTranslation: TargetTranslation,
         mergeStrategy: MergeStrategy,
         sourceURL: String? = null,
-        onProgress: (Float, String?) -> Unit
+        onProgress: (Float, String?) -> Unit = {_,_->}
     ): Result {
         if (profile.gogsUser != null) {
             try {
@@ -85,7 +85,7 @@ class PullTargetTranslation(
         remote: String,
         targetTranslation: TargetTranslation,
         mergeStrategy: MergeStrategy,
-        onProgress: (Float, String?) -> Unit
+        onProgress: (Float, String?) -> Unit = {_,_->}
     ): Result {
         onProgress(-1f, "Downloading updates")
 

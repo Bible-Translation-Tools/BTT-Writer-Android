@@ -12,7 +12,7 @@ class GetRepository(
 ) {
     suspend fun execute(
         translation: TargetTranslation,
-        onProgress: (Float, String?) -> Unit
+        onProgress: (Float, String?) -> Unit = {_,_->}
     ): Repository? {
         onProgress(-1f, "Getting repository")
 

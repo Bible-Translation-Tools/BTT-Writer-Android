@@ -56,7 +56,7 @@ data class Manifest(
     data class Resource(
         @SerialName("id")
         val slug: String,
-        val name: String
+        val name: String = ""
     )
 
     @Serializable

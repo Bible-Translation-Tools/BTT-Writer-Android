@@ -6,6 +6,7 @@ import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.IntegrationTest
 import com.door43.translationstudio.KoinAndroidTest
+import com.door43.translationstudio.Platform
 import com.door43.translationstudio.TestUtils
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.Translator
@@ -15,7 +16,7 @@ import com.door43.usecases.BackupRC
 import com.door43.usecases.ImportProjects
 import com.door43.util.FileUtilities
 import com.door43.util.Zip
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -43,6 +44,7 @@ class BackupRCTest : KoinAndroidTest() {
     private val profile: Profile by inject()
     private val assetsProvider: AssetsProvider by inject()
     private val translator: Translator by inject()
+    private val platform: Platform by inject()
 
     private var tempDir: File? = null
     private lateinit var targetLanguage: TargetLanguage
@@ -61,7 +63,7 @@ class BackupRCTest : KoinAndroidTest() {
     }
 
     @Test
-    fun testBackupResourceContainer() {
+    fun testBackupResourceContainer() = runTest {
         val source = "source/fa_jud_nmv.zip"
         val rcTranslation = importSourceTranslation(source)
 
@@ -90,6 +92,7 @@ class BackupRCTest : KoinAndroidTest() {
         val targetTranslation = TestUtils.importTargetTranslation(
             library,
             appContext,
+            platform,
             directoryProvider,
             profile,
             assetsProvider,
@@ -122,6 +125,7 @@ class BackupRCTest : KoinAndroidTest() {
         val targetTranslation = TestUtils.importTargetTranslation(
             library,
             appContext,
+            platform,
             directoryProvider,
             profile,
             assetsProvider,
@@ -154,6 +158,7 @@ class BackupRCTest : KoinAndroidTest() {
         val targetTranslation = TestUtils.importTargetTranslation(
             library,
             appContext,
+            platform,
             directoryProvider,
             profile,
             assetsProvider,
@@ -170,7 +175,7 @@ class BackupRCTest : KoinAndroidTest() {
         assertTrue("Backup should succeed", backedUp)
     }
 
-    private fun importSourceTranslation(path: String): Translation? {
+    private suspend fun importSourceTranslation(path: String): Translation? {
         return assetProvider.open(path).use {
             try {
                 tempDir = directoryProvider.createTempDir("tempRc")
@@ -182,9 +187,7 @@ class BackupRCTest : KoinAndroidTest() {
 
                 assertFalse("tempDir should not be empty", tempDir!!.listFiles().isNullOrEmpty())
 
-                val rc = runBlocking {
-                    library.importResourceContainer(tempDir!!)
-                }
+                val rc = library.importResourceContainer(tempDir!!)
 
                 assertNotNull("rc should not be null", rc)
 

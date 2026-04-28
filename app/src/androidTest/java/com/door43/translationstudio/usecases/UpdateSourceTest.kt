@@ -1,6 +1,5 @@
 package com.door43.translationstudio.usecases
 
-import android.content.Context
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
@@ -12,7 +11,7 @@ import com.door43.usecases.UpdateSource
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertNotNull
 import junit.framework.TestCase.assertTrue
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import okhttp3.mockwebserver.Dispatcher
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -31,7 +30,6 @@ import java.text.SimpleDateFormat
 @IntegrationTest
 class UpdateSourceTest : KoinAndroidTest() {
 
-    private val appContext: Context by inject()
     private val library: Door43Client by inject()
     private val directoryProvider: IDirectoryProvider by inject()
     private val updateSource: UpdateSource by inject()
@@ -77,20 +75,18 @@ class UpdateSourceTest : KoinAndroidTest() {
 
         @JvmStatic
         @AfterClass
-        fun cleanUp(): Unit {
+        fun cleanUp() {
             _directoryProvider?.deleteLibrary()
             _directoryProvider = null
         }
     }
 
     @Test
-    fun testUpdateSource() {
+    fun testUpdateSource() = runTest {
         val url = server.url("/test")
         prefRepository.setDefaultPref(IPreferenceRepository.KEY_PREF_MEDIA_SERVER, url.toString())
 
-        val result = runBlocking {
-            updateSource.execute()
-        }
+        val result = updateSource.execute()
 
         assertTrue("Update source succeeded", result.success)
         assertEquals("Added 1 source", 1, result.addedCount)
@@ -155,7 +151,7 @@ class UpdateSourceTest : KoinAndroidTest() {
             tstResource?.name
         )
         assertEquals("TST resource type should match", "book", tstResource?.type)
-        assertEquals("TST resource version should match", "12.2", tstResource?.version)
+        assertEquals("TST resource version should match", "12.2", tstResource?.status?.version)
         assertTrue(
             "TST resource url should match",
             tstResource?.formats?.first()?.url?.endsWith("/mat/test/source.json") ?: false
@@ -165,7 +161,7 @@ class UpdateSourceTest : KoinAndroidTest() {
         assertNotNull("TN resource should not be null", tnResource)
         assertEquals("TN resource name should match", "translationNotes", tnResource?.name)
         assertEquals("TN resource type should match", "help", tnResource?.type)
-        assertEquals("TN resource version should match", "12.2", tnResource?.version)
+        assertEquals("TN resource version should match", "12.2", tnResource?.status?.version)
         assertTrue(
             "TN resource url should match",
             tnResource?.formats?.first()?.url?.endsWith("/mat/test/notes.json") ?: false
@@ -179,7 +175,7 @@ class UpdateSourceTest : KoinAndroidTest() {
             tqResource?.name
         )
         assertEquals("TQ resource type should match", "help", tqResource?.type)
-        assertEquals("TQ resource version should match", "12.2", tqResource?.version)
+        assertEquals("TQ resource version should match", "12.2", tqResource?.status?.version)
         assertTrue("" +
                 "TQ resource url should match",
             tqResource?.formats?.first()?.url?.endsWith("/mat/test/questions.json") ?: false
@@ -189,7 +185,7 @@ class UpdateSourceTest : KoinAndroidTest() {
         assertNotNull("TW resource should not be null", twResource)
         assertEquals("TW resource name should match", "translationWords", twResource?.name)
         assertEquals("TW resource type should match", "dict", twResource?.type)
-        assertEquals("TW resource version should match", "12.2", twResource?.version)
+        assertEquals("TW resource version should match", "12.2", twResource?.status?.version)
         assertTrue(
             "TW resource url should be match",
             twResource?.formats?.first()?.url?.endsWith("/mat/test/words.json") ?: false

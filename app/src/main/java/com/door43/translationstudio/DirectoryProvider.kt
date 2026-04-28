@@ -3,7 +3,6 @@ package com.door43.translationstudio
 import android.content.Context
 import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
-import com.door43.translationstudio.App.Companion.udid
 import com.door43.util.FileUtilities
 import com.door43.util.Zip
 import com.jcraft.jsch.JSch
@@ -107,7 +106,7 @@ class DirectoryProvider (
         return privateKey.exists() && publicKey.exists()
     }
 
-    override fun generateSSHKeys() {
+    override fun generateSSHKeys(udid: String) {
         val jsch = JSch()
         val type = KeyPair.RSA
 
@@ -116,7 +115,7 @@ class DirectoryProvider (
             File(privateKey.absolutePath).createNewFile()
             keyPair.writePrivateKey(privateKey.absolutePath)
             File(publicKey.absolutePath).createNewFile()
-            keyPair.writePublicKey(publicKey.absolutePath, udid())
+            keyPair.writePublicKey(publicKey.absolutePath, udid)
             keyPair.dispose()
         } catch (e: Exception) {
             e.printStackTrace()

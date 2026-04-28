@@ -5,7 +5,7 @@ import android.util.Log
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.door43.data.IPreferenceRepository
-import com.door43.translationstudio.App
+import com.door43.translationstudio.Platform
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.ComponentScope
 import com.door43.translationstudio.core.ContainerCache
@@ -215,7 +215,7 @@ class DefaultSelectSourcesComponent(
                     null,
                     "book",
                     null,
-                    App.MIN_CHECKING_LEVEL,
+                    Platform.MIN_CHECKING_LEVEL,
                     -1
                 )
                 for (sourceTranslation in availableTranslations) {

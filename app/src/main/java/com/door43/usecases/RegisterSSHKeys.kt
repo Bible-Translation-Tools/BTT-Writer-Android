@@ -4,7 +4,7 @@ import android.content.Context
 import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
-import com.door43.translationstudio.App
+import com.door43.translationstudio.Platform
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Profile
 import com.door43.util.FileUtilities
@@ -17,12 +17,18 @@ class RegisterSSHKeys(
     private val context: Context,
     private val profile: Profile,
     private val directoryProvider: IDirectoryProvider,
-    private val prefRepository: IPreferenceRepository
+    private val prefRepository: IPreferenceRepository,
+    private val platform: Platform
 ) {
-    suspend fun execute(force: Boolean, onProgress: (Float, String?) -> Unit): Boolean {
+    suspend fun execute(
+        force: Boolean,
+        onProgress: (Float, String?) -> Unit = {_,_->}
+    ): Boolean {
         onProgress(-1f, "Authenticating")
 
-        val keyName = context.resources.getString(R.string.gogs_public_key_name) + " " + App.udid()
+        val keyName = context.resources.getString(
+            R.string.gogs_public_key_name
+        ) + " " + platform.udid
 
         val api = GogsAPI(
             apiUrl = prefRepository.getDefaultPref(
@@ -34,7 +40,7 @@ class RegisterSSHKeys(
 
         profile.gogsUser?.let { user ->
             if (!directoryProvider.hasSSHKeys() || force) {
-                directoryProvider.generateSSHKeys()
+                directoryProvider.generateSSHKeys(platform.udid)
             }
             val keyString: String?
             try {

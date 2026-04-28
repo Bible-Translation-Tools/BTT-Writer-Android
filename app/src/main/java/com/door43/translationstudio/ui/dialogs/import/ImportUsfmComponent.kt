@@ -7,7 +7,7 @@ import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
-import com.door43.translationstudio.App.Companion.deviceLanguageCode
+import com.door43.translationstudio.Platform
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.ComponentScope
 import com.door43.translationstudio.core.MergeConflictsHandler
@@ -102,6 +102,7 @@ class DefaultImportUsfmComponent(
     private val directoryProvider: IDirectoryProvider by inject()
     private val assetsProvider: AssetsProvider by inject()
     private val profile: Profile by inject()
+    private val platform: Platform by inject()
 
     override val coroutineScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
 
@@ -174,7 +175,7 @@ class DefaultImportUsfmComponent(
         if (stack.size <= 1) return
         val parentId = stack[stack.size - 2]
         val categories = library.index.getProjectCategories(
-            parentId, deviceLanguageCode, "all"
+            parentId, platform.deviceLanguageCode, "all"
         )
         _state.update {
             it.copy(
@@ -245,6 +246,7 @@ class DefaultImportUsfmComponent(
             val usfm = withContext(Dispatchers.IO) {
                 ProcessUSFM.Builder(
                     application,
+                    platform,
                     directoryProvider,
                     profile,
                     library,
@@ -284,7 +286,7 @@ class DefaultImportUsfmComponent(
         }
 
         val categories = library.index.getProjectCategories(
-            0L, deviceLanguageCode, "all"
+            0L, platform.deviceLanguageCode, "all"
         )
         _state.update {
             it.copy(
@@ -394,7 +396,7 @@ class DefaultImportUsfmComponent(
 
     private fun navigateToCategory(categoryId: Long) {
         val categories = library.index.getProjectCategories(
-            categoryId, deviceLanguageCode, "all"
+            categoryId, platform.deviceLanguageCode, "all"
         )
         _state.update {
             it.copy(

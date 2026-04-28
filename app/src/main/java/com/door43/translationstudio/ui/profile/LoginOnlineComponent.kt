@@ -3,7 +3,7 @@ package com.door43.translationstudio.ui.profile
 import android.app.Application
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.essenty.lifecycle.doOnDestroy
-import com.door43.translationstudio.App
+import com.door43.translationstudio.Platform
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.ComponentScope
 import com.door43.translationstudio.core.Profile
@@ -54,6 +54,7 @@ class DefaultLoginOnlineComponent(
     private val application: Application by inject()
     private val profile: Profile by inject()
     private val gogsLogin: GogsLogin by inject()
+    private val platform: Platform by inject()
 
     private val _event = Channel<LoginOnlineComponent.Event>(Channel.BUFFERED)
     override val event = _event.receiveAsFlow()
@@ -64,7 +65,7 @@ class DefaultLoginOnlineComponent(
     override val progress get() = progressManager.progress
 
     override val isNetworkAvailable: Boolean
-        get() = App.isNetworkAvailable
+        get() = platform.isNetworkAvailable
 
     init {
         lifecycle.doOnDestroy {
@@ -93,7 +94,7 @@ class DefaultLoginOnlineComponent(
                 profile.login(user.fullName!!, user)
                 onResult(LoginOnlineComponent.Result.LoggedIn)
             } else {
-                val errorRes = if (App.isNetworkAvailable) {
+                val errorRes = if (platform.isNetworkAvailable) {
                     R.string.double_check_credentials
                 } else {
                     R.string.internet_not_available

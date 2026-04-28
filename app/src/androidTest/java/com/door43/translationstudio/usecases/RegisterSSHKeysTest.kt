@@ -1,7 +1,6 @@
 package com.door43.translationstudio.usecases
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.door43.OnProgressListener
 import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
 import com.door43.data.setDefaultPref
@@ -64,14 +63,14 @@ class RegisterSSHKeysTest : KoinAndroidTest() {
         loginGogsUser()
 
         var progressMessage: String? = null
-        val progressListener = OnProgressListener { _, message ->
+        val onProgress: (Float, String?) -> Unit = { _, message ->
             progressMessage = message
         }
 
         val hasSSHKeys = directoryProvider.hasSSHKeys()
         assertFalse("SSH keys should not exist", hasSSHKeys)
 
-        val registered = registerSSHKeys.execute(false, progressListener)
+        val registered = registerSSHKeys.execute(false, onProgress)
 
         assertTrue("SSH keys registered ", registered)
         assertNotNull("Progress message should not be null", progressMessage)
@@ -81,7 +80,7 @@ class RegisterSSHKeysTest : KoinAndroidTest() {
         }
 
         progressMessage = null
-        val registered2 = registerSSHKeys.execute(true, progressListener)
+        val registered2 = registerSSHKeys.execute(true, onProgress)
 
         assertTrue("SSH keys registered with force flag", registered2)
         assertNotNull("Progress message should not be null", progressMessage)
@@ -100,11 +99,11 @@ class RegisterSSHKeysTest : KoinAndroidTest() {
     @Test
     fun testRegisterSSHKeys_noUser() = runTest {
         var progressMessage: String? = null
-        val progressListener = OnProgressListener { _, message ->
+        val onProgress: (Float, String?) -> Unit = { _, message ->
             progressMessage = message
         }
 
-        val registered = registerSSHKeys.execute(false, progressListener)
+        val registered = registerSSHKeys.execute(false, onProgress)
 
         assertFalse("SSH keys not registered without user", registered)
         assertNotNull("Progress message should not be null", progressMessage)

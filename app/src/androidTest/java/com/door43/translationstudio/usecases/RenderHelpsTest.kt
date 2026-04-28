@@ -6,6 +6,7 @@ import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.IntegrationTest
 import com.door43.translationstudio.KoinAndroidTest
+import com.door43.translationstudio.Platform
 import com.door43.translationstudio.TestUtils
 import com.door43.translationstudio.core.Chunk
 import com.door43.translationstudio.core.Profile
@@ -17,12 +18,12 @@ import com.door43.usecases.RenderHelps
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertNotNull
 import junit.framework.TestCase.assertTrue
+import org.bibletranslationtools.resourcecontainer.Link
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.koin.core.component.inject
 import org.unfoldingword.door43client.Door43Client
-import org.unfoldingword.resourcecontainer.Link
 
 @RunWith(AndroidJUnit4::class)
 @IntegrationTest
@@ -36,6 +37,7 @@ class RenderHelpsTest : KoinAndroidTest() {
     private val translator: Translator by inject()
     private val profile: Profile by inject()
     private val renderHelps: RenderHelps by inject()
+    private val platform: Platform by inject()
 
     @Before
     fun setUp() {
@@ -64,7 +66,7 @@ class RenderHelpsTest : KoinAndroidTest() {
         assertTrue("There should be a notes help", result.containsKey("notes"))
         assertEquals("There should be 10 notes", 10, (result["notes"] as List<*>).size)
         assertTrue("There should be a questions help", result.containsKey("questions"))
-        assertEquals("There should be 8 questions", 8, (result["questions"] as List<*>).size)
+        assertEquals("There should be 14 questions", 14, (result["questions"] as List<*>).size)
         assertTrue("There should be a words help", result.containsKey("words"))
         assertEquals("There should be 9 words", 9, (result["words"] as List<*>).size)
 
@@ -84,13 +86,14 @@ class RenderHelpsTest : KoinAndroidTest() {
             (it as Link).chapter == "goodnews"
         }
         assertNotNull(word)
-        assertTrue((word!! as Link).title.contains("good news", ignoreCase = true))
+        assertTrue((word as? Link)?.title?.contains("good news", ignoreCase = true) == true)
     }
 
     private fun importTargetTranslation(lang: String): TargetTranslation? {
         return TestUtils.importTargetTranslation(
             library,
             appContext,
+            platform,
             directoryProvider,
             profile,
             assetsProvider,

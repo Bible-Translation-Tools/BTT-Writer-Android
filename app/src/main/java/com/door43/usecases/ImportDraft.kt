@@ -14,7 +14,7 @@ class ImportDraft(
 ) {
     fun execute(
         draftTranslation: ResourceContainer,
-        onProgress: (Float, String?) -> Unit
+        onProgress: (Float, String?) -> Unit = {_,_->}
     ): Result {
         onProgress(-1f, context.getString(R.string.importing_draft))
 

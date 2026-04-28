@@ -1,7 +1,6 @@
 package com.door43.translationstudio.usecases
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.door43.OnProgressListener
 import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.IntegrationTest
 import com.door43.translationstudio.KoinAndroidTest
@@ -38,11 +37,11 @@ class CloneRepositoryTest : KoinAndroidTest() {
     fun cloneRepositorySuccessfully() {
         val cloneUrl = "https://wacs.bibletranslationtools.org/WycliffeAssociates/en_ulb.git"
         var progressMessage: String? = null
-        val progressListener = OnProgressListener { _, message ->
+        val onProgress: (Float, String?) -> Unit = { _, message ->
             progressMessage = message
         }
 
-        val result = cloneRepository.execute(cloneUrl, progressListener)
+        val result = cloneRepository.execute(cloneUrl, onProgress)
 
         assertNotNull("Clone repository result should not be null", result)
         assertNotNull("Progress message should not be null", progressMessage)
@@ -63,11 +62,11 @@ class CloneRepositoryTest : KoinAndroidTest() {
         val cloneUrl = "https://wacs.bibletranslationtools.org/WycliffeAssociates/non_existing_repo.git"
 
         var progressMessage: String? = null
-        val progressListener = OnProgressListener { _, message ->
+        val onProgress: (Float, String?) -> Unit = { _, message ->
             progressMessage = message
         }
 
-        val result = cloneRepository.execute(cloneUrl, progressListener)
+        val result = cloneRepository.execute(cloneUrl, onProgress)
 
         assertNotNull("Clone repository result should not be null", result)
         assertNotNull("Progress message should not be null", progressMessage)

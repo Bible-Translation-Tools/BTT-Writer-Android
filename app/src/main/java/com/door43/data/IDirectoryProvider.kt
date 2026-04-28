@@ -101,7 +101,7 @@ interface IDirectoryProvider {
     /**
      * Generates a new RSA key pair for use with ssh
      */
-    fun generateSSHKeys()
+    fun generateSSHKeys(udid: String)
 
     /**
      * Moves an asset into the cache directory and returns a file reference to it

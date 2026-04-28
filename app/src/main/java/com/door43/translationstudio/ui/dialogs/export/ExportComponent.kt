@@ -8,8 +8,7 @@ import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
-import com.door43.translationstudio.App
-import com.door43.translationstudio.App.Companion.deviceLanguageCode
+import com.door43.translationstudio.Platform
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.ComponentScope
 import com.door43.translationstudio.core.DownloadImages
@@ -130,6 +129,7 @@ class DefaultExportComponent(
     private val pushTargetTranslation: PushTargetTranslation by inject()
     private val registerSSHKeys: RegisterSSHKeys by inject()
     private val prefRepository: IPreferenceRepository by inject()
+    private val platform: Platform by inject()
 
     override val coroutineScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
 
@@ -543,7 +543,7 @@ class DefaultExportComponent(
         val noInternet = application.getString(R.string.internet_not_available)
         val exportFailed = application.getString(R.string.export_failed)
 
-        if (!App.isNetworkAvailable) {
+        if (!platform.isNetworkAvailable) {
             _state.update { it.copy(info = DialogMessage(title, noInternet)) }
         } else {
             _state.update { it.copy(uploadError = DialogMessage(title, exportFailed)) }
@@ -565,7 +565,7 @@ class DefaultExportComponent(
 
     private fun getProject(): Project? {
         return library.index.getProject(
-            deviceLanguageCode,
+            platform.deviceLanguageCode,
             targetTranslation.projectId,
             true
         )

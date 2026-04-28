@@ -5,6 +5,7 @@ import android.net.Uri
 import android.text.TextUtils
 import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
+import com.door43.translationstudio.Platform
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Translator.Companion.TXT_EXTENSION
 import com.door43.translationstudio.core.Translator.Companion.USFM_EXTENSION
@@ -30,6 +31,7 @@ import java.util.regex.Pattern
  */
 class ProcessUSFM {
     private var context: Context
+    private var platform: Platform
     private val directoryProvider: IDirectoryProvider
     private val profile: Profile
     private val library: Door43Client
@@ -74,6 +76,7 @@ class ProcessUSFM {
 
     private constructor(
         context: Context,
+        platform: Platform,
         directoryProvider: IDirectoryProvider,
         profile: Profile,
         library: Door43Client,
@@ -82,6 +85,7 @@ class ProcessUSFM {
         onProgress: (Float, String?) -> Unit = {_,_->}
     ) {
         this.context = context
+        this.platform = platform
         this.directoryProvider = directoryProvider
         this.profile = profile
         this.library = library
@@ -97,6 +101,7 @@ class ProcessUSFM {
      */
     private constructor(
         context: Context,
+        platform: Platform,
         directoryProvider: IDirectoryProvider,
         profile: Profile,
         library: Door43Client,
@@ -106,6 +111,7 @@ class ProcessUSFM {
         onProgress: (Float, String?) -> Unit = {_,_->}
     ): this(
         context,
+        platform,
         directoryProvider,
         profile,
         library,
@@ -119,6 +125,7 @@ class ProcessUSFM {
 
     private constructor(
         context: Context,
+        platform: Platform,
         directoryProvider: IDirectoryProvider,
         profile: Profile,
         library: Door43Client,
@@ -128,6 +135,7 @@ class ProcessUSFM {
         onProgress: (Float, String?) -> Unit = {_,_->}
     ): this(
         context,
+        platform,
         directoryProvider,
         profile,
         library,
@@ -141,6 +149,7 @@ class ProcessUSFM {
 
     private constructor(
         context: Context,
+        platform: Platform,
         directoryProvider: IDirectoryProvider,
         profile: Profile,
         library: Door43Client,
@@ -150,6 +159,7 @@ class ProcessUSFM {
         onProgress: (Float, String?) -> Unit = {_,_->}
     ): this(
         context,
+        platform,
         directoryProvider,
         profile,
         library,
@@ -163,6 +173,7 @@ class ProcessUSFM {
 
     class Builder(
         private val context: Context,
+        private val platform: Platform,
         private val directoryProvider: IDirectoryProvider,
         private val profile: Profile,
         private val library: Door43Client,
@@ -217,6 +228,7 @@ class ProcessUSFM {
                 when {
                     currentLang != null && currentFile != null -> ProcessUSFM(
                         context,
+                        platform,
                         directoryProvider,
                         profile,
                         library,
@@ -227,6 +239,7 @@ class ProcessUSFM {
                     )
                     currentLang != null && currentUri != null -> ProcessUSFM(
                         context,
+                        platform,
                         directoryProvider,
                         profile,
                         library,
@@ -237,6 +250,7 @@ class ProcessUSFM {
                     )
                     currentLang != null && currentRcPath != null -> ProcessUSFM(
                         context,
+                        platform,
                         directoryProvider,
                         profile,
                         library,
@@ -765,6 +779,7 @@ class ProcessUSFM {
             val resourceSlug = Resource.REGULAR_SLUG
             TargetTranslation.create(
                 context,
+                platform,
                 profile.nativeSpeaker,
                 TranslationFormat.USFM,
                 targetLanguage!!,

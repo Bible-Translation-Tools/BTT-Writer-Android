@@ -9,7 +9,6 @@ import androidx.compose.material.icons.outlined.Warning
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.door43.data.IDirectoryProvider
-import com.door43.translationstudio.App
 import com.door43.translationstudio.Platform
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.ComponentScope
@@ -75,7 +74,6 @@ interface DevToolsComponent {
 
 class DefaultDevToolsComponent(
     componentContext: ComponentContext,
-    private val platform: Platform,
     private val onResult: (DevToolsComponent.Result) -> Unit
 ) : DevToolsComponent,
     ComponentContext by componentContext,
@@ -84,6 +82,7 @@ class DefaultDevToolsComponent(
     private val application: Application by inject()
     private val directoryProvider: IDirectoryProvider by inject()
     private val library: Door43Client by inject()
+    private val platform: Platform by inject()
 
     override val coroutineScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
 
@@ -96,9 +95,9 @@ class DefaultDevToolsComponent(
     private val _event = Channel<DevToolsComponent.Event>()
     override val event = _event.receiveAsFlow()
 
-    override val versionName = App.info.versionName
-    override val versionCode = App.info.versionCode
-    override val udid: String get() = App.udid()
+    override val versionName = platform.info.versionName
+    override val versionCode = platform.info.versionCode
+    override val udid = platform.udid
 
     init {
         lifecycle.doOnDestroy {
@@ -206,7 +205,7 @@ class DefaultDevToolsComponent(
             application.getString(R.string.recreate_keys)
         ) {
             val generated = withContext(Dispatchers.IO) {
-                directoryProvider.generateSSHKeys()
+                directoryProvider.generateSSHKeys(platform.udid)
                 true
             }
             _state.update { it.copy(keysRegenerated = generated) }

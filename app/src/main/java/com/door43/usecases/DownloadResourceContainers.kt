@@ -1,6 +1,6 @@
 package com.door43.usecases
 
-import com.door43.translationstudio.App
+import com.door43.translationstudio.Platform
 import org.bibletranslationtools.logger.Logger
 import org.bibletranslationtools.resourcecontainer.ResourceContainer
 import org.unfoldingword.door43client.Door43Client
@@ -25,7 +25,7 @@ class DownloadResourceContainers(
 
     suspend fun download(
         translation: Translation,
-        onProgress: (Float, String?) -> Unit
+        onProgress: (Float, String?) -> Unit = {_,_->}
     ): DownloadResult {
         var success = false
         val downloadedContainers = arrayListOf<ResourceContainer>()
@@ -108,7 +108,7 @@ class DownloadResourceContainers(
 
     suspend fun download(
         translationIDs: List<String>,
-        onProgress: (Float, String?) -> Unit
+        onProgress: (Float, String?) -> Unit = {_,_->}
     ): Result {
         val downloadedContainers = arrayListOf<ResourceContainer>()
         val failedSourceDownloads = arrayListOf<String>()
@@ -268,7 +268,7 @@ class DownloadResourceContainers(
         downloadedContainers: ArrayList<ResourceContainer>,
         failedHelpsDownloads: ArrayList<String>,
         failedSourceDownloads: ArrayList<String>,
-        onProgress: (Float, String?) -> Unit
+        onProgress: (Float, String?) -> Unit = {_,_->}
     ): Boolean {
         var success = true
         if (!downloaded.contains(languageSlug)) {
@@ -316,7 +316,7 @@ class DownloadResourceContainers(
         downloadedContainers: ArrayList<ResourceContainer>,
         failedHelpsDownloads: ArrayList<String>,
         failedSourceDownloads: ArrayList<String>,
-        onProgress: (Float, String?) -> Unit
+        onProgress: (Float, String?) -> Unit = {_,_->}
     ): Boolean {
         var passSuccess = true
         try {
@@ -327,7 +327,7 @@ class DownloadResourceContainers(
                 resourceSlug,
                 null,
                 null,
-                App.MIN_CHECKING_LEVEL,
+                Platform.MIN_CHECKING_LEVEL,
                 -1
             )
             if (helps.isEmpty()) {

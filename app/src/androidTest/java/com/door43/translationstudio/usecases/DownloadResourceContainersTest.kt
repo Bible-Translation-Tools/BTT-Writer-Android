@@ -1,7 +1,6 @@
 package com.door43.translationstudio.usecases
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.door43.OnProgressListener
 import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.IntegrationTest
 import com.door43.translationstudio.KoinAndroidTest
@@ -10,7 +9,7 @@ import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertFalse
 import junit.framework.TestCase.assertNotNull
 import junit.framework.TestCase.assertTrue
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -38,18 +37,16 @@ class DownloadResourceContainersTest : KoinAndroidTest() {
     }
 
     @Test
-    fun downloadResourceContainerSucceeded() {
+    fun downloadResourceContainerSucceeded() = runTest {
         val translation = library.index.getTranslation("en_gen_ulb")
         assertNotNull("Translation should not be null", translation)
 
         var progressMessage: String? = null
-        val progressListener = OnProgressListener { _, message ->
+        val onProgress: (Float, String?) -> Unit = { _, message ->
             progressMessage = message
         }
 
-        val result = runBlocking {
-            downloadResourceContainers.download(translation!!, progressListener)
-        }
+        val result = downloadResourceContainers.download(translation!!, onProgress)
 
         assertNotNull("Download result should not be null", result)
         assertTrue("Download result should be successful", result.success)
@@ -61,17 +58,15 @@ class DownloadResourceContainersTest : KoinAndroidTest() {
     }
 
     @Test
-    fun downloadResourceContainersSucceeded() {
+    fun downloadResourceContainersSucceeded() = runTest {
         val translationIds = listOf("en_gen_ulb", "id_gen_ayt")
 
         var progressMessage: String? = null
-        val progressListener = OnProgressListener { _, message ->
+        val onProgress: (Float, String?) -> Unit = { _, message ->
             progressMessage = message
         }
 
-        val result = runBlocking {
-            downloadResourceContainers.download(translationIds, progressListener)
-        }
+        val result = downloadResourceContainers.download(translationIds, onProgress)
 
         assertNotNull("Download result should not be null", result)
 
@@ -128,10 +123,8 @@ class DownloadResourceContainersTest : KoinAndroidTest() {
     }
 
     @Test
-    fun downloadNoneResourceContainers() {
-        val result = runBlocking {
-            downloadResourceContainers.download(listOf())
-        }
+    fun downloadNoneResourceContainers() = runTest {
+        val result = downloadResourceContainers.download(listOf())
 
         assertNotNull("Download result should not be null", result)
         assertEquals(result.downloadedTranslations.size, 0)
@@ -142,11 +135,9 @@ class DownloadResourceContainersTest : KoinAndroidTest() {
     }
 
     @Test
-    fun downloadIncorrectResourceContainers() {
+    fun downloadIncorrectResourceContainers() = runTest {
         val badTranslationIds = listOf("bad_tr_id1", "bad_tr_id2")
-        val result = runBlocking {
-            downloadResourceContainers.download(badTranslationIds)
-        }
+        val result = downloadResourceContainers.download(badTranslationIds)
 
         assertNotNull("Download result should not be null", result)
 

@@ -1,18 +1,16 @@
 package com.door43.translationstudio.usecases
 
-import android.content.Context
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.IntegrationTest
 import com.door43.translationstudio.KoinAndroidTest
-import com.door43.translationstudio.R
 import com.door43.usecases.UpdateCatalogs
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertNotNull
 import junit.framework.TestCase.assertNull
 import junit.framework.TestCase.assertTrue
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import okhttp3.mockwebserver.Dispatcher
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -25,13 +23,13 @@ import org.koin.core.component.inject
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.door43client.models.Catalog
 import java.text.SimpleDateFormat
+import java.util.Locale
 
 
 @RunWith(AndroidJUnit4::class)
 @IntegrationTest
 class UpdateCatalogsTest : KoinAndroidTest() {
 
-    private val appContext: Context by inject()
     private val updateCatalogs: UpdateCatalogs by inject()
     private val library: Door43Client by inject()
     private val directoryProvider: IDirectoryProvider by inject()
@@ -50,7 +48,6 @@ class UpdateCatalogsTest : KoinAndroidTest() {
 
                 return when (request.path) {
                     "/langnames.json" -> successResponse.setBody(createResponse("langnames"))
-                    "/questionnaire.json" -> successResponse.setBody(createResponse("questionnaire"))
                     "/temp-langs.json" -> successResponse.setBody(createResponse("temp_langs"))
                     "/approved-langs.json" -> successResponse.setBody(createResponse("approved_temp_langs"))
                     else -> notFoundResponse
@@ -72,18 +69,15 @@ class UpdateCatalogsTest : KoinAndroidTest() {
     }
 
     @Test
-    fun testUpdateCatalogs() {
+    fun testUpdateCatalogs() = runTest {
         prepareCatalogs()
 
-        val result = runBlocking {
-            updateCatalogs.execute(false)
-        }
+        val result = updateCatalogs.execute(false)
 
         assertTrue("Update catalogs should succeed", result.success)
         assertEquals("Added 2 languages", 2, result.addedCount)
 
         verifyTargetLanguages()
-        verifyQuestionnaire()
     }
 
     private fun verifyTargetLanguages() {
@@ -115,30 +109,11 @@ class UpdateCatalogsTest : KoinAndroidTest() {
         assertEquals("Temp language name should match", "Yattuca", temp2LanguageApproved?.name)
     }
 
-    private fun verifyQuestionnaire() {
-        val questionnaires = library.index.getQuestionnaires()
-        assertTrue("Questionnaires should not be empty", questionnaires.isNotEmpty())
-
-        val questionnaire = questionnaires.singleOrNull { it.tdId == 2L }
-        assertNotNull("Questionnaire should not be null", questionnaire)
-        assertEquals("es", questionnaire?.languageSlug)
-        assertEquals("Spanish", questionnaire?.languageName)
-
-        val questions = library.index.getQuestions(2L)
-        assertEquals("Question count should match", 19, questions.size)
-        assertEquals("Test questionnaire question", questions.singleOrNull { it.sort == 19 }?.text)
-    }
-
     private fun prepareCatalogs() {
         val langCatalogUrl = server.url("/langnames.json").toString()
         val langCatalog = Catalog("langnames", langCatalogUrl, 0)
         library.index.addCatalog(langCatalog)
         createResponse("langnames")
-
-        val questionnaireCatalogUrl = server.url("/questionnaire.json").toString()
-        val questionnaireCatalog = Catalog("new-language-questions", questionnaireCatalogUrl, 0)
-        library.index.addCatalog(questionnaireCatalog)
-        createResponse("questionnaire")
 
         val tempLangsCatalogUrl = server.url("/temp-langs.json").toString()
         val tempLangsCatalog = Catalog("temp-langnames", tempLangsCatalogUrl, 0)
@@ -153,8 +128,8 @@ class UpdateCatalogsTest : KoinAndroidTest() {
 
     private fun createResponse(id: String): String {
         val baseUrl = server.url("/").toString()
-        val datetimeFormat = SimpleDateFormat("yyyyMMdd")
-        val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSSSXXX")
+        val datetimeFormat = SimpleDateFormat("yyyyMMdd", Locale.US)
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSSSXXX", Locale.US)
         val project = directoryProvider.createTempFile(id, ".json")
         assetsProvider.open("catalog/$id.json").use { input ->
             project.outputStream().use { output ->

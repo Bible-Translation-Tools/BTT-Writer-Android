@@ -6,9 +6,11 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.IntegrationTest
+import com.door43.translationstudio.Platform
 import com.door43.translationstudio.rendering.spannables.USFMVerseSpan
 import com.door43.util.FileUtilities
 import junit.framework.TestCase.assertFalse
+import org.bibletranslationtools.logger.Logger
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
@@ -21,7 +23,6 @@ import org.koin.test.inject
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.door43client.models.ChunkMarker
 import org.unfoldingword.door43client.models.TargetLanguage
-import org.bibletranslationtools.logger.Logger
 import java.io.File
 import java.io.IOException
 import java.util.regex.Pattern
@@ -42,6 +43,7 @@ class ImportUsfmTest : KoinTest {
     private val directoryProvider: IDirectoryProvider by inject()
     private val profile: Profile by inject()
     private val assetsProvider: AssetsProvider by inject()
+    private val platform: Platform by inject()
 
     private lateinit var expectedBooks: JSONArray
     private lateinit var targetLanguage: TargetLanguage
@@ -75,12 +77,13 @@ class ImportUsfmTest : KoinTest {
 
         usfm = ProcessUSFM.Builder(
             appContext,
+            platform,
             directoryProvider,
             profile,
             library,
             assetsProvider
         )
-            .fromRc(targetLanguage, "usfm/$source", null)
+            .fromRc(targetLanguage, "usfm/$source")
             .build()
 
         assertNotNull(usfm)
@@ -112,12 +115,13 @@ class ImportUsfmTest : KoinTest {
 
         usfm = ProcessUSFM.Builder(
             appContext,
+            platform,
             directoryProvider,
             profile,
             library,
             assetsProvider
         )
-            .fromRc(targetLanguage, "usfm/$source", null)
+            .fromRc(targetLanguage, "usfm/$source")
             .build()
 
         assertNotNull(usfm)
@@ -144,12 +148,13 @@ class ImportUsfmTest : KoinTest {
         val expectedVerseCount = 678
         usfm = ProcessUSFM.Builder(
             appContext,
+            platform,
             directoryProvider,
             profile,
             library,
             assetsProvider
         )
-            .fromRc(targetLanguage, "usfm/$source", null)
+            .fromRc(targetLanguage, "usfm/$source")
             .build()
 
         val usfmStream = assetsProvider.open("usfm/$source")
@@ -176,12 +181,13 @@ class ImportUsfmTest : KoinTest {
         val expectedVerseCount = 2461
         usfm = ProcessUSFM.Builder(
             appContext,
+            platform,
             directoryProvider,
             profile,
             library,
             assetsProvider
         )
-            .fromRc(targetLanguage, "usfm/$source", null)
+            .fromRc(targetLanguage, "usfm/$source")
             .build()
 
         assertNotNull(usfm)
@@ -206,12 +212,13 @@ class ImportUsfmTest : KoinTest {
         val expectAllVerses = true
         usfm = ProcessUSFM.Builder(
             appContext,
+            platform,
             directoryProvider,
             profile,
             library,
             assetsProvider
         )
-            .fromRc(targetLanguage, "usfm/$source", null)
+            .fromRc(targetLanguage, "usfm/$source")
             .build()
 
         assertNotNull(usfm)
@@ -235,12 +242,13 @@ class ImportUsfmTest : KoinTest {
         val expectedVerseCount = 45
         usfm = ProcessUSFM.Builder(
             appContext,
+            platform,
             directoryProvider,
             profile,
             library,
             assetsProvider
         )
-            .fromRc(targetLanguage, "usfm/$source", null)
+            .fromRc(targetLanguage, "usfm/$source")
             .build()
 
         assertNotNull(usfm)
@@ -266,12 +274,13 @@ class ImportUsfmTest : KoinTest {
         val expectedVerseCount = 0
         usfm = ProcessUSFM.Builder(
             appContext,
+            platform,
             directoryProvider,
             profile,
             library,
             assetsProvider
         )
-            .fromRc(targetLanguage, "usfm/$source", null)
+            .fromRc(targetLanguage, "usfm/$source")
             .build()
 
         assertNotNull(usfm)
@@ -297,12 +306,13 @@ class ImportUsfmTest : KoinTest {
         val expectedVerseCount = 677
         usfm = ProcessUSFM.Builder(
             appContext,
+            platform,
             directoryProvider,
             profile,
             library,
             assetsProvider
         )
-            .fromRc(targetLanguage, "usfm/$source", null)
+            .fromRc(targetLanguage, "usfm/$source")
             .build()
 
         assertNotNull(usfm)
@@ -328,12 +338,13 @@ class ImportUsfmTest : KoinTest {
         val expectedVerseCount = 633
         usfm = ProcessUSFM.Builder(
             appContext,
+            platform,
             directoryProvider,
             profile,
             library,
             assetsProvider
         )
-            .fromRc(targetLanguage, "usfm/$source", null)
+            .fromRc(targetLanguage, "usfm/$source")
             .build()
 
         assertNotNull(usfm)
@@ -359,12 +370,13 @@ class ImportUsfmTest : KoinTest {
         val expectedVerseCount = 0
         usfm = ProcessUSFM.Builder(
             appContext,
+            platform,
             directoryProvider,
             profile,
             library,
             assetsProvider
         )
-            .fromRc(targetLanguage, "usfm/$source", null)
+            .fromRc(targetLanguage, "usfm/$source")
             .build()
 
         assertNotNull(usfm)
@@ -390,12 +402,13 @@ class ImportUsfmTest : KoinTest {
         val expectedVerseCount = 0
         usfm = ProcessUSFM.Builder(
             appContext,
+            platform,
             directoryProvider,
             profile,
             library,
             assetsProvider
         )
-            .fromRc(targetLanguage, "usfm/$source", null)
+            .fromRc(targetLanguage, "usfm/$source")
             .build()
 
         assertNotNull(usfm)
@@ -421,12 +434,13 @@ class ImportUsfmTest : KoinTest {
         val expectedVerseCount = 74
         usfm = ProcessUSFM.Builder(
             appContext,
+            platform,
             directoryProvider,
             profile,
             library,
             assetsProvider
         )
-            .fromRc(targetLanguage, "usfm/$source", null)
+            .fromRc(targetLanguage, "usfm/$source")
             .build()
 
         assertNotNull(usfm)
@@ -452,12 +466,13 @@ class ImportUsfmTest : KoinTest {
         val expectedVerseCount = 74
         usfm = ProcessUSFM.Builder(
             appContext,
+            platform,
             directoryProvider,
             profile,
             library,
             assetsProvider
         )
-            .fromRc(targetLanguage, "usfm/$source", null)
+            .fromRc(targetLanguage, "usfm/$source")
             .build()
 
         assertNotNull(usfm)
@@ -482,12 +497,13 @@ class ImportUsfmTest : KoinTest {
         val expectAllVerses = true
         usfm = ProcessUSFM.Builder(
             appContext,
+            platform,
             directoryProvider,
             profile,
             library,
             assetsProvider
         )
-            .fromRc(targetLanguage, "usfm/$source", null)
+            .fromRc(targetLanguage, "usfm/$source")
             .build()
 
         assertNotNull(usfm)
@@ -511,12 +527,13 @@ class ImportUsfmTest : KoinTest {
         val expectedVerseCount = 81
         usfm = ProcessUSFM.Builder(
             appContext,
+            platform,
             directoryProvider,
             profile,
             library,
             assetsProvider
         )
-            .fromRc(targetLanguage, "usfm/$source", null)
+            .fromRc(targetLanguage, "usfm/$source")
             .build()
 
         assertNotNull(usfm)
@@ -542,12 +559,13 @@ class ImportUsfmTest : KoinTest {
         val expectedVerseCount = 104
         usfm = ProcessUSFM.Builder(
             appContext,
+            platform,
             directoryProvider,
             profile,
             library,
             assetsProvider
         )
-            .fromRc(targetLanguage, "usfm/$source", null)
+            .fromRc(targetLanguage, "usfm/$source")
             .build()
 
         assertNotNull(usfm)
@@ -573,12 +591,13 @@ class ImportUsfmTest : KoinTest {
         val expectedVerseCount = 104
         usfm = ProcessUSFM.Builder(
             appContext,
+            platform,
             directoryProvider,
             profile,
             library,
             assetsProvider
         )
-            .fromRc(targetLanguage, "usfm/$source", null)
+            .fromRc(targetLanguage, "usfm/$source")
             .build()
 
         assertNotNull(usfm)
@@ -604,12 +623,13 @@ class ImportUsfmTest : KoinTest {
         val expectedVerseCount = 104
         usfm = ProcessUSFM.Builder(
             appContext,
+            platform,
             directoryProvider,
             profile,
             library,
             assetsProvider
         )
-            .fromRc(targetLanguage, "usfm/$source", null)
+            .fromRc(targetLanguage, "usfm/$source")
             .build()
 
         assertNotNull(usfm)
@@ -635,12 +655,13 @@ class ImportUsfmTest : KoinTest {
         val expectedVerseCount = 25
         usfm = ProcessUSFM.Builder(
             appContext,
+            platform,
             directoryProvider,
             profile,
             library,
             assetsProvider
         )
-            .fromRc(targetLanguage, "usfm/$source", null)
+            .fromRc(targetLanguage, "usfm/$source")
             .build()
 
         assertNotNull(usfm)
@@ -666,12 +687,13 @@ class ImportUsfmTest : KoinTest {
         val expectedVerseCount = 6
         usfm = ProcessUSFM.Builder(
             appContext,
+            platform,
             directoryProvider,
             profile,
             library,
             assetsProvider
         )
-            .fromRc(targetLanguage, "usfm/$source", null)
+            .fromRc(targetLanguage, "usfm/$source")
             .build()
 
         assertNotNull(usfm)

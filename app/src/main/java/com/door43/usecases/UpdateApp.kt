@@ -9,7 +9,6 @@ import com.door43.data.getDefaultPref
 import com.door43.data.getPrivatePref
 import com.door43.data.setDefaultPref
 import com.door43.data.setPrivatePref
-import com.door43.translationstudio.App
 import com.door43.translationstudio.Platform
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.TargetTranslationMigrator
@@ -33,7 +32,7 @@ class UpdateApp(
 ) {
     private var updateLibrary = true
 
-    suspend fun execute(onProgress: (Float, String?) -> Unit) {
+    suspend fun execute(onProgress: (Float, String?) -> Unit = {_,_->}) {
         var lastVersionCode = prefRepository.getPrivatePref(
             "last_version_code",
             0
@@ -96,7 +95,7 @@ class UpdateApp(
                 e.printStackTrace()
             }
 
-            App.restart()
+            platform.restart()
             return
         }
 
@@ -120,7 +119,10 @@ class UpdateApp(
      * @param lastVersion
      * @param progressListener
      */
-    private fun performUpdates(lastVersion: Int, onProgress: (Float, String?) -> Unit) {
+    private fun performUpdates(
+        lastVersion: Int,
+        onProgress: (Float, String?) -> Unit = {_,_->}
+    ) {
         // perform migrations
         if (lastVersion < 87) {
             upgradePre87(onProgress)
@@ -248,7 +250,7 @@ class UpdateApp(
      * Major changes.
      * Moved to the new object management system.
      */
-    private fun upgradePre103(onProgress: (Float, String?) -> Unit) {
+    private fun upgradePre103(onProgress: (Float, String?) -> Unit = {_,_->}) {
         onProgress(-1f, "Updating translations")
         Logger.i(this.javaClass.name, "Upgrading source data management from pre 103")
 
@@ -295,7 +297,7 @@ class UpdateApp(
     /**
      * Change default font to noto because most of the others do not work
      */
-    private fun upgradePre87(onProgress: (Float, String?) -> Unit) {
+    private fun upgradePre87(onProgress: (Float, String?) -> Unit = {_,_->}) {
         onProgress(-1f, "Updating fonts")
         Logger.i(this.javaClass.name, "Upgrading fonts from pre 87")
 
@@ -308,7 +310,7 @@ class UpdateApp(
     /**
      * "NotoSans-Regular.ttf" font has been removed, replace with new default font
      */
-    private fun upgradePre175(onProgress: (Float, String?) -> Unit) {
+    private fun upgradePre175(onProgress: (Float, String?) -> Unit = {_,_->}) {
         onProgress(-1f, "Updating fonts")
         Logger.i(this.javaClass.name, "Upgrading fonts from pre 175")
         // this has been removed, replace with new default font

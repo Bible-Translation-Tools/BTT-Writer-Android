@@ -35,12 +35,9 @@ class MainActivity : BaseActivity() {
         startBackupService()
         handleIntent(intent)
 
-        val platform = AndroidPlatform(this, directoryProvider)
-
         root = retainedComponent { componentContext ->
             DefaultRootComponent(
                 componentContext = componentContext,
-                platform = platform,
                 onExitApp = ::finishAffinity
             )
         }

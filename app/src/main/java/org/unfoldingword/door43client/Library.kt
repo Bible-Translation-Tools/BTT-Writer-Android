@@ -594,8 +594,12 @@ internal class Library @Throws(IOException::class) constructor(
             if (cursor.moveToFirst()) {
                 val reader = CursorReader(cursor)
                 return TargetLanguage(
-                    targetLanguageSlug, reader.getString("name"), reader.getString("anglicized_name"),
-                    reader.getString("direction"), reader.getString("region"), reader.getBoolean("is_gateway_language")
+                    slug = targetLanguageSlug,
+                    name = reader.getString("name"),
+                    direction = reader.getString("direction"),
+                    anglicizedName = reader.getString("anglicized_name"),
+                    region = reader.getString("region"),
+                    isGatewayLanguage = reader.getBoolean("is_gateway_language")
                 )
             }
         }
@@ -618,8 +622,12 @@ internal class Library @Throws(IOException::class) constructor(
             while (cursor.moveToNext()) {
                 results.add(
                     TargetLanguage(
-                        reader.getString("slug"), reader.getString("name"), reader.getString("anglicized_name"),
-                        reader.getString("direction"), reader.getString("region"), reader.getBoolean("is_gateway_language")
+                        slug = reader.getString("slug"),
+                        name = reader.getString("name"),
+                        direction = reader.getString("direction"),
+                        anglicizedName = reader.getString("anglicized_name"),
+                        region = reader.getString("region"),
+                        isGatewayLanguage = reader.getBoolean("is_gateway_language")
                     )
                 )
             }
@@ -654,8 +662,12 @@ internal class Library @Throws(IOException::class) constructor(
             while (cursor.moveToNext()) {
                 results.add(
                     TargetLanguage(
-                        reader.getString("slug"), reader.getString("name"), reader.getString("anglicized_name"),
-                        reader.getString("direction"), reader.getString("region"), reader.getBoolean("is_gateway_language")
+                        slug = reader.getString("slug"),
+                        name = reader.getString("name"),
+                        direction = reader.getString("direction"),
+                        anglicizedName = reader.getString("anglicized_name"),
+                        region = reader.getString("region"),
+                        isGatewayLanguage = reader.getBoolean("is_gateway_language")
                     )
                 )
             }
@@ -977,7 +989,13 @@ internal class Library @Throws(IOException::class) constructor(
         db.rawQuery("select * from catalog", null).use { cursor ->
             val reader = CursorReader(cursor)
             while (cursor.moveToNext()) {
-                results.add(Catalog(reader.getString("slug"), reader.getString("url"), reader.getInt("modified_at")))
+                results.add(
+                    Catalog(
+                        slug = reader.getString("slug"),
+                        url = reader.getString("url"),
+                        modifiedAt = reader.getInt("modified_at")
+                    )
+                )
             }
         }
         return results
@@ -1108,11 +1126,20 @@ internal class Library @Throws(IOException::class) constructor(
         vacuum()
     }
 
-    protected fun truncateTable(table: String) {
+    fun clearTempLanguages() {
+        truncateTable("temp_target_language")
+        vacuum()
+    }
+
+    fun clearApprovedTempLanguages() {
+        db.execSQL("update temp_target_language set approved_target_language_slug=null")
+    }
+
+    fun truncateTable(table: String) {
         db.execSQL("delete from $table")
     }
 
-    protected fun vacuum() {
+    fun vacuum() {
         try {
             db.execSQL("vacuum")
         } catch (e: Exception) {

@@ -202,7 +202,6 @@ interface HomeComponent {
 
 class DefaultHomeComponent(
     componentContext: ComponentContext,
-    private val platform: Platform,
     private val sharedFlow: SharedFlow<RootComponent.SharedEvent>,
     private val onResult: (HomeComponent.Result) -> Unit
 ) : HomeComponent,
@@ -217,6 +216,7 @@ class DefaultHomeComponent(
     private val gogsLogout: GogsLogout by inject()
     private val backupRC: BackupRC by inject()
     private val library: Door43Client by inject()
+    private val platform: Platform by inject()
 
     override val coroutineScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
 

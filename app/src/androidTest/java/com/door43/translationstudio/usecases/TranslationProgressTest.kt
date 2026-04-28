@@ -6,6 +6,7 @@ import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.IntegrationTest
 import com.door43.translationstudio.KoinAndroidTest
+import com.door43.translationstudio.Platform
 import com.door43.translationstudio.TestUtils
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TargetTranslation
@@ -34,6 +35,7 @@ class TranslationProgressTest : KoinAndroidTest() {
     private val translator: Translator by inject()
     private val profile: Profile by inject()
     private val translationProgress: TranslationProgress by inject()
+    private val platform: Platform by inject()
 
     @Before
     fun setUp() {
@@ -102,6 +104,7 @@ class TranslationProgressTest : KoinAndroidTest() {
         return TestUtils.importTargetTranslation(
             library,
             appContext,
+            platform,
             directoryProvider,
             profile,
             assetsProvider,

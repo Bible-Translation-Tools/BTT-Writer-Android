@@ -2,13 +2,13 @@ package com.door43.translationstudio.usecases
 
 import android.content.Context
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.door43.OnProgressListener
 import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
 import com.door43.data.setDefaultPref
 import com.door43.translationstudio.IntegrationTest
 import com.door43.translationstudio.KoinAndroidTest
+import com.door43.translationstudio.Platform
 import com.door43.translationstudio.TestUtils
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TargetTranslation
@@ -44,6 +44,7 @@ class CreateRepositoryTest : KoinAndroidTest() {
     private val prefRepository: IPreferenceRepository by inject()
     private val importProjects: ImportProjects by inject()
     private val translator: Translator by inject()
+    private val platform: Platform by inject()
 
     private lateinit var targetTranslation: TargetTranslation
 
@@ -56,6 +57,7 @@ class CreateRepositoryTest : KoinAndroidTest() {
         targetTranslation = TestUtils.importTargetTranslation(
             library,
             appContext,
+            platform,
             directoryProvider,
             profile,
             assetsProvider,
@@ -109,10 +111,10 @@ class CreateRepositoryTest : KoinAndroidTest() {
     @Test
     fun createRepositoryWithoutAuthenticationFails() = runTest {
         var progressMessage: String? = null
-        val progressListener = OnProgressListener { _, message ->
+        val onProgress: (Float, String?) -> Unit = { _, message ->
             progressMessage = message
         }
-        val created = createRepository.execute(targetTranslation, progressListener)
+        val created = createRepository.execute(targetTranslation, onProgress)
 
         assertFalse("Repository should not be created when not authenticated", created)
         assertNotNull("Progress message should not be null", progressMessage)
@@ -121,6 +123,7 @@ class CreateRepositoryTest : KoinAndroidTest() {
     private fun loginGogsUser()  = runTest{
         profile.gogsUser = TestUtils.simulateLoginGogsUser(
             appContext,
+            platform,
             server,
             gogsLogin,
             "test"

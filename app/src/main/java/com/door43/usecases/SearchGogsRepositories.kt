@@ -15,7 +15,7 @@ class SearchGogsRepositories(
         uid: Int,
         query: String,
         limit: Int,
-        onProgress: (Float, String?) -> Unit
+        onProgress: (Float, String?) -> Unit = {_,_->}
     ): List<Repository> {
         onProgress(-1f, "Searching for repositories")
         val repositories = arrayListOf<Repository>()

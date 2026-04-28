@@ -1,76 +1,84 @@
 package com.door43.translationstudio.usecases
 
-import android.content.Context
-import android.content.pm.PackageManager
+import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.door43.OnProgressListener
 import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
 import com.door43.data.setPrivatePref
-import com.door43.translationstudio.App
+import com.door43.di.appModule
+import com.door43.translationstudio.AppInfo
 import com.door43.translationstudio.IntegrationTest
 import com.door43.translationstudio.KoinAndroidTest
+import com.door43.translationstudio.Platform
+import com.door43.translationstudio.di.testDataModule
 import com.door43.usecases.UpdateApp
-import io.mockk.justRun
-import io.mockk.mockkObject
-import junit.framework.TestCase.assertNotNull
+import io.mockk.every
+import io.mockk.just
+import io.mockk.mockk
+import io.mockk.runs
 import junit.framework.TestCase.assertNull
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.koin.android.ext.koin.androidContext
 import org.koin.core.component.inject
+import org.koin.core.context.GlobalContext.startKoin
+import org.koin.core.context.GlobalContext.stopKoin
+import org.koin.dsl.module
 
 
 @RunWith(AndroidJUnit4::class)
 @IntegrationTest
 class UpdateAppTest : KoinAndroidTest() {
 
-    private val appContext: Context by inject()
     private val updateApp: UpdateApp by inject()
     private val directoryProvider: IDirectoryProvider by inject()
     private val prefRepository: IPreferenceRepository by inject()
+    private val platform: Platform = mockk()
+    private val appInfo: AppInfo = mockk()
 
     @Before
     fun setUp() {
+        stopKoin()
+        startKoin {
+            androidContext(ApplicationProvider.getApplicationContext())
+            allowOverride(true)
+            modules(appModule, testDataModule)
+            modules(
+                module {
+                    single<Platform> { platform }
+                }
+            )
+        }
+
         directoryProvider.deleteLibrary()
         prefRepository.setPrivatePref("last_version_code", 0)
 
-        mockkObject(App)
-        justRun { App.restart() }
+        every { appInfo.versionCode }.returns(0)
+        every { platform.info }.returns(appInfo)
+        every { platform.restart() }.just(runs)
     }
 
     @Test
-    fun testUpdateAppNewInstall() {
+    fun testUpdateAppNewInstall() = runTest {
         var progressMessage: String? = null
-        val progressListener = OnProgressListener { _, message ->
+        val onProgress: (Float, String?) -> Unit = { _, message ->
             progressMessage = message
         }
 
-        runBlocking {
-            updateApp.execute(progressListener)
-        }
+        updateApp.execute(onProgress)
 
         assertNull("Progress message should be null", progressMessage)
     }
 
     @Test
-    fun testUpdateAppCurrentVersion() {
-        val pInfo = try {
-            appContext.packageManager.getPackageInfo(appContext.packageName, 0)
-        } catch (e: PackageManager.NameNotFoundException) {
-            e.printStackTrace()
-            null
-        }
-
-        assertNotNull("Package info should not be null", pInfo)
-        val currentVersion = pInfo!!.versionCode
+    fun testUpdateAppCurrentVersion() = runTest {
+        val currentVersion = platform.info.versionCode
 
         prefRepository.setPrivatePref("last_version_code", currentVersion)
 
-        runBlocking {
-            updateApp.execute()
-        }
+        updateApp.execute()
     }
 
 //    @Test

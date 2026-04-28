@@ -5,7 +5,7 @@ import android.net.Uri
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.door43.data.IDirectoryProvider
-import com.door43.translationstudio.App
+import com.door43.translationstudio.Platform
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.ComponentScope
 import com.door43.translationstudio.core.Progress
@@ -107,6 +107,7 @@ class DefaultImportComponent(
     private val library: Door43Client by inject()
     private val directoryProvider: IDirectoryProvider by inject()
     private val targetTranslationMigrator: TargetTranslationMigrator by inject()
+    private val platform: Platform by inject()
 
     override val coroutineScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
 
@@ -334,15 +335,11 @@ class DefaultImportComponent(
                 }
 
                 val project = library.index.getProject(
-                    sourceLanguageSlug = App.deviceLanguageCode,
+                    sourceLanguageSlug = platform.deviceLanguageCode,
                     projectSlug = projectSlug,
                     enableDefaultLanguage = true
                 )
-                projectName = if (project != null) {
-                    project.name
-                } else {
-                    targetTranslationSlug
-                }
+                projectName = project?.name ?: targetTranslationSlug
                 val targetLanguage = library.index.getTargetLanguage(targetLanguageSlug)
                 if (targetLanguage != null) {
                     languageName = targetLanguage.name

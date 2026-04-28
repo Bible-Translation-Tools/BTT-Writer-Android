@@ -5,7 +5,10 @@ import android.app.ActivityManager
 import android.content.ClipData
 import android.content.Context
 import android.content.Context.ACTIVITY_SERVICE
+import android.content.Context.CONNECTIVITY_SERVICE
 import android.content.Intent
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.os.Build
 import android.os.Process
 import androidx.core.content.FileProvider
@@ -17,22 +20,36 @@ import com.door43.translationstudio.Platform.Companion.TB
 import com.door43.translationstudio.services.BackupService
 import com.door43.util.FileUtilities
 import com.door43.util.RuntimeWrapper
+import org.bibletranslationtools.logger.LogLevel
 import org.bibletranslationtools.logger.Logger
 import java.io.File
 import java.io.RandomAccessFile
 import java.text.DecimalFormat
+import java.util.Locale
 
 data class AppInfo(
     val versionName: String,
     val versionCode: Int,
-    val model: String
+    val model: String,
+    val device: String,
+    val manufacturer: String
 )
 
 interface Platform {
     val info: AppInfo
+    val udid: String
+        get() = info.model.lowercase().replace(" ", "_")
+    val isStoreVersion: Boolean
+    val deviceLanguageCode: String
+        get() {
+            val code = Locale.getDefault().language
+            return code.replace("[_-]$".toRegex(), "")
+        }
+    val isNetworkAvailable: Boolean
 
     fun restart()
     fun exit()
+    fun configureLogger(minLogLevel: Int)
 
     suspend fun shareApp()
     fun shareProject(file: File)
@@ -57,6 +74,12 @@ interface Platform {
         const val MB: Long = KB * KB
         const val GB: Long = MB * KB
         const val TB: Long = GB * KB
+
+        const val MIN_CHECKING_LEVEL: Int = 3
+        // 96 MB, Minimum RAM needed for reliable operation
+        const val MINIMUM_REQUIRED_RAM: Long = (96 * 1024 * 1024).toLong()
+        // Minimum number of processors needed for reliable operations
+        const val MINIMUM_NUMBER_OF_PROCESSORS: Long = 2
     }
 }
 
@@ -69,8 +92,33 @@ class AndroidPlatform(
         get() = AppInfo(
             versionName = BuildConfig.VERSION_NAME,
             versionCode = BuildConfig.VERSION_CODE,
-            model = Build.MODEL
+            model = Build.MODEL,
+            device = Build.DEVICE,
+            manufacturer = Build.MANUFACTURER
         )
+
+    override val isNetworkAvailable: Boolean
+        get() {
+            val cm = context.getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
+            val net = cm.activeNetwork ?: return false
+            val actNet = cm.getNetworkCapabilities(net) ?: return false
+            return when {
+                actNet.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> true
+                actNet.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> true
+                else -> false
+            }
+        }
+
+    override val isStoreVersion: Boolean
+        get() {
+            val installer = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                context.packageManager.getInstallSourceInfo(context.packageName).installingPackageName
+            } else {
+                @Suppress("DEPRECATION")
+                context.packageManager.getInstallerPackageName(context.packageName)
+            }
+            return !installer.isNullOrEmpty()
+        }
 
     override fun restart() {
         val backupIntent = Intent(context, BackupService::class.java)
@@ -87,6 +135,13 @@ class AndroidPlatform(
 
     override fun exit() {
         (context as? Activity)?.finishAffinity()
+    }
+
+    override fun configureLogger(minLogLevel: Int) {
+        Logger.configure(
+            directoryProvider.logFile,
+            LogLevel.getLevel(minLogLevel)
+        )
     }
 
     override suspend fun shareApp() {
@@ -111,20 +166,26 @@ class AndroidPlatform(
         val am = context.getSystemService(ACTIVITY_SERVICE) as ActivityManager
         var message = "System Resources:\n"
         val numProcessors = RuntimeWrapper.availableProcessors
-        message += "Number of processors: $numProcessors (${App.MINIMUM_NUMBER_OF_PROCESSORS} required)\n"
+        message += "Number of processors: $numProcessors " +
+                "(${Platform.MINIMUM_NUMBER_OF_PROCESSORS} required)\n"
         val maxMem = RuntimeWrapper.maxMemory
-        message += "JVM max memory: ${getFormattedSize(maxMem)} (${getFormattedSize(App.MINIMUM_REQUIRED_RAM)} required)\n"
+        message += "JVM max memory: ${getFormattedSize(maxMem)} " +
+                "(${getFormattedSize(Platform.MINIMUM_REQUIRED_RAM)} required)\n"
 
-        val info = ActivityManager.MemoryInfo()
-        am.getMemoryInfo(info)
-        message += "Available memory on the system: ${getFormattedSize(info.availMem)}\n"
-        message += "Total memory on the system (getMemoryInfo): ${getFormattedSize(info.totalMem)}\n"
-        message += "Total memory on the system (/proc/meminfo): ${getFormattedSize(getTotalRam())}\n"
-        message += "Low memory threshold on the system: ${getFormattedSize(info.threshold)}\n"
-        message += "Low memory state on the system: ${info.lowMemory}\n"
+        val memoryInfo = ActivityManager.MemoryInfo()
+        am.getMemoryInfo(memoryInfo)
+        message += "Available memory on the system: " +
+                "${getFormattedSize(memoryInfo.availMem)}\n"
+        message += "Total memory on the system (getMemoryInfo): " +
+                "${getFormattedSize(memoryInfo.totalMem)}\n"
+        message += "Total memory on the system (/proc/meminfo): " +
+                "${getFormattedSize(getTotalRam())}\n"
+        message += "Low memory threshold on the system: " +
+                "${getFormattedSize(memoryInfo.threshold)}\n"
+        message += "Low memory state on the system: ${memoryInfo.lowMemory}\n"
 
         message += "Manufacturer: ${Build.MANUFACTURER}\n"
-        message += "Model: ${App.info.model}\n"
+        message += "Model: ${info.model}\n"
         message += "Version: ${Build.VERSION.SDK_INT}\n"
         message += "Version Release: ${Build.VERSION.RELEASE}\n"
 

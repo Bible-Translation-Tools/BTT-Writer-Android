@@ -14,7 +14,10 @@ class MigrateTranslations(
     private val directoryProvider: IDirectoryProvider,
     private val targetTranslationMigrator: TargetTranslationMigrator
 ) {
-    fun execute(appDataFolder: Uri, onProgress: (Float, String?) -> Unit) {
+    fun execute(
+        appDataFolder: Uri,
+        onProgress: (Float, String?) -> Unit = {_,_->}
+    ) {
         // Migrate translations
 
         val tempTranslations = directoryProvider.createTempDir("translations")
@@ -39,7 +42,10 @@ class MigrateTranslations(
         copyBackups(tempBackups, onProgress)
     }
 
-    private fun migrateTranslations(translationsDir: File, onProgress: (Float, String?) -> Unit) {
+    private fun migrateTranslations(
+        translationsDir: File,
+        onProgress: (Float, String?) -> Unit = {_,_->}
+    ) {
         if (translationsDir.isDirectory) {
             translationsDir.listFiles()?.forEach { file ->
                 if (file.name == "cache") return@forEach
@@ -54,7 +60,10 @@ class MigrateTranslations(
         }
     }
 
-    private fun importTranslations(translationsDir: File, onProgress: (Float, String?) -> Unit) {
+    private fun importTranslations(
+        translationsDir: File,
+        onProgress: (Float, String?) -> Unit = {_,_->}
+    ) {
         if (translationsDir.isDirectory) {
             val translations = arrayListOf<File>()
             translationsDir.listFiles()?.forEach { file ->
@@ -68,7 +77,10 @@ class MigrateTranslations(
         }
     }
 
-    private fun copyBackups(backupsDir: File, onProgress: (Float, String?) -> Unit) {
+    private fun copyBackups(
+        backupsDir: File,
+        onProgress: (Float, String?) -> Unit = {_,_->}
+    ) {
         if (backupsDir.isDirectory) {
             backupsDir.listFiles()?.forEach { file ->
                 if (file.isFile) {

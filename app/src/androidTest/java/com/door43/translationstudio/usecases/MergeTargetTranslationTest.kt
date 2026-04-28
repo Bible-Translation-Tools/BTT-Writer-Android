@@ -6,6 +6,7 @@ import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.IntegrationTest
 import com.door43.translationstudio.KoinAndroidTest
+import com.door43.translationstudio.Platform
 import com.door43.translationstudio.TestUtils
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TargetTranslation
@@ -37,6 +38,7 @@ class MergeTargetTranslationTest : KoinAndroidTest() {
     private val importProjects: ImportProjects by inject()
     private val translator: Translator by inject()
     private val mergeTargetTranslation: MergeTargetTranslation by inject()
+    private val platform: Platform by inject()
 
     private var sourceTranslation: TargetTranslation? = null
     private var destinationTranslation: TargetTranslation? = null
@@ -120,6 +122,7 @@ class MergeTargetTranslationTest : KoinAndroidTest() {
         sourceTranslation = TestUtils.importTargetTranslation(
             library,
             appContext,
+            platform,
             directoryProvider,
             profile,
             assetsProvider,
@@ -134,6 +137,7 @@ class MergeTargetTranslationTest : KoinAndroidTest() {
         destinationTranslation = TestUtils.importTargetTranslation(
             library,
             appContext,
+            platform,
             directoryProvider,
             profile,
             assetsProvider,

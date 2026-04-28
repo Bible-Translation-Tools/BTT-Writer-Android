@@ -8,7 +8,7 @@ import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
 import com.door43.data.setDefaultPref
-import com.door43.translationstudio.App
+import com.door43.translationstudio.Platform
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.BackupController
 import com.door43.translationstudio.core.ComponentScope
@@ -164,6 +164,8 @@ class DefaultSettingsComponent(
     private val assetsProvider: AssetsProvider by inject()
     private val resourceProvider: ResourceProvider by inject()
     private val backupController: BackupController by inject()
+    private val platform: Platform by inject()
+
 
     override val coroutineScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
 
@@ -177,7 +179,7 @@ class DefaultSettingsComponent(
     override val event = _event.receiveAsFlow()
 
     override val appVersion: String
-        get() = "${App.info.versionName} - ${App.info.versionCode}"
+        get() = "${platform.info.versionName} - ${platform.info.versionCode}"
 
     init {
         loadInitialPreferences()
@@ -572,7 +574,7 @@ class DefaultSettingsComponent(
             )
         }
 
-        App.configureLogger(newValue.toInt())
+        platform.configureLogger(newValue.toInt())
     }
 
     override fun downloadLatestRelease(release: CheckForLatestRelease.Release) {

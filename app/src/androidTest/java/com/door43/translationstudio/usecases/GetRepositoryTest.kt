@@ -8,6 +8,7 @@ import com.door43.data.IPreferenceRepository
 import com.door43.data.setDefaultPref
 import com.door43.translationstudio.IntegrationTest
 import com.door43.translationstudio.KoinAndroidTest
+import com.door43.translationstudio.Platform
 import com.door43.translationstudio.TestUtils
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TargetTranslation
@@ -43,6 +44,7 @@ class GetRepositoryTest : KoinAndroidTest() {
     private val prefRepository: IPreferenceRepository by inject()
     private val importProjects: ImportProjects by inject()
     private val translator: Translator by inject()
+    private val platform: Platform by inject()
 
     private lateinit var targetTranslation: TargetTranslation
 
@@ -55,6 +57,7 @@ class GetRepositoryTest : KoinAndroidTest() {
         targetTranslation = TestUtils.importTargetTranslation(
             library,
             appContext,
+            platform,
             directoryProvider,
             profile,
             assetsProvider,
@@ -103,6 +106,7 @@ class GetRepositoryTest : KoinAndroidTest() {
     private fun loginGogsUser() = runTest {
         profile.gogsUser = TestUtils.simulateLoginGogsUser(
             appContext,
+            platform,
             server,
             gogsLogin,
             "test"

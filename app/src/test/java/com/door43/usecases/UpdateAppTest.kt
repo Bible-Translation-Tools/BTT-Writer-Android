@@ -9,7 +9,6 @@ import com.door43.data.getDefaultPref
 import com.door43.data.getPrivatePref
 import com.door43.data.setDefaultPref
 import com.door43.data.setPrivatePref
-import com.door43.translationstudio.App
 import com.door43.translationstudio.AppInfo
 import com.door43.translationstudio.Platform
 import com.door43.translationstudio.R
@@ -127,8 +126,7 @@ class UpdateAppTest {
         mockkStatic(PreferenceManager::class)
         every { PreferenceManager.setDefaultValues(any(), any(), any()) }.just(runs)
 
-        mockkObject(App)
-        justRun { App.restart() }
+        justRun { platform.restart() }
     }
 
     @After

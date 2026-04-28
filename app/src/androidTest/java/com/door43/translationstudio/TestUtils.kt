@@ -1,7 +1,6 @@
 package com.door43.translationstudio
 
 import android.content.Context
-import android.os.Build
 import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.core.ProcessUSFM
@@ -84,6 +83,7 @@ object TestUtils {
     fun importTargetTranslation(
         library: Door43Client,
         appContext: Context,
+        platform: Platform,
         directoryProvider: IDirectoryProvider,
         profile: Profile,
         assetsProvider: AssetsProvider,
@@ -95,12 +95,13 @@ object TestUtils {
         val targetLanguage = library.index.getTargetLanguage(langCode)
         val usfm = ProcessUSFM.Builder(
             appContext,
+            platform,
             directoryProvider,
             profile,
             library,
             assetsProvider
         )
-            .fromRc(targetLanguage!!, path, null)
+            .fromRc(targetLanguage!!, path)
             .build()
 
         assertNotNull("usfm should not be null", usfm)
@@ -142,15 +143,16 @@ object TestUtils {
 
     suspend fun simulateLoginGogsUser(
         context: Context,
+        platform: Platform,
         server: MockWebServer,
         gogsLogin: GogsLogin,
         username: String,
         fullName: String? = null
     ): User {
         server.enqueue(createLoginResponse(username, fullName))
-        server.enqueue(createGetTokenResponse(context))
+        server.enqueue(createGetTokenResponse(context, platform))
         server.enqueue(MockResponse().setResponseCode(204)) // Delete token response
-        server.enqueue(createTokenResponse(context))
+        server.enqueue(createTokenResponse(context, platform))
 
         val result = gogsLogin.execute("username", "password", fullName)
 
@@ -162,17 +164,17 @@ object TestUtils {
         TestCase.assertNotNull("Token should not be null", user.token)
         TestCase.assertTrue(
             "Token name should contain build model",
-            user.token?.name?.contains(App.udid()) == true
+            user.token?.name?.contains(platform.udid) == true
         )
 
         return user
     }
 
-    fun getTokenStub(context: Context): String {
+    fun getTokenStub(context: Context, platform: Platform): String {
         val defaultTokenName = context.resources.getString(R.string.gogs_token_name)
-        val androidId = Build.DEVICE.lowercase()
-        val nickname = App.udid()
-        val tokenSuffix = String.format("%s_%s__%s", Build.MANUFACTURER, nickname, androidId)
+        val androidId = platform.info.device.lowercase()
+        val nickname = platform.udid
+        val tokenSuffix = String.format("%s_%s__%s", platform.info.manufacturer, nickname, androidId)
         return (defaultTokenName + "__" + tokenSuffix).replace(" ", "_")
     }
 
@@ -191,9 +193,9 @@ object TestUtils {
             .setResponseCode(200)
     }
 
-    private fun createGetTokenResponse(context: Context): MockResponse {
+    private fun createGetTokenResponse(context: Context, platform: Platform): MockResponse {
         val body = """
-            [{"id": 1, "name": "${getTokenStub(context)}", "sha1": "${generateHash()}"}]
+            [{"id": 1, "name": "${getTokenStub(context, platform)}", "sha1": "${generateHash()}"}]
         """.trimIndent()
 
         return MockResponse()
@@ -202,9 +204,9 @@ object TestUtils {
             .setResponseCode(200)
     }
 
-    private fun createTokenResponse(context: Context): MockResponse {
+    private fun createTokenResponse(context: Context, platform: Platform): MockResponse {
         val body = """
-            {"id": 1, "name": "${getTokenStub(context)}", "sha1": "${generateHash()}"}
+            {"id": 1, "name": "${getTokenStub(context, platform)}", "sha1": "${generateHash()}"}
         """.trimIndent()
 
         return MockResponse()

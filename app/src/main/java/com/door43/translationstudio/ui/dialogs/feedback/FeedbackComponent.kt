@@ -3,7 +3,7 @@ package com.door43.translationstudio.ui.dialogs.feedback
 import android.app.Application
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.essenty.lifecycle.doOnDestroy
-import com.door43.translationstudio.App
+import com.door43.translationstudio.Platform
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.ComponentScope
 import com.door43.translationstudio.core.Progress
@@ -65,6 +65,7 @@ class DefaultFeedbackComponent(
     private val checkForLatestRelease: CheckForLatestRelease by inject()
     private val downloadLatestRelease: DownloadLatestRelease by inject()
     private val uploadFeedback: UploadFeedback by inject()
+    private val platform: Platform by inject()
 
     override val coroutineScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
 
@@ -149,7 +150,7 @@ class DefaultFeedbackComponent(
         if (success) {
             _state.update { it.copy(success = true) }
         } else {
-            val msg = if (App.isNetworkAvailable) {
+            val msg = if (platform.isNetworkAvailable) {
                 application.getString(R.string.upload_feedback_failed)
             } else {
                 application.getString(R.string.internet_not_available)

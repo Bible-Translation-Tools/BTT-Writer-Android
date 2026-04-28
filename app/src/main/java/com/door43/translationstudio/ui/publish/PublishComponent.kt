@@ -10,7 +10,6 @@ import com.arkivanov.decompose.router.slot.childSlot
 import com.arkivanov.decompose.router.slot.dismiss
 import com.arkivanov.decompose.value.Value
 import com.arkivanov.essenty.lifecycle.doOnDestroy
-import com.door43.translationstudio.App.Companion.deviceLanguageCode
 import com.door43.translationstudio.Platform
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.ComponentScope
@@ -100,7 +99,6 @@ interface PublishComponent {
 class DefaultPublishComponent(
     componentContext: ComponentContext,
     translationId: String,
-    private val platform: Platform,
     private val onResult: (PublishComponent.Result) -> Unit
 ) : PublishComponent,
     ComponentContext by componentContext,
@@ -111,6 +109,7 @@ class DefaultPublishComponent(
     private val library: Door43Client by inject()
     private val validateProject: ValidateProject by inject()
     private val profile: Profile by inject()
+    private val platform: Platform by inject()
 
     private lateinit var sourceTranslationId: String
 
@@ -303,7 +302,7 @@ class DefaultPublishComponent(
 
     private fun getProject(): Project? {
         return library.index.getProject(
-            deviceLanguageCode,
+            platform.deviceLanguageCode,
             targetTranslation.projectId,
             true
         )

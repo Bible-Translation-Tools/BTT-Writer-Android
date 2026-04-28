@@ -3,7 +3,7 @@ package com.door43.translationstudio.ui.crash
 import android.app.Application
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.essenty.lifecycle.doOnDestroy
-import com.door43.translationstudio.App
+import com.door43.translationstudio.Platform
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.ComponentScope
 import com.door43.translationstudio.core.Progress
@@ -71,6 +71,7 @@ class DefaultCrashComponent(
     private val checkForLatestRelease: CheckForLatestRelease by inject()
     private val downloadLatestRelease: DownloadLatestRelease by inject()
     private val uploadCrashReport: UploadCrashReport by inject()
+    private val platform: Platform by inject()
 
     override val coroutineScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
 
@@ -84,7 +85,7 @@ class DefaultCrashComponent(
     override val event = _event.receiveAsFlow()
 
     private var release: CheckForLatestRelease.Release? = null
-    override val isNetworkAvailable: Boolean get() = App.isNetworkAvailable
+    override val isNetworkAvailable: Boolean get() = platform.isNetworkAvailable
 
     init {
         lifecycle.doOnDestroy {

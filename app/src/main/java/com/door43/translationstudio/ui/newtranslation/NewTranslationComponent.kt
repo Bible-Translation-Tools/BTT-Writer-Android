@@ -4,7 +4,7 @@ import android.app.Application
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.door43.data.IPreferenceRepository
-import com.door43.translationstudio.App
+import com.door43.translationstudio.Platform
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.ComponentScope
 import com.door43.translationstudio.core.MergeConflictsHandler
@@ -98,6 +98,7 @@ class DefaultNewTranslationComponent(
     private val library: Door43Client by inject()
     private val translator: Translator by inject()
     private val profile: Profile by inject()
+    private val platform: Platform by inject()
 
     var selectedTargetLanguage: TargetLanguage? = null
         private set
@@ -227,7 +228,7 @@ class DefaultNewTranslationComponent(
 
     override fun onCategorySelected(categoryId: Long) {
         val categories = library.index.getProjectCategories(
-            categoryId, App.deviceLanguageCode, "all"
+            categoryId, platform.deviceLanguageCode, "all"
         )
         _state.value = _state.value.copy(
             searchQuery = "",
@@ -254,7 +255,7 @@ class DefaultNewTranslationComponent(
         val newStack = stack.dropLast(1)
         val parentId = newStack.last()
         val categories = library.index.getProjectCategories(
-            parentId, App.deviceLanguageCode, "all"
+            parentId, platform.deviceLanguageCode, "all"
         )
         _state.value = _state.value.copy(
             searchQuery = "",
@@ -374,7 +375,7 @@ class DefaultNewTranslationComponent(
 
     private fun showProjectStep() {
         val categories = library.index.getProjectCategories(
-            0L, App.deviceLanguageCode, "all"
+            0L, platform.deviceLanguageCode, "all"
         )
         _state.value = _state.value.copy(
             screenStep = ScreenStep.PROJECT,
@@ -388,7 +389,7 @@ class DefaultNewTranslationComponent(
 
     private fun getProject(targetTranslation: TargetTranslation): Project? {
         return library.index.getProject(
-            App.deviceLanguageCode,
+            platform.deviceLanguageCode,
             targetTranslation.projectId
         )
     }

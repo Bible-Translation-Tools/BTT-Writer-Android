@@ -7,7 +7,7 @@ import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
 import com.door43.data.setDefaultPref
-import com.door43.translationstudio.App
+import com.door43.translationstudio.Platform
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.ComponentScope
 import com.door43.translationstudio.core.Progress
@@ -130,7 +130,8 @@ class DefaultSplashComponent(
             val numProcessors = RuntimeWrapper.availableProcessors
             val maxMem = RuntimeWrapper.maxMemory
 
-            if (numProcessors < App.MINIMUM_NUMBER_OF_PROCESSORS || maxMem < App.MINIMUM_REQUIRED_RAM) {
+            if (numProcessors < Platform.MINIMUM_NUMBER_OF_PROCESSORS
+                || maxMem < Platform.MINIMUM_REQUIRED_RAM) {
                 _state.update { it.copy(showHardwareWarning = true) }
             } else {
                 checkMigration()

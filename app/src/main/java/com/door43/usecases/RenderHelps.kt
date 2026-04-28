@@ -176,12 +176,12 @@ class RenderHelps(
         val foundTitles = arrayListOf<String>()
 
         // split up multiple helps
-        val helpTextArray = rawText.split("#".toRegex())
+        val helpTextArray = rawText.split("#")
         for (helpText in helpTextArray) {
             if (helpText.trim().isEmpty()) continue
 
             // split help title and body
-            val parts = helpText.trim().split("\n".toRegex(), limit = 2)
+            val parts = helpText.trim().split("\n", limit = 2)
             var title = parts[0].trim()
             var body = if (parts.size > 1) parts[1].trim() else null
 

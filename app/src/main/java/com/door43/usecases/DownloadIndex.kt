@@ -17,7 +17,7 @@ class DownloadIndex(
     private val prefRepository: IPreferenceRepository,
     private val library: Door43Client
 ) {
-    fun download(onProgress: (Float, String?) -> Unit): Boolean {
+    fun download(onProgress: (Float, String?) -> Unit = {_,_->}): Boolean {
         var connection: HttpURLConnection? = null
         val message = context.resources.getString(R.string.downloading_index)
 

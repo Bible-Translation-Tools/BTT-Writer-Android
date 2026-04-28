@@ -12,7 +12,7 @@ import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertNotNull
 import junit.framework.TestCase.assertNull
 import junit.framework.TestCase.assertTrue
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import okhttp3.mockwebserver.Dispatcher
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -26,6 +26,7 @@ import org.koin.core.component.inject
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.door43client.models.Catalog
 import java.text.SimpleDateFormat
+import java.util.Locale
 
 
 @RunWith(AndroidJUnit4::class)
@@ -59,7 +60,6 @@ class UpdateAllTest : KoinAndroidTest() {
                     request.path == "/luk_es" -> successResponse.setBody(createResponse("luk_es"))
                     request.path == "/luk_tpi" -> successResponse.setBody(createResponse("luk_tpi"))
                     request.path == "/langnames.json" -> successResponse.setBody(createResponse("langnames"))
-                    request.path == "/questionnaire.json" -> successResponse.setBody(createResponse("questionnaire"))
                     request.path == "/temp-langs.json" -> successResponse.setBody(createResponse("temp_langs"))
                     request.path == "/approved-langs.json" -> successResponse.setBody(createResponse("approved_temp_langs"))
                     isCatalog -> successResponse.setBody(createResponse("catalog"))
@@ -87,22 +87,19 @@ class UpdateAllTest : KoinAndroidTest() {
     }
 
     @Test
-    fun testUpdateAll() {
+    fun testUpdateAll() = runTest {
         val url = server.url("/test")
         prefRepository.setDefaultPref(IPreferenceRepository.KEY_PREF_MEDIA_SERVER, url.toString())
 
         prepareCatalogs()
 
-        val result = runBlocking {
-            updateAll.execute(false)
-        }
+        val result = updateAll.execute(false)
 
         assertTrue("UpdateAll should succeed", result.success)
 
         verifyTestProject()
         verifyLukProject()
         verifyTargetLanguages()
-        verifyQuestionnaire()
     }
 
     private fun verifyTestProject() {
@@ -145,7 +142,7 @@ class UpdateAllTest : KoinAndroidTest() {
             tstResource?.name
         )
         assertEquals("TST resource type should match", "book", tstResource?.type)
-        assertEquals("TST resource version should match", "12.2", tstResource?.version)
+        assertEquals("TST resource version should match", "12.2", tstResource?.status?.version)
         assertTrue(
             "TST resource url should match",
             tstResource?.formats?.first()?.url?.endsWith("/mat/test/source.json") ?: false
@@ -155,7 +152,7 @@ class UpdateAllTest : KoinAndroidTest() {
         assertNotNull("TN resource should not be null", tnResource)
         assertEquals("TN resource name should match", "translationNotes", tnResource?.name)
         assertEquals("TN resource type should match", "help", tnResource?.type)
-        assertEquals("TN resource version should match", "12.2", tnResource?.version)
+        assertEquals("TN resource version should match", "12.2", tnResource?.status?.version)
         assertTrue(
             "TN resource url should match",
             tnResource?.formats?.first()?.url?.endsWith("/mat/test/notes.json") ?: false
@@ -169,7 +166,7 @@ class UpdateAllTest : KoinAndroidTest() {
             tqResource?.name
         )
         assertEquals("TQ resource type should match", "help", tqResource?.type)
-        assertEquals("TQ resource version should match", "12.2", tqResource?.version)
+        assertEquals("TQ resource version should match", "12.2", tqResource?.status?.version)
         assertTrue("" +
                 "TQ resource url should match",
             tqResource?.formats?.first()?.url?.endsWith("/mat/test/questions.json") ?: false
@@ -179,7 +176,7 @@ class UpdateAllTest : KoinAndroidTest() {
         assertNotNull("TW resource should not be null", twResource)
         assertEquals("TW resource name should match", "translationWords", twResource?.name)
         assertEquals("TW resource type should match", "dict", twResource?.type)
-        assertEquals("TW resource version should match", "12.2", twResource?.version)
+        assertEquals("TW resource version should match", "12.2", twResource?.status?.version)
         assertTrue(
             "TW resource url should be match",
             twResource?.formats?.first()?.url?.endsWith("/mat/test/words.json") ?: false
@@ -239,30 +236,11 @@ class UpdateAllTest : KoinAndroidTest() {
         assertEquals("Temp language name should match", "Yattuca", temp2LanguageApproved?.name)
     }
 
-    private fun verifyQuestionnaire() {
-        val questionnaires = library.index.getQuestionnaires()
-        assertTrue("Questionnaires should not be empty", questionnaires.isNotEmpty())
-
-        val questionnaire = questionnaires.singleOrNull { it.tdId == 2L }
-        assertNotNull("Questionnaire should not be null", questionnaire)
-        assertEquals("es", questionnaire?.languageSlug)
-        assertEquals("Spanish", questionnaire?.languageName)
-
-        val questions = library.index.getQuestions(2L)
-        assertEquals("Question count should match", 19, questions.size)
-        assertEquals("Test questionnaire question", questions.singleOrNull { it.sort == 19 }?.text)
-    }
-
     private fun prepareCatalogs() {
         val langCatalogUrl = server.url("/langnames.json").toString()
         val langCatalog = Catalog("langnames", langCatalogUrl, 0)
         library.index.addCatalog(langCatalog)
         createResponse("langnames")
-
-        val questionnaireCatalogUrl = server.url("/questionnaire.json").toString()
-        val questionnaireCatalog = Catalog("new-language-questions", questionnaireCatalogUrl, 0)
-        library.index.addCatalog(questionnaireCatalog)
-        createResponse("questionnaire")
 
         val tempLangsCatalogUrl = server.url("/temp-langs.json").toString()
         val tempLangsCatalog = Catalog("temp-langnames", tempLangsCatalogUrl, 0)
@@ -277,8 +255,8 @@ class UpdateAllTest : KoinAndroidTest() {
 
     private fun createResponse(id: String): String {
         val baseUrl = server.url("/").toString()
-        val datetimeFormat = SimpleDateFormat("yyyyMMdd")
-        val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSSSXXX")
+        val datetimeFormat = SimpleDateFormat("yyyyMMdd", Locale.US)
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSSSXXX", Locale.US)
         val project = directoryProvider.createTempFile(id, ".json")
         assetsProvider.open("catalog/$id.json").use { input ->
             project.outputStream().use { output ->

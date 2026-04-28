@@ -1,7 +1,6 @@
 package com.door43.translationstudio.usecases
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.door43.OnProgressListener
 import com.door43.translationstudio.IntegrationTest
 import com.door43.translationstudio.KoinAndroidTest
 import com.door43.usecases.GetAvailableSources
@@ -20,11 +19,11 @@ class GetAvailableSourcesTest : KoinAndroidTest() {
     @Test
     fun testAvailableResources() {
         var progressMessage: String? = null
-        val progressListener = OnProgressListener { _, message ->
+        val onProgress: (Float, String?) -> Unit = { _, message ->
             progressMessage = message
         }
 
-        val result = getAvailableSources.execute(progressListener)
+        val result = getAvailableSources.execute(onProgress)
 
         assertEquals("Prefix message should be equal to progress message", null, progressMessage)
 

@@ -10,7 +10,7 @@ class AdvancedGogsRepoSearch(
         userQuery: String,
         repoQuery: String,
         limit: Int,
-        onProgress: (Float, String?) -> Unit
+        onProgress: (Float, String?) -> Unit = {_,_->}
     ): List<Repository> {
         val repositories = arrayListOf<Repository>()
 

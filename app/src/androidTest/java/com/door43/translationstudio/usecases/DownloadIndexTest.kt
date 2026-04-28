@@ -3,7 +3,6 @@ package com.door43.translationstudio.usecases
 import android.content.Context
 import android.net.Uri
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.door43.OnProgressListener
 import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.IntegrationTest
@@ -37,14 +36,14 @@ class DownloadIndexTest : KoinAndroidTest() {
     @Test
     fun downloadIndexSucceeds() {
         var progressMessage: String? = null
-        val progressListener = OnProgressListener { _, message ->
+        val onProgress: (Float, String?) -> Unit = { _, message ->
             progressMessage = message
         }
 
         val languagesBefore = library.index.getTargetLanguages()
         assertTrue("Languages before should not be empty", languagesBefore.isNotEmpty())
 
-        val downloaded = downloadIndex.download(progressListener)
+        val downloaded = downloadIndex.download(onProgress)
 
         assertTrue("Download result should be true", downloaded)
         assertNotNull("Progress message should not be null", progressMessage)

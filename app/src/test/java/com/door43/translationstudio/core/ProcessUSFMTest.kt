@@ -2,14 +2,14 @@ package com.door43.translationstudio.core
 
 import android.content.ContentResolver
 import android.content.Context
-import android.content.pm.PackageInfo
-import android.content.pm.PackageManager
 import android.content.res.Resources
 import android.net.Uri
 import android.text.TextUtils
 import com.door43.TestUtils
 import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
+import com.door43.translationstudio.AppInfo
+import com.door43.translationstudio.Platform
 import com.door43.translationstudio.R
 import com.door43.util.FileUtilities
 import io.mockk.MockKAnnotations
@@ -44,14 +44,14 @@ class ProcessUSFMTest {
     @MockK private lateinit var context: Context
     @MockK private lateinit var resources: Resources
     @MockK private lateinit var directoryProvider: IDirectoryProvider
+    @MockK private lateinit var platform: Platform
     @MockK private lateinit var profile: Profile
     @MockK private lateinit var library: Door43Client
     @MockK private lateinit var assetsProvider: AssetsProvider
     @MockK private lateinit var targetLanguage: TargetLanguage
     @MockK private lateinit var index: Index
-    @MockK private lateinit var packageManager: PackageManager
-    @MockK private lateinit var packageInfo: PackageInfo
     @MockK private lateinit var contentResolver: ContentResolver
+    @MockK private lateinit var appInfo: AppInfo
 
     @MockK private lateinit var mockFile: File
     @MockK private lateinit var mockUri: Uri
@@ -67,13 +67,13 @@ class ProcessUSFMTest {
         mockkObject(TargetTranslation)
 
         every { context.resources }.returns(resources)
-        every { context.packageManager }.returns(packageManager)
-        every { context.packageName }.returns("writer")
         every { context.contentResolver }.returns(contentResolver)
 
-        every { packageManager.getPackageInfo(any(String::class), 0) }.returns(packageInfo)
+        every { appInfo.versionCode }.returns(10)
+        every { platform.info }.returns(appInfo)
+
         every { TargetTranslation.create(any(), any(), any(), any(), any(),
-            any(), any(), any()) }.returns(mockk())
+            any(), any(), any(), any()) }.returns(mockk())
 
         mockStringResources()
 
@@ -115,6 +115,7 @@ class ProcessUSFMTest {
 
         val processUSFM = ProcessUSFM.Builder(
             context,
+            platform,
             directoryProvider,
             profile,
             library,
@@ -145,6 +146,7 @@ class ProcessUSFMTest {
 
         val processUSFM = ProcessUSFM.Builder(
             context,
+            platform,
             directoryProvider,
             profile,
             library,
@@ -178,6 +180,7 @@ class ProcessUSFMTest {
 
         val processUSFM = ProcessUSFM.Builder(
             context,
+            platform,
             directoryProvider,
             profile,
             library,
@@ -207,6 +210,7 @@ class ProcessUSFMTest {
 
         val processUSFM = ProcessUSFM.Builder(
             context,
+            platform,
             directoryProvider,
             profile,
             library,
@@ -241,6 +245,7 @@ class ProcessUSFMTest {
 
         val processUSFM = ProcessUSFM.Builder(
             context,
+            platform,
             directoryProvider,
             profile,
             library,
@@ -274,6 +279,7 @@ class ProcessUSFMTest {
 
         val processUSFM = ProcessUSFM.Builder(
             context,
+            platform,
             directoryProvider,
             profile,
             library,
@@ -307,6 +313,7 @@ class ProcessUSFMTest {
 
         val processUSFM = ProcessUSFM.Builder(
             context,
+            platform,
             directoryProvider,
             profile,
             library,
@@ -340,6 +347,7 @@ class ProcessUSFMTest {
 
         val processUSFM = ProcessUSFM.Builder(
             context,
+            platform,
             directoryProvider,
             profile,
             library,
@@ -388,6 +396,7 @@ class ProcessUSFMTest {
 
         val processUSFM = ProcessUSFM.Builder(
             context,
+            platform,
             directoryProvider,
             profile,
             library,
@@ -428,6 +437,7 @@ class ProcessUSFMTest {
     @Test fun `test cleanup temp directory`() {
         val processUSFM = ProcessUSFM.Builder(
             context,
+            platform,
             directoryProvider,
             profile,
             library,
@@ -524,7 +534,7 @@ class ProcessUSFMTest {
 
         verify { index.getChunkMarkers("mrk", "en") }
         verify { TargetTranslation.create(any(), any(), any(), any(), any(),
-            any(), any(), any()) }
+            any(), any(), any(), any()) }
         verify { directoryProvider.cacheDir }
         verify { onProgress(any(), any()) }
         verify { index.getVersifications("en") }

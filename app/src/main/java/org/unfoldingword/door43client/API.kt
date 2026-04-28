@@ -101,7 +101,7 @@ internal class API @Throws(IOException::class) constructor(
      * @param onProgress an optional progress listener
      */
     @Throws(Exception::class)
-    suspend fun updateSources(url: String, onProgress: (Float, String?) -> Unit) {
+    suspend fun updateSources(url: String, onProgress: (Float, String?) -> Unit = {_,_->}) {
         // Download catalog data
         val projects = withContext(networkDispatcher) {
             val data  = GetRequest(url).read()
@@ -120,7 +120,7 @@ internal class API @Throws(IOException::class) constructor(
      * a single short-lived transaction.
      */
     @Throws(Exception::class)
-    suspend fun updateChunks(onProgress: (Float, String?) -> Unit) {
+    suspend fun updateChunks(onProgress: (Float, String?) -> Unit = {_,_->}) {
         // Collect chunk URLs and versification
         val (markers, versificationRowId) = withContext(dbDispatcher) {
             val result = mutableMapOf<String, String>()
@@ -158,7 +158,7 @@ internal class API @Throws(IOException::class) constructor(
      * @param onProgress Progress Listener
      */
     @Throws(Exception::class)
-    suspend fun updateCatalogs(force: Boolean, onProgress: (Float, String?) -> Unit) {
+    suspend fun updateCatalogs(force: Boolean, onProgress: (Float, String?) -> Unit = {_,_->}) {
         if (force) {
             withContext(dbDispatcher) {
                 LegacyTools.injectGlobalCatalogs(library, globalCatalogHost)
@@ -170,20 +170,6 @@ internal class API @Throws(IOException::class) constructor(
         for (c in catalogs) {
             updateCatalog(c, onProgress)
         }
-    }
-
-    /**
-     * Utility for testing
-     */
-    @Throws(Exception::class)
-    suspend fun updateCatalog(slug: String) {
-        withContext(dbDispatcher) {
-            LegacyTools.injectGlobalCatalogs(library, globalCatalogHost)
-        }
-        val c = withContext(dbDispatcher) {
-            library.getCatalog(slug)
-        }
-        c?.let { updateCatalog(it) }
     }
 
     fun updateLanguageUrl(url: String) {
@@ -205,22 +191,34 @@ internal class API @Throws(IOException::class) constructor(
             GetRequest(catalog.url).read()
         }
 
-        // Index inside a short-lived transaction
-        withTransaction {
-            when (catalog.slug) {
-                "langnames" -> {
-                    library.clearTargetLanguages()
+        when (catalog.slug) {
+            "langnames" -> {
+                library.clearTargetLanguages()
+                withTransaction {
                     indexTargetLanguageCatalog(data, onProgress)
                 }
-                else -> throw Exception("Parsing this catalog has not been implemented")
             }
+            "new-language-questions" -> {}
+            "temp-langnames" -> {
+                library.clearTempLanguages()
+                withTransaction {
+                    indexTempLanguagesCatalog(data, onProgress)
+                }
+            }
+            "approved-temp-langnames" -> {
+                library.clearApprovedTempLanguages()
+                withTransaction {
+                    indexApprovedTempLanguagesCatalog(data, onProgress)
+                }
+            }
+            else -> throw Exception("Parsing this catalog has not been implemented")
         }
     }
 
     @Throws(Exception::class)
     private fun indexTargetLanguageCatalog(
         data: String,
-        onProgress: (Float, String?) -> Unit
+        onProgress: (Float, String?) -> Unit = {_,_->}
     ) {
         val languages = json.decodeFromString<List<CatalogLanguage>>(data)
         languages.forEachIndexed { index, language ->
@@ -230,6 +228,38 @@ internal class API @Throws(IOException::class) constructor(
 
             onProgress((index + 1) / languages.size.toFloat(), "langnames")
 
+            library.yieldSafely()
+        }
+    }
+
+    @Throws(Exception::class)
+    private fun indexTempLanguagesCatalog(
+        data: String,
+        onProgress: (Float, String?) -> Unit = {_,_->}
+    ) {
+        val languages = json.decodeFromString<List<CatalogLanguage>>(data)
+        languages.forEachIndexed { index, language ->
+            if (!library.addTempTargetLanguage(language.toTargetLanguage())) {
+                logListener.onWarning("Failed to add the temp target language: " + language.slug)
+            }
+            onProgress((index + 1) / languages.size.toFloat(), "temp-langnames")
+            library.yieldSafely()
+        }
+    }
+
+    @Throws(Exception::class)
+    private fun indexApprovedTempLanguagesCatalog(
+        data: String,
+        onProgress: (Float, String?) -> Unit = {_,_->}
+    ) {
+        val languages = json.decodeFromString<List<Map<String, String>>>(data)
+        languages.forEachIndexed { index, entry ->
+            entry.forEach { (key, value) ->
+                if (!library.setApprovedTargetLanguage(key, value)) {
+                    logListener.onWarning("Failed to approve the temp target language: $key as $value")
+                }
+            }
+            onProgress((index + 1) / languages.size.toFloat(), "approved-temp-langnames")
             library.yieldSafely()
         }
     }

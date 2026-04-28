@@ -7,6 +7,7 @@ import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
 import com.door43.data.getPrivatePref
 import com.door43.data.setPrivatePref
+import com.door43.translationstudio.Platform
 import com.door43.translationstudio.rendering.USXtoUSFMConverter
 import com.door43.usecases.BackupRC
 import com.door43.util.FileUtilities
@@ -28,7 +29,8 @@ class Translator (
     private val prefRepository: IPreferenceRepository,
     private val directoryProvider: IDirectoryProvider,
     private val backupRC: BackupRC,
-    private val library: Door43Client
+    private val library: Door43Client,
+    private val platform: Platform
 ) {
     /**
      * Returns the root directory to the target translations
@@ -156,7 +158,8 @@ class Translator (
             val targetTranslationDir = File(this.path, targetTranslationId)
             try {
                 return TargetTranslation.create(
-                    this.context,
+                    context,
+                    platform,
                     nativeSpeaker,
                     format,
                     targetLanguage,
@@ -435,36 +438,6 @@ class Translator (
         prefRepository.setPrivatePref<String>(LAST_FOCUS_FRAME + targetTranslationId, null)
         prefRepository.setPrivatePref<String>(LAST_FOCUS_CHAPTER + targetTranslationId, null)
         prefRepository.setPrivatePref<String>(LAST_VIEW_MODE + targetTranslationId, null)
-    }
-
-    /**
-     * A temporary utility to retrieve the target language used in a target translation.
-     * if the language does not exist it will be added as a temporary language if possible
-     * @param t
-     * @return
-     */
-    @Deprecated("")
-    fun languageFromTargetTranslation(t: TargetTranslation): TargetLanguage? {
-        var language = library.index.getTargetLanguage(t.targetLanguageId)
-        if (language == null && t.targetLanguageId.isEmpty()) {
-            val name = t.targetLanguageName.ifEmpty { t.targetLanguageId }
-            val direction = t.targetLanguageDirection
-            language = TargetLanguage(
-                t.targetLanguageId,
-                name,
-                "",
-                direction,
-                "unknown",
-                false
-            )
-            try {
-                library.index.addTempTargetLanguage(language)
-            } catch (e: Exception) {
-                language = null
-                e.printStackTrace()
-            }
-        }
-        return language
     }
 
     companion object {

@@ -15,7 +15,7 @@ class UpdateAll(
 
     suspend fun execute(
         updateCatalogs: Boolean,
-        onProgress: (Float, String?) -> Unit
+        onProgress: (Float, String?) -> Unit = {_,_->}
     ): Result {
         var success = false
         var overallSuccess = true

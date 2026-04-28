@@ -14,7 +14,7 @@ class SearchGogsUsers(
     suspend fun execute(
         userQuery: String,
         limit: Int,
-        onProgress: (Float, String?) -> Unit
+        onProgress: (Float, String?) -> Unit = {_,_->}
     ): List<User> {
         onProgress(-1f, "Searching for users")
 

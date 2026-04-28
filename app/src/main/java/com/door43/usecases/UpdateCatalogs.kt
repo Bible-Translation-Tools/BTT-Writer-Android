@@ -8,7 +8,10 @@ class UpdateCatalogs(
 ) {
     data class Result(val success: Boolean, val addedCount: Int)
 
-    suspend fun execute(updateCatalogs: Boolean, onProgress: (Float, String?) -> Unit): Result {
+    suspend fun execute(
+        updateCatalogs: Boolean,
+        onProgress: (Float, String?) -> Unit = {_,_->}
+    ): Result {
         var addedCount = 0
         var success = false
 

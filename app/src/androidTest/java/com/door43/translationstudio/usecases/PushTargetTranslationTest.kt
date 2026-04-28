@@ -2,13 +2,13 @@ package com.door43.translationstudio.usecases
 
 import android.content.Context
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.door43.OnProgressListener
 import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
 import com.door43.data.setDefaultPref
 import com.door43.translationstudio.IntegrationTest
 import com.door43.translationstudio.KoinAndroidTest
+import com.door43.translationstudio.Platform
 import com.door43.translationstudio.TestUtils
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TargetTranslation
@@ -55,6 +55,7 @@ class PushTargetTranslationTest : KoinAndroidTest() {
     private val gogsLogin: GogsLogin by inject()
     private val pushTargetTranslation: PushTargetTranslation by inject()
     private val prefRepo: IPreferenceRepository by inject()
+    private val platform: Platform by inject()
 
     private val server = MockWebServer()
     private lateinit var targetTranslation: TargetTranslation
@@ -71,6 +72,7 @@ class PushTargetTranslationTest : KoinAndroidTest() {
         targetTranslation = TestUtils.importTargetTranslation(
             library,
             appContext,
+            platform,
             directoryProvider,
             profile,
             assetsProvider,
@@ -93,7 +95,7 @@ class PushTargetTranslationTest : KoinAndroidTest() {
         loginGogsUser()
 
         var progressMessage: String? = null
-        val progressListener = OnProgressListener { _, message ->
+        val onProgress: (Float, String?) -> Unit = { _, message ->
             progressMessage = message
         }
 
@@ -107,7 +109,7 @@ class PushTargetTranslationTest : KoinAndroidTest() {
         every { pushResult.remoteUpdates }.returns(listOf(refUpdate))
         every { anyConstructed<PushCommand>().call() }.returns(listOf(pushResult))
 
-        val result = pushTargetTranslation.execute(targetTranslation, progressListener)
+        val result = pushTargetTranslation.execute(targetTranslation, onProgress)
 
         assertEquals(
             "Push should fail, because remote exists but not synced with local",
@@ -124,7 +126,7 @@ class PushTargetTranslationTest : KoinAndroidTest() {
         loginGogsUser()
 
         var progressMessage: String? = null
-        val progressListener = OnProgressListener { _, message ->
+        val onProgress: (Float, String?) -> Unit = { _, message ->
             progressMessage = message
         }
 
@@ -138,7 +140,7 @@ class PushTargetTranslationTest : KoinAndroidTest() {
         every { pushResult.remoteUpdates }.returns(listOf(refUpdate))
         every { anyConstructed<PushCommand>().call() }.returns(listOf(pushResult))
 
-        val result = pushTargetTranslation.execute(targetTranslation, progressListener)
+        val result = pushTargetTranslation.execute(targetTranslation, onProgress)
 
         assertEquals(
             "Push should fail, because remote exists but not synced with local",
@@ -155,7 +157,7 @@ class PushTargetTranslationTest : KoinAndroidTest() {
         loginGogsUser()
 
         var progressMessage: String? = null
-        val progressListener = OnProgressListener { _, message ->
+        val onProgress: (Float, String?) -> Unit = { _, message ->
             progressMessage = message
         }
 
@@ -169,7 +171,7 @@ class PushTargetTranslationTest : KoinAndroidTest() {
         every { pushResult.remoteUpdates }.returns(listOf(refUpdate))
         every { anyConstructed<PushCommand>().call() }.returns(listOf(pushResult))
 
-        val result = pushTargetTranslation.execute(targetTranslation, progressListener)
+        val result = pushTargetTranslation.execute(targetTranslation, onProgress)
 
         assertEquals(
             "Push should fail, because remote doesn't allow deleting refs",
@@ -186,7 +188,7 @@ class PushTargetTranslationTest : KoinAndroidTest() {
         loginGogsUser()
 
         var progressMessage: String? = null
-        val progressListener = OnProgressListener { _, message ->
+        val onProgress: (Float, String?) -> Unit = { _, message ->
             progressMessage = message
         }
 
@@ -200,7 +202,7 @@ class PushTargetTranslationTest : KoinAndroidTest() {
         every { pushResult.remoteUpdates }.returns(listOf(refUpdate))
         every { anyConstructed<PushCommand>().call() }.returns(listOf(pushResult))
 
-        val result = pushTargetTranslation.execute(targetTranslation, progressListener)
+        val result = pushTargetTranslation.execute(targetTranslation, onProgress)
 
         assertEquals(
             "Push should fail, because remote changed during push",
@@ -217,7 +219,7 @@ class PushTargetTranslationTest : KoinAndroidTest() {
         loginGogsUser()
 
         var progressMessage: String? = null
-        val progressListener = OnProgressListener { _, message ->
+        val onProgress: (Float, String?) -> Unit = { _, message ->
             progressMessage = message
         }
 
@@ -232,7 +234,7 @@ class PushTargetTranslationTest : KoinAndroidTest() {
         every { pushResult.remoteUpdates }.returns(listOf(refUpdate))
         every { anyConstructed<PushCommand>().call() }.returns(listOf(pushResult))
 
-        val result = pushTargetTranslation.execute(targetTranslation, progressListener)
+        val result = pushTargetTranslation.execute(targetTranslation, onProgress)
 
         assertEquals(
             "Push should fail for other reason",
@@ -249,7 +251,7 @@ class PushTargetTranslationTest : KoinAndroidTest() {
         loginGogsUser()
 
         var progressMessage: String? = null
-        val progressListener = OnProgressListener { _, message ->
+        val onProgress: (Float, String?) -> Unit = { _, message ->
             progressMessage = message
         }
 
@@ -264,7 +266,7 @@ class PushTargetTranslationTest : KoinAndroidTest() {
         every { pushResult.remoteUpdates }.returns(listOf(refUpdate))
         every { anyConstructed<PushCommand>().call() }.returns(listOf(pushResult))
 
-        val result = pushTargetTranslation.execute(targetTranslation, progressListener)
+        val result = pushTargetTranslation.execute(targetTranslation, onProgress)
 
         assertEquals(
             "Push should fail for other reason",
@@ -279,11 +281,11 @@ class PushTargetTranslationTest : KoinAndroidTest() {
     @Test
     fun testPushTargetTranslationUnAuthorized() = runTest {
         var progressMessage: String? = null
-        val progressListener = OnProgressListener { _, message ->
+        val onProgress: (Float, String?) -> Unit = { _, message ->
             progressMessage = message
         }
 
-        val result = pushTargetTranslation.execute(targetTranslation, progressListener)
+        val result = pushTargetTranslation.execute(targetTranslation, onProgress)
 
         assertEquals(
             "Fails when there is no auth user",
@@ -299,7 +301,7 @@ class PushTargetTranslationTest : KoinAndroidTest() {
         loginGogsUser()
 
         var progressMessage: String? = null
-        val progressListener = OnProgressListener { _, message ->
+        val onProgress: (Float, String?) -> Unit = { _, message ->
             progressMessage = message
         }
 
@@ -314,7 +316,7 @@ class PushTargetTranslationTest : KoinAndroidTest() {
         every { anyConstructed<PushCommand>().call() }
             .throws(exception)
 
-        val result = pushTargetTranslation.execute(targetTranslation, progressListener)
+        val result = pushTargetTranslation.execute(targetTranslation, onProgress)
 
         assertEquals(
             "Push should fail",
@@ -330,7 +332,7 @@ class PushTargetTranslationTest : KoinAndroidTest() {
         loginGogsUser()
 
         var progressMessage: String? = null
-        val progressListener = OnProgressListener { _, message ->
+        val onProgress: (Float, String?) -> Unit = { _, message ->
             progressMessage = message
         }
 
@@ -343,7 +345,7 @@ class PushTargetTranslationTest : KoinAndroidTest() {
         every { anyConstructed<PushCommand>().call() }
             .throws(exception)
 
-        val result = pushTargetTranslation.execute(targetTranslation, progressListener)
+        val result = pushTargetTranslation.execute(targetTranslation, onProgress)
 
         assertEquals(
             "Push should fail",
@@ -359,7 +361,7 @@ class PushTargetTranslationTest : KoinAndroidTest() {
         loginGogsUser()
 
         var progressMessage: String? = null
-        val progressListener = OnProgressListener { _, message ->
+        val onProgress: (Float, String?) -> Unit = { _, message ->
             progressMessage = message
         }
 
@@ -372,7 +374,7 @@ class PushTargetTranslationTest : KoinAndroidTest() {
         every { anyConstructed<PushCommand>().call() }
             .throws(exception)
 
-        val result = pushTargetTranslation.execute(targetTranslation, progressListener)
+        val result = pushTargetTranslation.execute(targetTranslation, onProgress)
 
         assertEquals(
             "Push should fail",
@@ -388,7 +390,7 @@ class PushTargetTranslationTest : KoinAndroidTest() {
         loginGogsUser()
 
         var progressMessage: String? = null
-        val progressListener = OnProgressListener { _, message ->
+        val onProgress: (Float, String?) -> Unit = { _, message ->
             progressMessage = message
         }
 
@@ -401,7 +403,7 @@ class PushTargetTranslationTest : KoinAndroidTest() {
         every { anyConstructed<PushCommand>().call() }
             .throws(exception)
 
-        val result = pushTargetTranslation.execute(targetTranslation, progressListener)
+        val result = pushTargetTranslation.execute(targetTranslation, onProgress)
 
         assertEquals(
             "Push should fail",
@@ -417,7 +419,7 @@ class PushTargetTranslationTest : KoinAndroidTest() {
         loginGogsUser()
 
         var progressMessage: String? = null
-        val progressListener = OnProgressListener { _, message ->
+        val onProgress: (Float, String?) -> Unit = { _, message ->
             progressMessage = message
         }
 
@@ -426,7 +428,7 @@ class PushTargetTranslationTest : KoinAndroidTest() {
         every { anyConstructed<PushCommand>().call() }
             .throws(OutOfMemoryError("An error occurred."))
 
-        val result = pushTargetTranslation.execute(targetTranslation, progressListener)
+        val result = pushTargetTranslation.execute(targetTranslation, onProgress)
 
         assertEquals(
             "Push should fail",
@@ -442,7 +444,7 @@ class PushTargetTranslationTest : KoinAndroidTest() {
         loginGogsUser()
 
         var progressMessage: String? = null
-        val progressListener = OnProgressListener { _, message ->
+        val onProgress: (Float, String?) -> Unit = { _, message ->
             progressMessage = message
         }
 
@@ -451,7 +453,7 @@ class PushTargetTranslationTest : KoinAndroidTest() {
         every { anyConstructed<PushCommand>().call() }
             .throws(Exception("An error occurred."))
 
-        val result = pushTargetTranslation.execute(targetTranslation, progressListener)
+        val result = pushTargetTranslation.execute(targetTranslation, onProgress)
 
         assertEquals(
             "Push should fail",
@@ -465,6 +467,7 @@ class PushTargetTranslationTest : KoinAndroidTest() {
     private fun loginGogsUser() = runTest {
         profile.gogsUser = TestUtils.simulateLoginGogsUser(
             appContext,
+            platform,
             server,
             gogsLogin,
             "test"

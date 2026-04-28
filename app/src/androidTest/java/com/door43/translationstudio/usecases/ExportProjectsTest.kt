@@ -7,6 +7,7 @@ import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.IntegrationTest
 import com.door43.translationstudio.KoinAndroidTest
+import com.door43.translationstudio.Platform
 import com.door43.translationstudio.TestUtils
 import com.door43.translationstudio.core.ProcessUSFM
 import com.door43.translationstudio.core.Profile
@@ -23,6 +24,7 @@ import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertFalse
 import junit.framework.TestCase.assertNotNull
 import junit.framework.TestCase.assertTrue
+import org.bibletranslationtools.logger.Logger
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -30,7 +32,6 @@ import org.junit.runner.RunWith
 import org.koin.core.component.inject
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.door43client.models.TargetLanguage
-import org.bibletranslationtools.logger.Logger
 import java.io.File
 import java.io.FileInputStream
 
@@ -46,6 +47,7 @@ class ExportProjectsTest : KoinAndroidTest() {
     private val profile: Profile by inject()
     private val importProjects: ImportProjects by inject()
     private val translator: Translator by inject()
+    private val platform: Platform by inject()
 
     private var targetTranslation: TargetTranslation? = null
     private var targetLanguage: TargetLanguage? = null
@@ -56,6 +58,7 @@ class ExportProjectsTest : KoinAndroidTest() {
         targetTranslation = TestUtils.importTargetTranslation(
             library,
             appContext,
+            platform,
             directoryProvider,
             profile,
             assetsProvider,
@@ -221,12 +224,13 @@ class ExportProjectsTest : KoinAndroidTest() {
 
         val usfm = ProcessUSFM.Builder(
             appContext,
+            platform,
             directoryProvider,
             profile,
             library,
             assetsProvider
         )
-            .fromFile(targetLanguage!!, file, null)
+            .fromFile(targetLanguage!!, file)
             .build()
 
         assertNotNull("USFM should not be null", usfm)

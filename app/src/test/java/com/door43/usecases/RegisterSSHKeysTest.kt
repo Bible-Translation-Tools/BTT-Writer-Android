@@ -5,7 +5,7 @@ import android.content.res.Resources
 import com.door43.TestUtils
 import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
-import com.door43.translationstudio.App
+import com.door43.translationstudio.Platform
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Profile
 import com.door43.util.FileUtilities
@@ -39,6 +39,7 @@ class RegisterSSHKeysTest {
     @MockK private lateinit var directoryProvider: IDirectoryProvider
     @MockK private lateinit var prefRepository: IPreferenceRepository
     @MockK private lateinit var resources: Resources
+    @MockK private lateinit var platform: Platform
 
     val onProgress = mockk<(Float, String?) -> Unit>(relaxed = true)
 
@@ -46,8 +47,7 @@ class RegisterSSHKeysTest {
     fun setup() {
         MockKAnnotations.init(this)
 
-        mockkObject(App)
-        every { App.udid() }.returns("1234567890")
+        every { platform.udid }.returns("1234567890")
 
         mockkObject(FileUtilities)
         every { FileUtilities.readFileToString(any()) }.returns("public_key_string")
@@ -59,7 +59,7 @@ class RegisterSSHKeysTest {
 
         every { context.resources }.returns(resources)
         every { onProgress(any(), any()) }.just(runs)
-        every { directoryProvider.generateSSHKeys() }.just(runs)
+        every { directoryProvider.generateSSHKeys(any()) }.just(runs)
         every { directoryProvider.publicKey }.returns(mockk())
 
         every { prefRepository.getDefaultPref(any(), any(), String::class.java) }
@@ -85,7 +85,8 @@ class RegisterSSHKeysTest {
             context,
             profile,
             directoryProvider,
-            prefRepository
+            prefRepository,
+            platform
         ).execute(false, onProgress)
 
         assertTrue(success)
@@ -94,7 +95,7 @@ class RegisterSSHKeysTest {
 
         coVerify(exactly = 0) { anyConstructed<GogsAPI>().deletePublicKey(any(), any()) }
         verify(exactly = 0) { anyConstructed<GogsAPI>().getLastResponse() }
-        verify(exactly = 0) { directoryProvider.generateSSHKeys() }
+        verify(exactly = 0) { directoryProvider.generateSSHKeys(any()) }
     }
 
     @Test
@@ -105,17 +106,18 @@ class RegisterSSHKeysTest {
             context,
             profile,
             directoryProvider,
-            prefRepository
+            prefRepository,
+            platform
         ).execute(false, onProgress)
 
         assertFalse(success)
 
         verify { profile.gogsUser }
-        verify { App.udid() }
+        verify { platform.udid }
         verify { onProgress(any(), "Authenticating") }
 
         coVerify(exactly = 0) { anyConstructed<GogsAPI>().listPublicKeys(any()) }
-        verify(exactly = 0) { directoryProvider.generateSSHKeys() }
+        verify(exactly = 0) { directoryProvider.generateSSHKeys(any()) }
     }
 
     @Test
@@ -127,14 +129,15 @@ class RegisterSSHKeysTest {
             context,
             profile,
             directoryProvider,
-            prefRepository
+            prefRepository,
+            platform
         ).execute(false, onProgress)
 
         assertTrue(success)
 
         verifyCommonCalls()
 
-        verify { directoryProvider.generateSSHKeys() }
+        verify { directoryProvider.generateSSHKeys(any()) }
         coVerify(exactly = 0) { anyConstructed<GogsAPI>().deletePublicKey(any(), any()) }
         verify(exactly = 0) { anyConstructed<GogsAPI>().getLastResponse() }
     }
@@ -148,14 +151,15 @@ class RegisterSSHKeysTest {
             context,
             profile,
             directoryProvider,
-            prefRepository
+            prefRepository,
+            platform
         ).execute(true, onProgress)
 
         assertTrue(success)
 
         verifyCommonCalls()
 
-        verify { directoryProvider.generateSSHKeys() }
+        verify { directoryProvider.generateSSHKeys(any()) }
         coVerify(exactly = 0) { anyConstructed<GogsAPI>().deletePublicKey(any(), any()) }
         verify(exactly = 0) { anyConstructed<GogsAPI>().getLastResponse() }
     }
@@ -171,14 +175,15 @@ class RegisterSSHKeysTest {
             context,
             profile,
             directoryProvider,
-            prefRepository
+            prefRepository,
+            platform
         ).execute(false, onProgress)
 
         assertFalse(success)
 
         verify { profile.gogsUser }
         verify { directoryProvider.hasSSHKeys() }
-        verify(exactly = 0) { directoryProvider.generateSSHKeys() }
+        verify(exactly = 0) { directoryProvider.generateSSHKeys(any()) }
         coVerify(exactly = 0) { anyConstructed<GogsAPI>().listPublicKeys(any()) }
         coVerify(exactly = 0) { anyConstructed<GogsAPI>().deletePublicKey(any(), any()) }
         verify(exactly = 0) { anyConstructed<GogsAPI>().getLastResponse() }
@@ -190,7 +195,7 @@ class RegisterSSHKeysTest {
         every { directoryProvider.hasSSHKeys() }.returns(true)
 
         val publicKey: PublicKey = mockk {
-            every { title }.returns("public key ${App.udid()}")
+            every { title }.returns("public key ${platform.udid}")
         }
         coEvery { anyConstructed<GogsAPI>().listPublicKeys(any()) }.returns(listOf(publicKey))
 
@@ -198,7 +203,8 @@ class RegisterSSHKeysTest {
             context,
             profile,
             directoryProvider,
-            prefRepository
+            prefRepository,
+            platform
         ).execute(false, onProgress)
 
         assertTrue(success)
@@ -207,7 +213,7 @@ class RegisterSSHKeysTest {
         verify { directoryProvider.hasSSHKeys() }
         coVerify { anyConstructed<GogsAPI>().listPublicKeys(any()) }
         coVerify { anyConstructed<GogsAPI>().deletePublicKey(any(), any()) }
-        verify(exactly = 0) { directoryProvider.generateSSHKeys() }
+        verify(exactly = 0) { directoryProvider.generateSSHKeys(any()) }
         verify(exactly = 0) { anyConstructed<GogsAPI>().getLastResponse() }
     }
 
@@ -225,7 +231,8 @@ class RegisterSSHKeysTest {
             context,
             profile,
             directoryProvider,
-            prefRepository
+            prefRepository,
+            platform
         ).execute(false, onProgress)
 
         assertTrue(success)
@@ -234,7 +241,7 @@ class RegisterSSHKeysTest {
         verify { directoryProvider.hasSSHKeys() }
         coVerify { anyConstructed<GogsAPI>().listPublicKeys(any()) }
         coVerify(exactly = 0) { anyConstructed<GogsAPI>().deletePublicKey(any(), any()) }
-        verify(exactly = 0) { directoryProvider.generateSSHKeys() }
+        verify(exactly = 0) { directoryProvider.generateSSHKeys(any()) }
         verify(exactly = 0) { anyConstructed<GogsAPI>().getLastResponse() }
     }
 
@@ -256,7 +263,8 @@ class RegisterSSHKeysTest {
             context,
             profile,
             directoryProvider,
-            prefRepository
+            prefRepository,
+            platform
         ).execute(false, onProgress)
 
         assertFalse(success)
@@ -267,13 +275,13 @@ class RegisterSSHKeysTest {
         coVerify { anyConstructed<GogsAPI>().createPublicKey(any(), any()) }
         verify { anyConstructed<GogsAPI>().getLastResponse() }
         coVerify(exactly = 0) { anyConstructed<GogsAPI>().deletePublicKey(any(), any()) }
-        verify(exactly = 0) { directoryProvider.generateSSHKeys() }
+        verify(exactly = 0) { directoryProvider.generateSSHKeys(any()) }
     }
 
     private fun verifyCommonCalls() {
         verify { profile.gogsUser }
         verify { directoryProvider.hasSSHKeys() }
-        verify { App.udid() }
+        verify { platform.udid }
         verify { FileUtilities.readFileToString(any()) }
         coVerify { anyConstructed<GogsAPI>().listPublicKeys(any()) }
         coVerify { anyConstructed<GogsAPI>().createPublicKey(any(), any()) }

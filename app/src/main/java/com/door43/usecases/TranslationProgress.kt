@@ -1,6 +1,6 @@
 package com.door43.usecases
 
-import com.door43.translationstudio.App
+import com.door43.translationstudio.Platform
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.Translator
 import org.bibletranslationtools.resourcecontainer.ResourceContainer
@@ -78,7 +78,7 @@ class TranslationProgress(
             null,
             "book",
             null,
-            App.MIN_CHECKING_LEVEL,
+            Platform.MIN_CHECKING_LEVEL,
             -1
         )
 

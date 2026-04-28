@@ -29,7 +29,7 @@ android {
         minSdk = 26
         compileSdk = 36
         targetSdk = 36
-        versionCode = 46
+        versionCode = 47
         versionName = "1.6.0"
 
         testBuildType = "verify"
@@ -39,6 +39,7 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -188,6 +189,7 @@ dependencies {
 
     // Koin
     androidTestImplementation(libs.koin.android.test)
+    androidTestImplementation(libs.koin.junit)
 
     testImplementation(libs.junit.jupiter)
 }

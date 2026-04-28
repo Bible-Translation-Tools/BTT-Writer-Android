@@ -41,10 +41,7 @@ class ArchiveImporter(
                     archiveJson.decodeFromString(rawManifest),
                     expandedArchiveDir
                 )
-                else -> v1(
-                    archiveJson.decodeFromString(rawManifest),
-                    expandedArchiveDir
-                )
+                else -> listOf(expandedArchiveDir)
             }
         } else {
             legacy(expandedArchiveDir)

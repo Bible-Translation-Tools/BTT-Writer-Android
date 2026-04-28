@@ -3,7 +3,7 @@ package com.door43.usecases
 import android.content.Context
 import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
-import com.door43.translationstudio.App
+import com.door43.translationstudio.Platform
 import com.door43.translationstudio.R
 import org.unfoldingword.door43client.Door43Client
 
@@ -18,7 +18,7 @@ class UpdateSource(
         val addedCount: Int
     )
 
-    suspend fun execute(onProgress: (Float, String?) -> Unit): Result {
+    suspend fun execute(onProgress: (Float, String?) -> Unit = {_,_->}): Result {
         var updatedCount = 0
         var addedCount = 0
         var success = false
@@ -30,7 +30,7 @@ class UpdateSource(
             null,
             "book",
             null,
-            App.MIN_CHECKING_LEVEL,
+            Platform.MIN_CHECKING_LEVEL,
             -1
         )
         val previouslyUpdated = HashMap<String, Int>()
@@ -76,7 +76,7 @@ class UpdateSource(
                 null,
                 "book",
                 null,
-                App.MIN_CHECKING_LEVEL,
+                Platform.MIN_CHECKING_LEVEL,
                 -1
             )
 

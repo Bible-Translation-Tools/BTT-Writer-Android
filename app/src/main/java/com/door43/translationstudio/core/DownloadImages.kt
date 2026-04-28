@@ -28,7 +28,7 @@ class DownloadImages(
      * @return
      */
     @SuppressLint("DefaultLocale")
-    suspend fun download(onProgress: (Float, String?) -> Unit): File? {
+    suspend fun download(onProgress: (Float, String?) -> Unit = {_,_->}): File? {
         // TODO: 1/21/2016 we need to be sure to download images for the correct project.
         // Right now only obs has images
         // eventually the api will be updated so we can easily download the correct images.
@@ -82,7 +82,7 @@ class DownloadImages(
 
     private suspend fun requestToFile(
         outputFile: File,
-        onProgress: (Float, String?) -> Unit
+        onProgress: (Float, String?) -> Unit = {_,_->}
     ): Boolean {
         val outOf = context.getString(R.string.out_of)
         val mbDownloaded = context.getString(R.string.mb_downloaded)

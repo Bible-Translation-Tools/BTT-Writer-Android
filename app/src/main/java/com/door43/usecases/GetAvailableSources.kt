@@ -1,6 +1,6 @@
 package com.door43.usecases
 
-import com.door43.translationstudio.App
+import com.door43.translationstudio.Platform
 import com.door43.translationstudio.core.BibleCodes
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.door43client.models.Translation
@@ -17,7 +17,7 @@ class GetAvailableSources(
         val otherBooks: Map<String, List<Int>>,
     )
 
-    fun execute(onProgress: (Float, String?) -> Unit): Result {
+    fun execute(onProgress: (Float, String?) -> Unit = {_,_->}): Result {
         val ntBookList = BibleCodes.getNtBooks()
         val otBookList = BibleCodes.getOtBooks()
 
@@ -31,7 +31,7 @@ class GetAvailableSources(
             null,
             "book",
             null,
-            App.MIN_CHECKING_LEVEL,
+            Platform.MIN_CHECKING_LEVEL,
             -1
         )
 
@@ -41,7 +41,7 @@ class GetAvailableSources(
             null,
             "dict",
             null,
-            App.MIN_CHECKING_LEVEL,
+            Platform.MIN_CHECKING_LEVEL,
             -1
         )
 

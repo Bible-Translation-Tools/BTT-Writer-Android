@@ -43,7 +43,7 @@ internal object LegacyTools {
     @Throws(Exception::class)
     suspend fun downloadCatalog(
         projects: List<ProjectCatalog>,
-        onProgress: (Float, String?) -> Unit
+        onProgress: (Float, String?) -> Unit = {_,_->}
     ): List<ProjectCatalog> {
         return projects.mapIndexed { index, project ->
             onProgress(index / projects.size.toFloat(), project.slug)
@@ -260,7 +260,7 @@ internal object LegacyTools {
     @Throws(Exception::class)
     suspend fun downloadAllChunks(
         markers: Map<String, String>,
-        onProgress: (Float, String?) -> Unit
+        onProgress: (Float, String?) -> Unit = {_,_->}
     ): Map<String, List<ChunkMarker>> {
         val result = mutableMapOf<String, List<ChunkMarker>>()
         markers.entries.forEachIndexed { index, (slug, url) ->

@@ -1,7 +1,6 @@
 package com.door43.translationstudio.usecases
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.door43.OnProgressListener
 import com.door43.data.IPreferenceRepository
 import com.door43.data.setDefaultPref
 import com.door43.translationstudio.IntegrationTest
@@ -48,7 +47,7 @@ class SearchGogsUsersTest : KoinAndroidTest() {
     fun searchParticularUser() = runTest {
         val user = "test"
         var progressMessage: String? = null
-        val progressListener = OnProgressListener { _, message ->
+        val onProgress: (Float, String?) -> Unit = { _, message ->
             progressMessage = message
         }
 
@@ -70,7 +69,7 @@ class SearchGogsUsersTest : KoinAndroidTest() {
             .addHeader("Content-Type", "application/json")
             .setResponseCode(200))
 
-        val gogsUser = searchGogsUsers.execute(user, 1, progressListener).singleOrNull()
+        val gogsUser = searchGogsUsers.execute(user, 1, onProgress).singleOrNull()
 
         assertNotNull("Gogs user should not be null", gogsUser)
         assertEquals("Ids should match", gogsUser?.id, 222)

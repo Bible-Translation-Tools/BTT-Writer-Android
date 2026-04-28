@@ -7,11 +7,13 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
-import com.door43.translationstudio.App
 import com.door43.translationstudio.IntegrationTest
+import com.door43.translationstudio.Platform
 import com.door43.usecases.ExportProjects
 import com.door43.util.FileUtilities
 import com.door43.util.Zip
+import org.bibletranslationtools.logger.Logger
+import org.bibletranslationtools.resourcecontainer.ResourceContainer
 import org.junit.After
 import org.junit.Assert
 import org.junit.Before
@@ -22,8 +24,6 @@ import org.koin.test.inject
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.door43client.models.TargetLanguage
 import org.unfoldingword.door43client.models.Translation
-import org.unfoldingword.resourcecontainer.ResourceContainer
-import org.bibletranslationtools.logger.Logger
 import java.io.File
 import java.io.FileInputStream
 import java.io.IOException
@@ -46,6 +46,7 @@ class ExportUsfmTest : KoinTest {
     private val exportProjects: ExportProjects by inject()
     private val assetsProvider: AssetsProvider by inject()
     private val prefRepository: IPreferenceRepository by inject()
+    private val platform: Platform by inject()
 
     private var tempFolder: File? = null
     private var targetLanguage: TargetLanguage? = null
@@ -669,12 +670,13 @@ class ExportUsfmTest : KoinTest {
         targetLanguage?.let { language ->
             usfm = ProcessUSFM.Builder(
                 appContext,
+                platform,
                 directoryProvider,
                 profile,
                 library,
                 assetsProvider
             )
-                .fromRc(language, "usfm/$source", null)
+                .fromRc(language, "usfm/$source")
                 .build()
 
             Assert.assertNotNull(usfm)
@@ -754,7 +756,7 @@ class ExportUsfmTest : KoinTest {
             var sourceTranslationSlug: String? = null
             val availableTranslations: MutableList<Translation> = library.index.findTranslations(
                 null, projectId,
-                null, "book", "all", App.MIN_CHECKING_LEVEL, -1
+                null, "book", "all", Platform.MIN_CHECKING_LEVEL, -1
             ).toMutableList()
             if (availableTranslations.isNotEmpty()) {
                 for (availableTranslation in availableTranslations) {

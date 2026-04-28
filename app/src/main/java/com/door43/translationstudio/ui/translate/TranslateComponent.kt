@@ -20,7 +20,6 @@ import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.arkivanov.essenty.lifecycle.doOnResume
 import com.door43.data.AssetsProvider
 import com.door43.data.IPreferenceRepository
-import com.door43.translationstudio.App.Companion.deviceLanguageCode
 import com.door43.translationstudio.Platform
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.ComponentScope
@@ -195,7 +194,6 @@ class DefaultTranslateComponent(
     translationId: String,
     initialViewMode: TranslationViewMode?,
     conflictFilterOn: Boolean,
-    private val platform: Platform,
     private val sharedFlow: SharedFlow<RootComponent.SharedEvent>,
     private val onResult: (TranslateComponent.Result) -> Unit
 ) : TranslateComponent,
@@ -208,6 +206,7 @@ class DefaultTranslateComponent(
     private val prefRepository: IPreferenceRepository by inject()
     private val typography: Typography by inject()
     private val assetsProvider: AssetsProvider by inject()
+    private val platform: Platform by inject()
 
     private val navigation = StackNavigation<TranslateComponent.Config>()
 
@@ -599,7 +598,7 @@ class DefaultTranslateComponent(
 
     private fun getProject(): Project? {
         return library.index.getProject(
-            deviceLanguageCode,
+            platform.deviceLanguageCode,
             targetTranslation.projectId,
             true
         )

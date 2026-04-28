@@ -4,9 +4,9 @@ import android.content.Context
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.door43.data.IPreferenceRepository
 import com.door43.data.setDefaultPref
-import com.door43.translationstudio.App
 import com.door43.translationstudio.IntegrationTest
 import com.door43.translationstudio.KoinAndroidTest
+import com.door43.translationstudio.Platform
 import com.door43.translationstudio.TestUtils
 import com.door43.translationstudio.TestUtils.getTokenStub
 import com.door43.translationstudio.core.Profile
@@ -36,6 +36,7 @@ class GogsLoginLogoutTest : KoinAndroidTest() {
     private val gogsLogout: GogsLogout by inject()
     private val profile: Profile by inject()
     private val prefRepository: IPreferenceRepository by inject()
+    private val platform: Platform by inject()
 
     private val username = "test"
     private val server = MockWebServer()
@@ -102,7 +103,7 @@ class GogsLoginLogoutTest : KoinAndroidTest() {
         assertNotNull("Token should not be null", result.user.token)
         assertTrue(
             "Token name should contain build model",
-            result.user.token?.name?.contains(App.udid()) == true
+            result.user.token?.name?.contains(platform.udid) == true
         )
 
         return result.user
@@ -121,7 +122,7 @@ class GogsLoginLogoutTest : KoinAndroidTest() {
 
     private fun createGetTokenResponse(): MockResponse {
         val body = """
-            [{"id": 1, "name": "${getTokenStub(appContext)}", "sha1": "${TestUtils.generateHash()}"}]
+            [{"id": 1, "name": "${getTokenStub(appContext, platform)}", "sha1": "${TestUtils.generateHash()}"}]
         """.trimIndent()
 
         return MockResponse()
@@ -132,7 +133,7 @@ class GogsLoginLogoutTest : KoinAndroidTest() {
 
     private fun createTokenResponse(): MockResponse {
         val body = """
-            {"id": 1, "name": "${getTokenStub(appContext)}", "sha1": "${TestUtils.generateHash()}"}
+            {"id": 1, "name": "${getTokenStub(appContext, platform)}", "sha1": "${TestUtils.generateHash()}"}
         """.trimIndent()
 
         return MockResponse()

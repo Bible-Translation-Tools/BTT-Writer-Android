@@ -2,13 +2,13 @@ package com.door43.translationstudio.usecases
 
 import android.content.Context
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.door43.OnProgressListener
 import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
 import com.door43.data.setDefaultPref
 import com.door43.translationstudio.IntegrationTest
 import com.door43.translationstudio.KoinAndroidTest
+import com.door43.translationstudio.Platform
 import com.door43.translationstudio.TestUtils
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TargetTranslation
@@ -55,6 +55,7 @@ class PullTargetTranslationTest : KoinAndroidTest() {
     private val pullTargetTranslation: PullTargetTranslation by inject()
     private val gogsLogin: GogsLogin by inject()
     private val prefRepo: IPreferenceRepository by inject()
+    private val platform: Platform by inject()
 
     private val server = MockWebServer()
     private lateinit var targetTranslation: TargetTranslation
@@ -71,6 +72,7 @@ class PullTargetTranslationTest : KoinAndroidTest() {
         targetTranslation = TestUtils.importTargetTranslation(
             library,
             appContext,
+            platform,
             directoryProvider,
             profile,
             assetsProvider,
@@ -93,7 +95,7 @@ class PullTargetTranslationTest : KoinAndroidTest() {
         loginGogsUser()
 
         var progressMessage: String? = null
-        val progressListener = OnProgressListener { _, message ->
+        val onProgress: (Float, String?) -> Unit = { _, message ->
             progressMessage = message
         }
 
@@ -106,7 +108,7 @@ class PullTargetTranslationTest : KoinAndroidTest() {
             targetTranslation,
             MergeStrategy.RECURSIVE,
             null,
-            progressListener
+            onProgress
         )
 
         assertEquals(
@@ -123,7 +125,7 @@ class PullTargetTranslationTest : KoinAndroidTest() {
         loginGogsUser()
 
         var progressMessage: String? = null
-        val progressListener = OnProgressListener { _, message ->
+        val onProgress: (Float, String?) -> Unit = { _, message ->
             progressMessage = message
         }
 
@@ -143,7 +145,7 @@ class PullTargetTranslationTest : KoinAndroidTest() {
             targetTranslation,
             MergeStrategy.RECURSIVE,
             null,
-            progressListener
+            onProgress
         )
 
         assertEquals(
@@ -160,7 +162,7 @@ class PullTargetTranslationTest : KoinAndroidTest() {
         loginGogsUser()
 
         var progressMessage: String? = null
-        val progressListener = OnProgressListener { _, message ->
+        val onProgress: (Float, String?) -> Unit = { _, message ->
             progressMessage = message
         }
 
@@ -177,7 +179,7 @@ class PullTargetTranslationTest : KoinAndroidTest() {
             targetTranslation,
             MergeStrategy.RECURSIVE,
             null,
-            progressListener
+            onProgress
         )
 
         assertEquals(
@@ -194,7 +196,7 @@ class PullTargetTranslationTest : KoinAndroidTest() {
         loginGogsUser()
 
         var progressMessage: String? = null
-        val progressListener = OnProgressListener { _, message ->
+        val onProgress: (Float, String?) -> Unit = { _, message ->
             progressMessage = message
         }
 
@@ -215,7 +217,7 @@ class PullTargetTranslationTest : KoinAndroidTest() {
             targetTranslation,
             MergeStrategy.RECURSIVE,
             null,
-            progressListener
+            onProgress
         )
 
         assertEquals(
@@ -230,7 +232,7 @@ class PullTargetTranslationTest : KoinAndroidTest() {
     @Test
     fun testPullTargetTranslationUnAuthorizedFails() = runTest {
         var progressMessage: String? = null
-        val progressListener = OnProgressListener { _, message ->
+        val onProgress: (Float, String?) -> Unit = { _, message ->
             progressMessage = message
         }
 
@@ -238,7 +240,7 @@ class PullTargetTranslationTest : KoinAndroidTest() {
             targetTranslation,
             MergeStrategy.RECURSIVE,
             null,
-            progressListener
+            onProgress
         )
 
         assertEquals(
@@ -255,7 +257,7 @@ class PullTargetTranslationTest : KoinAndroidTest() {
         loginGogsUser()
 
         var progressMessage: String? = null
-        val progressListener = OnProgressListener { _, message ->
+        val onProgress: (Float, String?) -> Unit = { _, message ->
             progressMessage = message
         }
 
@@ -274,7 +276,7 @@ class PullTargetTranslationTest : KoinAndroidTest() {
             targetTranslation,
             MergeStrategy.RECURSIVE,
             null,
-            progressListener
+            onProgress
         )
 
         assertEquals(
@@ -291,7 +293,7 @@ class PullTargetTranslationTest : KoinAndroidTest() {
         loginGogsUser()
 
         var progressMessage: String? = null
-        val progressListener = OnProgressListener { _, message ->
+        val onProgress: (Float, String?) -> Unit = { _, message ->
             progressMessage = message
         }
 
@@ -308,7 +310,7 @@ class PullTargetTranslationTest : KoinAndroidTest() {
             targetTranslation,
             MergeStrategy.RECURSIVE,
             null,
-            progressListener
+            onProgress
         )
 
         assertEquals(
@@ -325,7 +327,7 @@ class PullTargetTranslationTest : KoinAndroidTest() {
         loginGogsUser()
 
         var progressMessage: String? = null
-        val progressListener = OnProgressListener { _, message ->
+        val onProgress: (Float, String?) -> Unit = { _, message ->
             progressMessage = message
         }
 
@@ -338,7 +340,7 @@ class PullTargetTranslationTest : KoinAndroidTest() {
             targetTranslation,
             MergeStrategy.RECURSIVE,
             null,
-            progressListener
+            onProgress
         )
 
         assertEquals(
@@ -355,7 +357,7 @@ class PullTargetTranslationTest : KoinAndroidTest() {
         loginGogsUser()
 
         var progressMessage: String? = null
-        val progressListener = OnProgressListener { _, message ->
+        val onProgress: (Float, String?) -> Unit = { _, message ->
             progressMessage = message
         }
 
@@ -368,7 +370,7 @@ class PullTargetTranslationTest : KoinAndroidTest() {
             targetTranslation,
             MergeStrategy.RECURSIVE,
             null,
-            progressListener
+            onProgress
         )
 
         assertEquals(
@@ -383,6 +385,7 @@ class PullTargetTranslationTest : KoinAndroidTest() {
     private fun loginGogsUser() = runTest {
         profile.gogsUser = TestUtils.simulateLoginGogsUser(
             appContext,
+            platform,
             server,
             gogsLogin,
             "test"
