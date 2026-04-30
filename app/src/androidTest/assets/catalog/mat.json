@@ -1,7 +1,7 @@
 [
   {
     "language": {
-      "date_modified": "{datetime}",
+      "date_modified": {datetime},
       "direction": "ltr",
       "name": "Espa\u00f1ol (Latin American Spanish)",
       "slug": "es-419"
@@ -18,7 +18,7 @@
   },
   {
     "language": {
-      "date_modified": "{datetime}",
+      "date_modified": {datetime},
       "direction": "ltr",
       "name": "Tok Pisin",
       "slug": "tpi"
@@ -35,7 +35,7 @@
   },
   {
     "language": {
-      "date_modified": "{datetime}",
+      "date_modified": {datetime},
       "direction": "ltr",
       "name": "Test Language",
       "slug": "test"

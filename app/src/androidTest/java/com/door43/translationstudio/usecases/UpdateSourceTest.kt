@@ -16,13 +16,13 @@ import okhttp3.mockwebserver.Dispatcher
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.mockwebserver.RecordedRequest
+import org.bibletranslationtools.resourcecatalog.ResourceCatalogClient
 import org.junit.After
 import org.junit.AfterClass
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.koin.core.component.inject
-import org.bibletranslationtools.resourcecatalog.ResourceCatalogClient
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -113,7 +113,7 @@ class UpdateSourceTest : KoinAndroidTest() {
     }
 
     private fun verifyTestProject() {
-        val projects = catalogClient.library.getProjects("test")
+        val projects = catalogClient.library.getProjects("test", false)
         val project = projects.singleOrNull { it.slug == "mat" }
 
         assertEquals("There should be 2 test project", 2, projects.size)
@@ -194,7 +194,7 @@ class UpdateSourceTest : KoinAndroidTest() {
     }
 
     private fun verifyLukProject() {
-        val projects = catalogClient.library.getProjects("es-419")
+        val projects = catalogClient.library.getProjects("es-419", false)
         val project = projects.singleOrNull { it.slug == "luk" }
 
         assertEquals("There should be 67 test project", 67, projects.size)
