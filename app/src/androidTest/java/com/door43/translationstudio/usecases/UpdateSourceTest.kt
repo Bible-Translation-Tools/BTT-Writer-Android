@@ -22,15 +22,16 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.koin.core.component.inject
-import org.unfoldingword.door43client.Door43Client
+import org.bibletranslationtools.resourcecatalog.ResourceCatalogClient
 import java.text.SimpleDateFormat
+import java.util.Locale
 
 
 @RunWith(AndroidJUnit4::class)
 @IntegrationTest
 class UpdateSourceTest : KoinAndroidTest() {
 
-    private val library: Door43Client by inject()
+    private val catalogClient: ResourceCatalogClient by inject()
     private val directoryProvider: IDirectoryProvider by inject()
     private val updateSource: UpdateSource by inject()
     private val prefRepository: IPreferenceRepository by inject()
@@ -49,14 +50,14 @@ class UpdateSourceTest : KoinAndroidTest() {
                 val isCatalog = request.path?.endsWith("/catalog.json") ?: false
 
                 return when {
-                    request.path == "/mat" -> successResponse.setBody(createResponse("mat"))
-                    request.path == "/mat_es" -> successResponse.setBody(createResponse("mat_es"))
-                    request.path == "/mat_tpi" -> successResponse.setBody(createResponse("mat_tpi"))
-                    request.path == "/mat_test" -> successResponse.setBody(createResponse("mat_test"))
-                    request.path == "/luk" -> successResponse.setBody(createResponse("luk"))
-                    request.path == "/luk_es" -> successResponse.setBody(createResponse("luk_es"))
-                    request.path == "/luk_tpi" -> successResponse.setBody(createResponse("luk_tpi"))
-                    isCatalog -> successResponse.setBody(createResponse("catalog"))
+                    request.path == "/mat" -> successResponse.addHeader("Content-Type", "application/json").setBody(createResponse("mat"))
+                    request.path == "/mat_es" -> successResponse.addHeader("Content-Type", "application/json").setBody(createResponse("mat_es"))
+                    request.path == "/mat_tpi" -> successResponse.addHeader("Content-Type", "application/json").setBody(createResponse("mat_tpi"))
+                    request.path == "/mat_test" -> successResponse.addHeader("Content-Type", "application/json").setBody(createResponse("mat_test"))
+                    request.path == "/luk" -> successResponse.addHeader("Content-Type", "application/json").setBody(createResponse("luk"))
+                    request.path == "/luk_es" -> successResponse.addHeader("Content-Type", "application/json").setBody(createResponse("luk_es"))
+                    request.path == "/luk_tpi" -> successResponse.addHeader("Content-Type", "application/json").setBody(createResponse("luk_tpi"))
+                    isCatalog -> successResponse.addHeader("Content-Type", "application/json").setBody(createResponse("catalog"))
                     else -> notFoundResponse
                 }
             }
@@ -92,7 +93,7 @@ class UpdateSourceTest : KoinAndroidTest() {
         assertEquals("Added 1 source", 1, result.addedCount)
         assertEquals("Updated 6 sources", 6, result.updatedCount)
 
-        val sourceLanguages = library.index.getSourceLanguages()
+        val sourceLanguages = catalogClient.library.getSourceLanguages()
 
         assertNotNull(
             "Test Source language should be added",
@@ -112,7 +113,7 @@ class UpdateSourceTest : KoinAndroidTest() {
     }
 
     private fun verifyTestProject() {
-        val projects = library.index.getProjects("test")
+        val projects = catalogClient.library.getProjects("test")
         val project = projects.singleOrNull { it.slug == "mat" }
 
         assertEquals("There should be 2 test project", 2, projects.size)
@@ -140,7 +141,7 @@ class UpdateSourceTest : KoinAndroidTest() {
         assertEquals("TW project name should match", "translationWords", twProject?.name)
         assertEquals("TW project languageSlug should match", "test", twProject?.languageSlug)
 
-        val resources = library.index.getResources("test", "mat")
+        val resources = catalogClient.library.getResources("test", "mat")
         assertTrue("Resources should not be empty", resources.isNotEmpty())
 
         val tstResource = resources.singleOrNull { it.slug == "tst" }
@@ -181,7 +182,7 @@ class UpdateSourceTest : KoinAndroidTest() {
             tqResource?.formats?.first()?.url?.endsWith("/mat/test/questions.json") ?: false
         )
 
-        val twResource = library.index.getResource("test", "bible", "tw")
+        val twResource = catalogClient.library.getResource("test", "bible", "tw")
         assertNotNull("TW resource should not be null", twResource)
         assertEquals("TW resource name should match", "translationWords", twResource?.name)
         assertEquals("TW resource type should match", "dict", twResource?.type)
@@ -193,7 +194,7 @@ class UpdateSourceTest : KoinAndroidTest() {
     }
 
     private fun verifyLukProject() {
-        val projects = library.index.getProjects("es-419")
+        val projects = catalogClient.library.getProjects("es-419")
         val project = projects.singleOrNull { it.slug == "luk" }
 
         assertEquals("There should be 67 test project", 67, projects.size)
@@ -218,8 +219,8 @@ class UpdateSourceTest : KoinAndroidTest() {
 
     private fun createResponse(id: String): String {
         val baseUrl = server.url("/").toString()
-        val datetimeFormat = SimpleDateFormat("yyyyMMdd")
-        val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSSSXXX")
+        val datetimeFormat = SimpleDateFormat("yyyyMMdd", Locale.US)
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSSSXXX", Locale.US)
         val project = directoryProvider.createTempFile(id, ".json")
         assetsProvider.open("catalog/$id.json").use { input ->
             project.outputStream().use { output ->

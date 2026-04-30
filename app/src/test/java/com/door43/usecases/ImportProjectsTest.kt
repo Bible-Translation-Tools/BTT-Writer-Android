@@ -27,6 +27,7 @@ import io.mockk.unmockkAll
 import io.mockk.verify
 import io.mockk.verifySequence
 import kotlinx.coroutines.test.runTest
+import org.bibletranslationtools.resourcecatalog.ResourceCatalogClient
 import org.bibletranslationtools.resourcecontainer.Language
 import org.bibletranslationtools.resourcecontainer.Project
 import org.bibletranslationtools.resourcecontainer.Resource
@@ -41,7 +42,6 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
-import org.unfoldingword.door43client.Door43Client
 import java.io.File
 import java.io.InputStream
 
@@ -52,12 +52,12 @@ class ImportProjectsTest {
     @MockK private lateinit var backupRC: BackupRC
     @MockK private lateinit var directoryProvider: IDirectoryProvider
     @MockK private lateinit var archiveImporter: ArchiveImporter
-    @MockK private lateinit var library: Door43Client
+    @MockK private lateinit var catalogClient: ResourceCatalogClient
     @MockK private lateinit var contentResolver: ContentResolver
     @MockK private lateinit var platform: Platform
     @MockK private lateinit var info: AppInfo
 
-    val onProgress = mockk<(Float, String?) -> Unit>(relaxed = true)
+    private val onProgress = mockk<(Float, String?) -> Unit>(relaxed = true)
 
     @JvmField
     @Rule
@@ -138,7 +138,7 @@ class ImportProjectsTest {
             backupRC,
             directoryProvider,
             archiveImporter,
-            library,
+            catalogClient,
             platform
         ).importProject(tStudioFile, false)
 
@@ -181,7 +181,7 @@ class ImportProjectsTest {
             backupRC,
             directoryProvider,
             archiveImporter,
-            library,
+            catalogClient,
             platform
         ).importProject(importDir, false)
 
@@ -236,7 +236,7 @@ class ImportProjectsTest {
             backupRC,
             directoryProvider,
             archiveImporter,
-            library,
+            catalogClient,
             platform
         ).importProject(tStudioFile, false)
 
@@ -285,7 +285,7 @@ class ImportProjectsTest {
             backupRC,
             directoryProvider,
             archiveImporter,
-            library,
+            catalogClient,
             platform
         ).importProject(tStudioFile, false)
 
@@ -334,7 +334,7 @@ class ImportProjectsTest {
             backupRC,
             directoryProvider,
             archiveImporter,
-            library,
+            catalogClient,
             platform
         ).importProject(tStudioFile, true)
 
@@ -363,7 +363,7 @@ class ImportProjectsTest {
             backupRC,
             directoryProvider,
             archiveImporter,
-            library,
+            catalogClient,
             platform
         ).importProject(tStudioFile, false)
 
@@ -383,7 +383,7 @@ class ImportProjectsTest {
             backupRC,
             directoryProvider,
             archiveImporter,
-            library,
+            catalogClient,
             platform
         ).importProject(pdfFile, true)
 
@@ -432,7 +432,7 @@ class ImportProjectsTest {
             backupRC,
             directoryProvider,
             archiveImporter,
-            library,
+            catalogClient,
             platform
         ).importProjects(
             listOf(project1, project2),
@@ -477,7 +477,7 @@ class ImportProjectsTest {
             backupRC,
             directoryProvider,
             archiveImporter,
-            library,
+            catalogClient,
             platform
         ).importProjects(
             listOf(project),
@@ -530,7 +530,7 @@ class ImportProjectsTest {
             backupRC,
             directoryProvider,
             archiveImporter,
-            library,
+            catalogClient,
             platform
         ).importProject(uri, false, onProgress)
 
@@ -594,7 +594,7 @@ class ImportProjectsTest {
             backupRC,
             directoryProvider,
             archiveImporter,
-            library,
+            catalogClient,
             platform
         ).importProject(uri, false, onProgress)
 
@@ -659,7 +659,7 @@ class ImportProjectsTest {
             backupRC,
             directoryProvider,
             archiveImporter,
-            library,
+            catalogClient,
             platform
         ).importProject(uri, true, onProgress)
 
@@ -687,7 +687,7 @@ class ImportProjectsTest {
             backupRC,
             directoryProvider,
             archiveImporter,
-            library,
+            catalogClient,
             platform
         ).importProject(uri, true, onProgress)
 
@@ -714,8 +714,8 @@ class ImportProjectsTest {
         every { FileUtilities.copyDirectory(any(), any<Uri>(), any()) }
             .just(runs)
 
-        every { library.open(any()) }.throws(Exception("local rc not found."))
-        coEvery { library.importResourceContainer(srcDir) }.returns(mockk())
+        every { catalogClient.openResourceContainer(any()) }.throws(Exception("local rc not found."))
+        coEvery { catalogClient.importResourceContainer(srcDir) }.returns(mockk())
 
         val tempRc: ResourceContainer = mockk {
             every { slug }.returns("en")
@@ -728,7 +728,7 @@ class ImportProjectsTest {
             backupRC,
             directoryProvider,
             archiveImporter,
-            library,
+            catalogClient,
             platform
         ).importSource(uri, false)
 
@@ -739,8 +739,8 @@ class ImportProjectsTest {
 
         verify { directoryProvider.createTempDir(any()) }
         verify { FileUtilities.copyDirectory(any(), any<Uri>(), any()) }
-        verify { library.open(any()) }
-        coVerify { library.importResourceContainer(srcDir) }
+        verify { catalogClient.openResourceContainer(any()) }
+        coVerify { catalogClient.importResourceContainer(srcDir) }
         verify { ResourceContainer.load(srcDir) }
         verify { FileUtilities.deleteQuietly(any()) }
     }
@@ -754,8 +754,8 @@ class ImportProjectsTest {
         every { FileUtilities.copyDirectory(any(), any<Uri>(), any()) }
             .just(runs)
 
-        every { library.open(any()) }.returns(mockk())
-        coEvery { library.importResourceContainer(srcDir) }.returns(mockk())
+        every { catalogClient.openResourceContainer(any()) }.returns(mockk())
+        coEvery { catalogClient.importResourceContainer(srcDir) }.returns(mockk())
 
         val tempRc = mockResourceContainer()
         every { ResourceContainer.load(srcDir) }.returns(tempRc)
@@ -772,7 +772,7 @@ class ImportProjectsTest {
             backupRC,
             directoryProvider,
             archiveImporter,
-            library,
+            catalogClient,
             platform
         ).importSource(uri, false)
 
@@ -783,8 +783,8 @@ class ImportProjectsTest {
 
         verify { directoryProvider.createTempDir(any()) }
         verify { FileUtilities.copyDirectory(any(), any<Uri>(), any()) }
-        verify { library.open(any()) }
-        coVerify(exactly = 0) { library.importResourceContainer(srcDir) }
+        verify { catalogClient.openResourceContainer(any()) }
+        coVerify(exactly = 0) { catalogClient.importResourceContainer(srcDir) }
         verify { ResourceContainer.load(srcDir) }
         verify { FileUtilities.deleteQuietly(any()) }
     }
@@ -798,8 +798,8 @@ class ImportProjectsTest {
         every { FileUtilities.copyDirectory(any(), any<Uri>(), any()) }
             .just(runs)
 
-        every { library.open(any()) }.returns(mockk())
-        coEvery { library.importResourceContainer(srcDir) }.returns(mockk())
+        every { catalogClient.openResourceContainer(any()) }.returns(mockk())
+        coEvery { catalogClient.importResourceContainer(srcDir) }.returns(mockk())
 
         val tempRc = mockResourceContainer()
         TestUtils.setPropertyReflection(tempRc, "slug", "en")
@@ -811,7 +811,7 @@ class ImportProjectsTest {
             backupRC,
             directoryProvider,
             archiveImporter,
-            library,
+            catalogClient,
             platform
         ).importSource(uri, true)
 
@@ -822,8 +822,8 @@ class ImportProjectsTest {
 
         verify { directoryProvider.createTempDir(any()) }
         verify { FileUtilities.copyDirectory(any(), any<Uri>(), any()) }
-        verify { library.open(any()) }
-        coVerify { library.importResourceContainer(srcDir) }
+        verify { catalogClient.openResourceContainer(any()) }
+        coVerify { catalogClient.importResourceContainer(srcDir) }
         verify { ResourceContainer.load(srcDir) }
         verify { FileUtilities.deleteQuietly(any()) }
     }
@@ -847,7 +847,7 @@ class ImportProjectsTest {
             backupRC,
             directoryProvider,
             archiveImporter,
-            library,
+            catalogClient,
             platform
         ).importSource(uri, false)
 
@@ -858,8 +858,8 @@ class ImportProjectsTest {
 
         verify { directoryProvider.createTempDir(any()) }
         verify { FileUtilities.copyDirectory(any(), any<Uri>(), any()) }
-        verify(exactly = 0) { library.open(any()) }
-        coVerify(exactly = 0) { library.importResourceContainer(srcDir) }
+        verify(exactly = 0) { catalogClient.openResourceContainer(any()) }
+        coVerify(exactly = 0) { catalogClient.importResourceContainer(srcDir) }
         verify { ResourceContainer.load(srcDir) }
         verify(exactly = 0) { FileUtilities.deleteQuietly(any()) }
     }
@@ -873,8 +873,8 @@ class ImportProjectsTest {
         every { FileUtilities.copyDirectory(any(), any<Uri>(), any()) }
             .just(runs)
 
-        every { library.open(any()) }.throws(Exception("local rc not found."))
-        coEvery { library.importResourceContainer(srcDir) }.throws(Exception("Failed to import rc."))
+        every { catalogClient.openResourceContainer(any()) }.throws(Exception("local rc not found."))
+        coEvery { catalogClient.importResourceContainer(srcDir) }.throws(Exception("Failed to import rc."))
 
         val tempRc: ResourceContainer = mockk {
             every { slug }.returns("slug")
@@ -890,7 +890,7 @@ class ImportProjectsTest {
             backupRC,
             directoryProvider,
             archiveImporter,
-            library,
+            catalogClient,
             platform
         ).importSource(uri, false)
 
@@ -901,8 +901,8 @@ class ImportProjectsTest {
 
         verify { directoryProvider.createTempDir(any()) }
         verify { FileUtilities.copyDirectory(any(), any<Uri>(), any()) }
-        verify { library.open(any()) }
-        coVerify { library.importResourceContainer(srcDir) }
+        verify { catalogClient.openResourceContainer(any()) }
+        coVerify { catalogClient.importResourceContainer(srcDir) }
         verify { ResourceContainer.load(srcDir) }
         verify { FileUtilities.deleteQuietly(any()) }
     }

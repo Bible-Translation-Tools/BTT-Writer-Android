@@ -69,12 +69,12 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import org.bibletranslationtools.logger.Logger
+import org.bibletranslationtools.resourcecatalog.ResourceCatalogClient
+import org.bibletranslationtools.resourcecatalog.library.models.Translation
 import org.bibletranslationtools.resourcecontainer.Project
 import org.bibletranslationtools.resourcecontainer.ResourceContainer
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import org.unfoldingword.door43client.Door43Client
-import org.unfoldingword.door43client.models.Translation
 import java.util.Locale
 import java.util.Timer
 import java.util.TimerTask
@@ -202,7 +202,7 @@ class DefaultTranslateComponent(
 
     private val application: Application by inject()
     private val translator: Translator by inject()
-    private val library: Door43Client by inject()
+    private val catalogClient: ResourceCatalogClient by inject()
     private val prefRepository: IPreferenceRepository by inject()
     private val typography: Typography by inject()
     private val assetsProvider: AssetsProvider by inject()
@@ -486,7 +486,7 @@ class DefaultTranslateComponent(
     }
 
     private fun draftIsAvailable(): Boolean {
-        return library.index.findTranslations(
+        return catalogClient.library.findTranslations(
             targetTranslation.targetLanguage.slug,
             targetTranslation.projectId,
             null,
@@ -550,7 +550,7 @@ class DefaultTranslateComponent(
     private suspend fun setSelectedResourceContainer(sourceTranslationId: String) {
         withContext(Dispatchers.Default) {
             var resourceContainer = ContainerCache.get(sourceTranslationId) ?: ContainerCache.cache(
-                library,
+                catalogClient,
                 sourceTranslationId
             )
 
@@ -561,7 +561,7 @@ class DefaultTranslateComponent(
 
                 while (availableSources.isNotEmpty()) {
                     val nextSource = availableSources.first()
-                    resourceContainer = ContainerCache.cache(library, nextSource)
+                    resourceContainer = ContainerCache.cache(catalogClient, nextSource)
                     if (resourceContainer != null) {
                         break
                     } else {
@@ -583,12 +583,12 @@ class DefaultTranslateComponent(
     }
 
     private fun getTranslation(slug: String): Translation? {
-        return library.index.getTranslation(slug)
+        return catalogClient.library.getTranslation(slug)
     }
 
     private fun getResourceContainerLastModified(translation: Translation?): Int {
         return translation?.let {
-            library.getResourceContainerLastModified(
+            catalogClient.getResourceContainerLastModified(
                 translation.language.slug,
                 translation.project.slug,
                 translation.resource.slug
@@ -597,7 +597,7 @@ class DefaultTranslateComponent(
     }
 
     private fun getProject(): Project? {
-        return library.index.getProject(
+        return catalogClient.library.getProject(
             platform.deviceLanguageCode,
             targetTranslation.projectId,
             true
@@ -671,12 +671,12 @@ class DefaultTranslateComponent(
             targetTranslation.id
         )
         for (slug in sourceTranslationSlugs) {
-            val st: Translation? = library.index.getTranslation(slug)
+            val st: Translation? = catalogClient.library.getTranslation(slug)
             if (st != null) {
                 var title = st.language.name + " " + st.resource.slug.uppercase(Locale.getDefault())
 
                 // include the resource id if there are more than one
-                val resources = library.index.getResources(
+                val resources = catalogClient.library.getResources(
                     st.language.slug,
                     st.project.slug
                 )

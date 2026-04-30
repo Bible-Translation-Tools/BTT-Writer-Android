@@ -14,6 +14,9 @@ import io.mockk.verify
 import io.mockk.verifySequence
 import kotlinx.coroutines.test.runTest
 import org.bibletranslationtools.logger.Logger
+import org.bibletranslationtools.resourcecatalog.ResourceCatalogClient
+import org.bibletranslationtools.resourcecatalog.library.Index
+import org.bibletranslationtools.resourcecatalog.library.models.Translation
 import org.bibletranslationtools.resourcecontainer.ContainerTools
 import org.bibletranslationtools.resourcecontainer.Language
 import org.bibletranslationtools.resourcecontainer.Project
@@ -27,20 +30,17 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import org.unfoldingword.door43client.Door43Client
-import org.unfoldingword.door43client.Index
-import org.unfoldingword.door43client.models.Translation
 
 class DownloadResourceContainersTest {
 
-    @MockK private lateinit var library: Door43Client
+    @MockK private lateinit var catalogClient: ResourceCatalogClient
     @MockK private lateinit var translation: Translation
     @MockK private lateinit var language: Language
     @MockK private lateinit var project: Project
     @MockK private lateinit var resource: Resource
     @MockK private lateinit var index: Index
 
-    val onProgress = mockk<(Float, String?) -> Unit>(relaxed = true)
+    private val onProgress = mockk<(Float, String?) -> Unit>(relaxed = true)
 
     @Before
     fun setup() {
@@ -54,7 +54,7 @@ class DownloadResourceContainersTest {
         every { translation.resourceContainerSlug } returns "en_mat_ulb"
 
         every { onProgress(any(), any()) }.just(runs)
-        every { library.index } returns index
+        every { catalogClient.library } returns index
     }
 
     @After
@@ -73,12 +73,12 @@ class DownloadResourceContainersTest {
         every { project.slug } returns("mrk")
         every { resource.slug } returns("ulb")
 
-        coEvery { library.download("en", "mrk", "ulb") }.returns(rcUlb)
-        coEvery { library.download("en", "bible", "tw") }.returns(twUlb)
-        coEvery { library.download("en", "mrk", "tn") }.returns(tnUlb)
-        coEvery { library.download("en", "mrk", "tq") }.returns(tqUlb)
+        coEvery { catalogClient.downloadResourceContainer("en", "mrk", "ulb") }.returns(rcUlb)
+        coEvery { catalogClient.downloadResourceContainer("en", "bible", "tw") }.returns(twUlb)
+        coEvery { catalogClient.downloadResourceContainer("en", "mrk", "tn") }.returns(tnUlb)
+        coEvery { catalogClient.downloadResourceContainer("en", "mrk", "tq") }.returns(tqUlb)
 
-        val result = DownloadResourceContainers(library).download(translation, onProgress)
+        val result = DownloadResourceContainers(catalogClient).download(translation, onProgress)
 
         assertTrue(result.success)
         assertEquals(4, result.containers.size)
@@ -95,10 +95,10 @@ class DownloadResourceContainersTest {
             onProgress(any(), "Downloading translation questions")
         }
 
-        coVerify { library.download("en", "mrk", "ulb") }
-        coVerify { library.download("en", "bible", "tw") }
-        coVerify { library.download("en", "mrk", "tn") }
-        coVerify { library.download("en", "mrk", "tq") }
+        coVerify { catalogClient.downloadResourceContainer("en", "mrk", "ulb") }
+        coVerify { catalogClient.downloadResourceContainer("en", "bible", "tw") }
+        coVerify { catalogClient.downloadResourceContainer("en", "mrk", "tn") }
+        coVerify { catalogClient.downloadResourceContainer("en", "mrk", "tq") }
     }
 
     @Test
@@ -111,9 +111,9 @@ class DownloadResourceContainersTest {
         every { project.slug } returns(projectSlug)
         every { resource.slug } returns(resourceSlug)
 
-        coEvery { library.download("en", projectSlug, resourceSlug) }.returns(twUlb)
+        coEvery { catalogClient.downloadResourceContainer("en", projectSlug, resourceSlug) }.returns(twUlb)
 
-        val result = DownloadResourceContainers(library)
+        val result = DownloadResourceContainers(catalogClient)
             .download(translation, onProgress)
 
         assertTrue(result.success)
@@ -121,7 +121,7 @@ class DownloadResourceContainersTest {
         assertEquals(twUlb, result.containers[0])
 
         verify { onProgress(any(), "Downloading resource container") }
-        coVerify { library.download("en", projectSlug, resourceSlug) }
+        coVerify { catalogClient.downloadResourceContainer("en", projectSlug, resourceSlug) }
     }
 
     @Test
@@ -133,9 +133,9 @@ class DownloadResourceContainersTest {
         every { project.slug } returns("mrk")
         every { resource.slug } returns(resourceSlug)
 
-        coEvery { library.download("en", "mrk", resourceSlug) }.returns(tnUlb)
+        coEvery { catalogClient.downloadResourceContainer("en", "mrk", resourceSlug) }.returns(tnUlb)
 
-        val result = DownloadResourceContainers(library)
+        val result = DownloadResourceContainers(catalogClient)
             .download(translation, onProgress)
 
         assertTrue(result.success)
@@ -143,7 +143,7 @@ class DownloadResourceContainersTest {
         assertEquals(tnUlb, result.containers[0])
 
         verify { onProgress(any(), "Downloading resource container") }
-        coVerify { library.download("en", "mrk", resourceSlug) }
+        coVerify { catalogClient.downloadResourceContainer("en", "mrk", resourceSlug) }
     }
 
     @Test
@@ -155,9 +155,9 @@ class DownloadResourceContainersTest {
         every { project.slug } returns("mrk")
         every { resource.slug } returns(resourceSlug)
 
-        coEvery { library.download("en", "mrk", resourceSlug) }.returns(tqUlb)
+        coEvery { catalogClient.downloadResourceContainer("en", "mrk", resourceSlug) }.returns(tqUlb)
 
-        val result = DownloadResourceContainers(library)
+        val result = DownloadResourceContainers(catalogClient)
             .download(translation, onProgress)
 
         assertTrue(result.success)
@@ -165,7 +165,7 @@ class DownloadResourceContainersTest {
         assertEquals(tqUlb, result.containers[0])
 
         verify { onProgress(any(), "Downloading resource container") }
-        coVerify { library.download("en", "mrk", resourceSlug) }
+        coVerify { catalogClient.downloadResourceContainer("en", "mrk", resourceSlug) }
     }
 
     @Test
@@ -179,12 +179,12 @@ class DownloadResourceContainersTest {
         every { project.slug } returns("obs")
         every { resource.slug } returns("ulb")
 
-        coEvery { library.download("en", "obs", "ulb") }.returns(rcUlb)
-        coEvery { library.download("en", "bible-obs", "tw") }.returns(twUlb)
-        coEvery { library.download("en", "obs", "tn") }.returns(tnUlb)
-        coEvery { library.download("en", "obs", "tq") }.returns(tqUlb)
+        coEvery { catalogClient.downloadResourceContainer("en", "obs", "ulb") }.returns(rcUlb)
+        coEvery { catalogClient.downloadResourceContainer("en", "bible-obs", "tw") }.returns(twUlb)
+        coEvery { catalogClient.downloadResourceContainer("en", "obs", "tn") }.returns(tnUlb)
+        coEvery { catalogClient.downloadResourceContainer("en", "obs", "tq") }.returns(tqUlb)
 
-        val result = DownloadResourceContainers(library)
+        val result = DownloadResourceContainers(catalogClient)
             .download(translation, onProgress)
 
         assertTrue(result.success)
@@ -202,10 +202,10 @@ class DownloadResourceContainersTest {
             onProgress(any(), "Downloading translation questions")
         }
 
-        coVerify { library.download("en", "obs", "ulb") }
-        coVerify { library.download("en", "bible-obs", "tw") }
-        coVerify { library.download("en", "obs", "tn") }
-        coVerify { library.download("en", "obs", "tq") }
+        coVerify { catalogClient.downloadResourceContainer("en", "obs", "ulb") }
+        coVerify { catalogClient.downloadResourceContainer("en", "bible-obs", "tw") }
+        coVerify { catalogClient.downloadResourceContainer("en", "obs", "tn") }
+        coVerify { catalogClient.downloadResourceContainer("en", "obs", "tq") }
     }
 
     @Test
@@ -214,17 +214,17 @@ class DownloadResourceContainersTest {
         every { project.slug } returns("mrk")
         every { resource.slug } returns("ulb")
 
-        coEvery { library.download("en", "mrk", "ulb") }
+        coEvery { catalogClient.downloadResourceContainer("en", "mrk", "ulb") }
             .throws(Exception("An error occurred."))
 
-        val result = DownloadResourceContainers(library)
+        val result = DownloadResourceContainers(catalogClient)
             .download(translation, onProgress)
 
         assertFalse(result.success)
         assertEquals(0, result.containers.size)
 
         verify { onProgress(any(), "Downloading resource container") }
-        coVerify { library.download("en", "mrk", "ulb") }
+        coVerify { catalogClient.downloadResourceContainer("en", "mrk", "ulb") }
     }
 
     @Test
@@ -238,13 +238,13 @@ class DownloadResourceContainersTest {
         every { project.slug } returns("mrk")
         every { resource.slug } returns("ulb")
 
-        coEvery { library.download("en", "mrk", "ulb") }.returns(rcUlb)
-        coEvery { library.download("en", "bible", "tw") }
+        coEvery { catalogClient.downloadResourceContainer("en", "mrk", "ulb") }.returns(rcUlb)
+        coEvery { catalogClient.downloadResourceContainer("en", "bible", "tw") }
             .throws(Exception("An error occurred."))
-        coEvery { library.download("en", "mrk", "tn") }.returns(tnUlb)
-        coEvery { library.download("en", "mrk", "tq") }.returns(tqUlb)
+        coEvery { catalogClient.downloadResourceContainer("en", "mrk", "tn") }.returns(tnUlb)
+        coEvery { catalogClient.downloadResourceContainer("en", "mrk", "tq") }.returns(tqUlb)
 
-        val result = DownloadResourceContainers(library)
+        val result = DownloadResourceContainers(catalogClient)
             .download(translation, onProgress)
 
         assertTrue(result.success)
@@ -262,10 +262,10 @@ class DownloadResourceContainersTest {
             onProgress(any(), "Downloading translation questions")
         }
 
-        coVerify { library.download("en", "mrk", "ulb") }
-        coVerify { library.download("en", "bible", "tw") }
-        coVerify { library.download("en", "mrk", "tn") }
-        coVerify { library.download("en", "mrk", "tq") }
+        coVerify { catalogClient.downloadResourceContainer("en", "mrk", "ulb") }
+        coVerify { catalogClient.downloadResourceContainer("en", "bible", "tw") }
+        coVerify { catalogClient.downloadResourceContainer("en", "mrk", "tn") }
+        coVerify { catalogClient.downloadResourceContainer("en", "mrk", "tq") }
     }
 
     @Test
@@ -279,13 +279,13 @@ class DownloadResourceContainersTest {
         every { project.slug } returns("mrk")
         every { resource.slug } returns("ulb")
 
-        coEvery { library.download("en", "mrk", "ulb") }.returns(rcUlb)
-        coEvery { library.download("en", "bible", "tw") }.returns(twUlb)
-        coEvery { library.download("en", "mrk", "tn") }
+        coEvery { catalogClient.downloadResourceContainer("en", "mrk", "ulb") }.returns(rcUlb)
+        coEvery { catalogClient.downloadResourceContainer("en", "bible", "tw") }.returns(twUlb)
+        coEvery { catalogClient.downloadResourceContainer("en", "mrk", "tn") }
             .throws(Exception("An error occurred."))
-        coEvery { library.download("en", "mrk", "tq") }.returns(tqUlb)
+        coEvery { catalogClient.downloadResourceContainer("en", "mrk", "tq") }.returns(tqUlb)
 
-        val result = DownloadResourceContainers(library)
+        val result = DownloadResourceContainers(catalogClient)
             .download(translation, onProgress)
 
         assertTrue(result.success)
@@ -303,10 +303,10 @@ class DownloadResourceContainersTest {
             onProgress(any(), "Downloading translation questions")
         }
 
-        coVerify { library.download("en", "mrk", "ulb") }
-        coVerify { library.download("en", "bible", "tw") }
-        coVerify { library.download("en", "mrk", "tn") }
-        coVerify { library.download("en", "mrk", "tq") }
+        coVerify { catalogClient.downloadResourceContainer("en", "mrk", "ulb") }
+        coVerify { catalogClient.downloadResourceContainer("en", "bible", "tw") }
+        coVerify { catalogClient.downloadResourceContainer("en", "mrk", "tn") }
+        coVerify { catalogClient.downloadResourceContainer("en", "mrk", "tq") }
     }
 
     @Test
@@ -320,13 +320,13 @@ class DownloadResourceContainersTest {
         every { project.slug } returns("mrk")
         every { resource.slug } returns("ulb")
 
-        coEvery { library.download("en", "mrk", "ulb") }.returns(rcUlb)
-        coEvery { library.download("en", "bible", "tw") }.returns(twUlb)
-        coEvery { library.download("en", "mrk", "tn") }.returns(tnUlb)
-        coEvery { library.download("en", "mrk", "tq") }
+        coEvery { catalogClient.downloadResourceContainer("en", "mrk", "ulb") }.returns(rcUlb)
+        coEvery { catalogClient.downloadResourceContainer("en", "bible", "tw") }.returns(twUlb)
+        coEvery { catalogClient.downloadResourceContainer("en", "mrk", "tn") }.returns(tnUlb)
+        coEvery { catalogClient.downloadResourceContainer("en", "mrk", "tq") }
             .throws(Exception("An error occurred."))
 
-        val result = DownloadResourceContainers(library)
+        val result = DownloadResourceContainers(catalogClient)
             .download(translation, onProgress)
 
         assertTrue(result.success)
@@ -344,10 +344,10 @@ class DownloadResourceContainersTest {
             onProgress(any(), "Downloading translation questions")
         }
 
-        coVerify { library.download("en", "mrk", "ulb") }
-        coVerify { library.download("en", "bible", "tw") }
-        coVerify { library.download("en", "mrk", "tn") }
-        coVerify { library.download("en", "mrk", "tq") }
+        coVerify { catalogClient.downloadResourceContainer("en", "mrk", "ulb") }
+        coVerify { catalogClient.downloadResourceContainer("en", "bible", "tw") }
+        coVerify { catalogClient.downloadResourceContainer("en", "mrk", "tn") }
+        coVerify { catalogClient.downloadResourceContainer("en", "mrk", "tq") }
     }
 
     @Test
@@ -361,14 +361,14 @@ class DownloadResourceContainersTest {
         every { project.slug } returns("obs")
         every { resource.slug } returns("ulb")
 
-        coEvery { library.download("en", "obs", "ulb") }.returns(rcObs)
-        coEvery { library.download("en", "bible-obs", "tw") }
+        coEvery { catalogClient.downloadResourceContainer("en", "obs", "ulb") }.returns(rcObs)
+        coEvery { catalogClient.downloadResourceContainer("en", "bible-obs", "tw") }
             .throws(Exception("An error occurred."))
-        coEvery { library.download("en", "obs", "tn") }.returns(tnUlb)
-        coEvery { library.download("en", "obs", "tq") }.returns(tqUlb)
+        coEvery { catalogClient.downloadResourceContainer("en", "obs", "tn") }.returns(tnUlb)
+        coEvery { catalogClient.downloadResourceContainer("en", "obs", "tq") }.returns(tqUlb)
 
 
-        val result = DownloadResourceContainers(library)
+        val result = DownloadResourceContainers(catalogClient)
             .download(translation, onProgress)
 
         assertTrue(result.success)
@@ -386,10 +386,10 @@ class DownloadResourceContainersTest {
             onProgress(any(), "Downloading translation questions")
         }
 
-        coVerify { library.download("en", "obs", "ulb") }
-        coVerify { library.download("en", "bible-obs", "tw") }
-        coVerify { library.download("en", "obs", "tn") }
-        coVerify { library.download("en", "obs", "tq") }
+        coVerify { catalogClient.downloadResourceContainer("en", "obs", "ulb") }
+        coVerify { catalogClient.downloadResourceContainer("en", "bible-obs", "tw") }
+        coVerify { catalogClient.downloadResourceContainer("en", "obs", "tn") }
+        coVerify { catalogClient.downloadResourceContainer("en", "obs", "tq") }
     }
 
     @Test
@@ -412,7 +412,7 @@ class DownloadResourceContainersTest {
             )
         }
 
-        coEvery { library.download(any(), any(), any()) }.answers {
+        coEvery { catalogClient.downloadResourceContainer(any(), any(), any()) }.answers {
             val language = firstArg<String>()
             val project = secondArg<String>()
             val resource = thirdArg<String>()
@@ -426,7 +426,7 @@ class DownloadResourceContainersTest {
             mockHelpTranslations(languageSlug, projectSlug, resourceSlug)
         }
 
-        val result = DownloadResourceContainers(library)
+        val result = DownloadResourceContainers(catalogClient)
             .download(ids, onProgress)
 
         assertEquals(2, result.downloadedTranslations.size)
@@ -453,7 +453,7 @@ class DownloadResourceContainersTest {
         verifyDownloadedContainers(result.downloadedContainers, "id", "gen", "tq")
 
         verify(exactly = 2) { index.getTranslation(any()) }
-        coVerify(exactly = 8) { library.download(any(), any(), any()) }
+        coVerify(exactly = 8) { catalogClient.downloadResourceContainer(any(), any(), any()) }
         verify(exactly = 6) { index.findTranslations(any(), any(), any(), any(), any(), any(), any()) }
         verify(exactly = 10) { onProgress(any(), any()) }
 
@@ -493,7 +493,7 @@ class DownloadResourceContainersTest {
 
         every { index.getTranslation(ids[1]) }.throws(Exception("An error occurred"))
 
-        coEvery { library.download(any(), any(), any()) }.answers {
+        coEvery { catalogClient.downloadResourceContainer(any(), any(), any()) }.answers {
             val language = firstArg<String>()
             val project = secondArg<String>()
             val resource = thirdArg<String>()
@@ -507,7 +507,7 @@ class DownloadResourceContainersTest {
             mockHelpTranslations(languageSlug, projectSlug, resourceSlug)
         }
 
-        val result = DownloadResourceContainers(library)
+        val result = DownloadResourceContainers(catalogClient)
             .download(ids, onProgress)
 
         assertEquals(1, result.downloadedTranslations.size)
@@ -535,7 +535,7 @@ class DownloadResourceContainersTest {
         verifyNotDownloadedContainers(result.downloadedContainers, "id", "gen", "tq")
 
         verify(exactly = 2) { index.getTranslation(any()) }
-        coVerify(exactly = 4) { library.download(any(), any(), any()) }
+        coVerify(exactly = 4) { catalogClient.downloadResourceContainer(any(), any(), any()) }
         verify(exactly = 3) { index.findTranslations(any(), any(), any(), any(), any(), any(), any()) }
         verify(exactly = 7) { onProgress(any(), any()) }
 
@@ -570,14 +570,14 @@ class DownloadResourceContainersTest {
             )
         }
 
-        coEvery { library.download(any(), any(), any()) }.answers {
+        coEvery { catalogClient.downloadResourceContainer(any(), any(), any()) }.answers {
             val language = firstArg<String>()
             val project = secondArg<String>()
             val resource = thirdArg<String>()
             mockResourceContainer(language, project, resource)
         }
 
-        coEvery { library.download("id", "gen", "ayt") }
+        coEvery { catalogClient.downloadResourceContainer("id", "gen", "ayt") }
             .throws(Exception("An error occurred."))
 
         every { index.findTranslations(any(), any(), any(), any(), any(), any(), any()) }.answers {
@@ -587,7 +587,7 @@ class DownloadResourceContainersTest {
             mockHelpTranslations(languageSlug, projectSlug, resourceSlug)
         }
 
-        val result = DownloadResourceContainers(library)
+        val result = DownloadResourceContainers(catalogClient)
             .download(ids, onProgress)
 
         assertEquals(1, result.downloadedTranslations.size)
@@ -615,7 +615,7 @@ class DownloadResourceContainersTest {
         verifyNotDownloadedContainers(result.downloadedContainers, "id", "gen", "tq")
 
         verify(exactly = 2) { index.getTranslation(any()) }
-        coVerify(exactly = 5) { library.download(any(), any(), any()) }
+        coVerify(exactly = 5) { catalogClient.downloadResourceContainer(any(), any(), any()) }
         verify(exactly = 3) { index.findTranslations(any(), any(), any(), any(), any(), any(), any()) }
         verify(exactly = 7) { onProgress(any(), any()) }
 
@@ -650,14 +650,14 @@ class DownloadResourceContainersTest {
             )
         }
 
-        coEvery { library.download(any(), any(), any()) }.answers {
+        coEvery { catalogClient.downloadResourceContainer(any(), any(), any()) }.answers {
             val language = firstArg<String>()
             val project = secondArg<String>()
             val resource = thirdArg<String>()
             mockResourceContainer(language, project, resource)
         }
 
-        coEvery { library.download("id", "gen", "tn") }
+        coEvery { catalogClient.downloadResourceContainer("id", "gen", "tn") }
             .throws(Exception("An error occurred."))
 
         every { index.findTranslations(any(), any(), any(), any(), any(), any(), any()) }.answers {
@@ -667,7 +667,7 @@ class DownloadResourceContainersTest {
             mockHelpTranslations(languageSlug, projectSlug, resourceSlug)
         }
 
-        val result = DownloadResourceContainers(library)
+        val result = DownloadResourceContainers(catalogClient)
             .download(ids, onProgress)
 
         assertEquals(1, result.downloadedTranslations.size)
@@ -695,7 +695,7 @@ class DownloadResourceContainersTest {
         verifyDownloadedContainers(result.downloadedContainers, "id", "gen", "tq")
 
         verify(exactly = 2) { index.getTranslation(any()) }
-        coVerify(exactly = 8) { library.download(any(), any(), any()) }
+        coVerify(exactly = 8) { catalogClient.downloadResourceContainer(any(), any(), any()) }
         verify(exactly = 6) { index.findTranslations(any(), any(), any(), any(), any(), any(), any()) }
         verify(exactly = 10) { onProgress(any(), any()) }
 
@@ -733,7 +733,7 @@ class DownloadResourceContainersTest {
             )
         }
 
-        coEvery { library.download(any(), any(), any()) }.answers {
+        coEvery { catalogClient.downloadResourceContainer(any(), any(), any()) }.answers {
             val language = firstArg<String>()
             val project = secondArg<String>()
             val resource = thirdArg<String>()
@@ -747,7 +747,7 @@ class DownloadResourceContainersTest {
             mockHelpTranslations(languageSlug, projectSlug, resourceSlug)
         }
 
-        val result = DownloadResourceContainers(library)
+        val result = DownloadResourceContainers(catalogClient)
             .download(ids, onProgress)
 
         assertEquals(2, result.downloadedTranslations.size)
@@ -774,7 +774,7 @@ class DownloadResourceContainersTest {
         verifyDownloadedContainers(result.downloadedContainers, "id", "obs", "tq")
 
         verify(exactly = 2) { index.getTranslation(any()) }
-        coVerify(exactly = 8) { library.download(any(), any(), any()) }
+        coVerify(exactly = 8) { catalogClient.downloadResourceContainer(any(), any(), any()) }
         verify(exactly = 6) { index.findTranslations(any(), any(), any(), any(), any(), any(), any()) }
         verify(exactly = 10) { onProgress(any(), any()) }
 

@@ -5,7 +5,7 @@ import com.door43.translationstudio.core.entity.SourceTranslation
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import org.unfoldingword.door43client.models.TargetLanguage
+import org.bibletranslationtools.resourcecatalog.library.models.TargetLanguage
 
 @Serializable
 data class Manifest(

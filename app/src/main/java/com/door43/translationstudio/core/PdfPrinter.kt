@@ -30,8 +30,8 @@ import com.itextpdf.text.pdf.PdfTemplate
 import com.itextpdf.text.pdf.PdfWriter
 import com.itextpdf.text.pdf.draw.LineSeparator
 import com.itextpdf.text.pdf.draw.VerticalPositionMark
+import org.bibletranslationtools.resourcecatalog.ResourceCatalogClient
 import org.bibletranslationtools.resourcecontainer.ResourceContainer
-import org.unfoldingword.door43client.Door43Client
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
@@ -51,7 +51,7 @@ class PdfPrinter(
     licenseFontPath: String?,
     private val imagesDir: File?,
     private val directoryProvider: IDirectoryProvider,
-    private val library: Door43Client
+    private val catalogClient: ResourceCatalogClient
 ) : PdfPageEventHelper() {
     private val titleFont: Font
     private val chapterFont: Font
@@ -76,15 +76,15 @@ class PdfPrinter(
 
     init {
         var rc: ResourceContainer? = null
-        val p = library.index.getProject(
+        val p = catalogClient.library.getProject(
             "en",
             translation.projectId,
             true
         )
         p?.let { project ->
-            val resources = library.index.getResources(project.languageSlug, project.slug)
+            val resources = catalogClient.library.getResources(project.languageSlug, project.slug)
             try {
-                rc = library.open(
+                rc = catalogClient.openResourceContainer(
                     "en",
                     translation.projectId,
                     resources[0].slug
@@ -203,8 +203,8 @@ class PdfPrinter(
                 element.alignment = Element.ALIGN_LEFT
                 element.add(chunk)
                 titleCell.addElement(element)
-                titleCell.runDirection =
-                    if (rtl) PdfWriter.RUN_DIRECTION_RTL else PdfWriter.RUN_DIRECTION_LTR // need to set predominant language direction in case first character runs other direction
+                // need to set predominant language direction in case first character runs other direction
+                titleCell.runDirection = if (rtl) PdfWriter.RUN_DIRECTION_RTL else PdfWriter.RUN_DIRECTION_LTR
                 titleCell.border = Rectangle.NO_BORDER
                 titleCell.verticalAlignment = Element.ALIGN_MIDDLE
 
@@ -294,12 +294,12 @@ class PdfPrinter(
         val projectTranslation = translation.projectTranslation
         var title = projectTranslation.title
         if (title.isEmpty()) {
-            val project = library.index.getProject(
+            val project = catalogClient.library.getProject(
                 translation.targetLanguageId,
                 translation.projectId,
                 true
             )
-            if ((project != null) && (project.name != null)) {
+            if (project != null) {
                 title = project.name
             }
         }

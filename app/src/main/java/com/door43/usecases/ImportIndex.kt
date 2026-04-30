@@ -7,15 +7,15 @@ import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
 import com.door43.translationstudio.R
 import org.bibletranslationtools.logger.Logger
-import org.unfoldingword.door43client.Door43Client
+import org.bibletranslationtools.resourcecatalog.ResourceCatalogClient
 import java.net.HttpURLConnection
 import java.net.URL
 
-class DownloadIndex(
+class ImportIndex(
     private val context: Context,
     private val directoryProvider: IDirectoryProvider,
     private val prefRepository: IPreferenceRepository,
-    private val library: Door43Client
+    private val catalogClient: ResourceCatalogClient
 ) {
     fun download(onProgress: (Float, String?) -> Unit = {_,_->}): Boolean {
         var connection: HttpURLConnection? = null
@@ -24,7 +24,7 @@ class DownloadIndex(
         onProgress(-1f, message)
 
         return try {
-            library.tearDown()
+            catalogClient.closeLibrary()
 
             val url = prefRepository.getDefaultPref(
                 IPreferenceRepository.KEY_PREF_INDEX_SQLITE_URL,
@@ -55,16 +55,17 @@ class DownloadIndex(
                 }
                 true
             } else false
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             false
         } finally {
             connection?.disconnect()
+            catalogClient.openLibrary()
         }
     }
 
     fun import(index: Uri): Boolean {
         return try {
-            library.tearDown()
+            catalogClient.closeLibrary()
 
             context.contentResolver.openInputStream(index)?.use { input ->
                 directoryProvider.databaseFile.outputStream().use { output ->
@@ -81,6 +82,8 @@ class DownloadIndex(
         } catch (e: Exception) {
             Logger.e(this::javaClass.name, "Failed to import index", e)
             false
+        } finally {
+            catalogClient.openLibrary()
         }
     }
 }

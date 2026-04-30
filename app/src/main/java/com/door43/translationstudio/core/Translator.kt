@@ -12,10 +12,10 @@ import com.door43.translationstudio.rendering.USXtoUSFMConverter
 import com.door43.usecases.BackupRC
 import com.door43.util.FileUtilities
 import org.bibletranslationtools.logger.Logger
+import org.bibletranslationtools.resourcecatalog.ResourceCatalogClient
+import org.bibletranslationtools.resourcecatalog.library.models.TargetLanguage
 import org.bibletranslationtools.resourcecontainer.Resource
 import org.bibletranslationtools.resourcecontainer.ResourceContainer
-import org.unfoldingword.door43client.Door43Client
-import org.unfoldingword.door43client.models.TargetLanguage
 import java.io.File
 import java.io.IOException
 import java.util.Locale
@@ -29,7 +29,7 @@ class Translator (
     private val prefRepository: IPreferenceRepository,
     private val directoryProvider: IDirectoryProvider,
     private val backupRC: BackupRC,
-    private val library: Door43Client,
+    private val catalogClient: ResourceCatalogClient,
     private val platform: Platform
 ) {
     /**
@@ -241,7 +241,7 @@ class Translator (
         nativeSpeaker: NativeSpeaker,
         draftTranslation: ResourceContainer,
     ): TargetTranslation {
-        val targetLanguage = library.index.getTargetLanguage(draftTranslation.language.slug)
+        val targetLanguage = catalogClient.library.getTargetLanguage(draftTranslation.language.slug)
         // TRICKY: for now android only supports "regular" or "obs" "text" translations
         // TODO: we should technically check if the project contains more than one resource
         //  when determining if it needs a regular slug or not.

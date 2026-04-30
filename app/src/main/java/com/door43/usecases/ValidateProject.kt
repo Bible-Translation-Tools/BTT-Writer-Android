@@ -10,24 +10,24 @@ import com.door43.translationstudio.core.Validation
 import com.door43.util.StringUtilities
 import com.door43.util.sortNumerically
 import org.bibletranslationtools.logger.Logger
+import org.bibletranslationtools.resourcecatalog.ResourceCatalogClient
 import org.bibletranslationtools.resourcecontainer.ResourceContainer
-import org.unfoldingword.door43client.Door43Client
 
 class ValidateProject(
     private val context: Context,
-    private val library: Door43Client,
+    private val catalogClient: ResourceCatalogClient,
     private val translator: Translator
 ) {
     fun execute(targetTranslationId: String, sourceTranslationId: String): List<Validation> {
         val validations = arrayListOf<Validation>()
 
         translator.getTargetTranslation(targetTranslationId)?.let { targetTranslation ->
-            val targetLanguage = library.index.getTargetLanguage(
+            val targetLanguage = catalogClient.library.getTargetLanguage(
                 targetTranslation.targetLanguageId
             ) ?: return validations
 
             val container = try {
-                library.open(sourceTranslationId)
+                catalogClient.openResourceContainer(sourceTranslationId)
             } catch (e: Exception) {
                 Logger.e(
                     "ValidationTask",
@@ -49,7 +49,7 @@ class ValidateProject(
             }
 
             val projectTitle = container.readChunk("front", "title")
-            val sourceLanguage = library.index.getSourceLanguage(
+            val sourceLanguage = catalogClient.library.getSourceLanguage(
                 container.language.slug
             ) ?: return validations
             val chapters = container.chapters()

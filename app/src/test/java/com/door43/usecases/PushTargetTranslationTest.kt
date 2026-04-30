@@ -55,7 +55,7 @@ class PushTargetTranslationTest {
     @MockK private lateinit var createCommand: CreateBranchCommand
     @MockK private lateinit var pushCommand: PushCommand
 
-    val onProgress = mockk<(Float, String?) -> Unit>(relaxed = true)
+    private val onProgress = mockk<(Float, String?) -> Unit>(relaxed = true)
 
     @Before
     fun setup() {

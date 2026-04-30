@@ -15,6 +15,10 @@ import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.unmockkAll
 import io.mockk.verify
+import org.bibletranslationtools.resourcecatalog.ResourceCatalogClient
+import org.bibletranslationtools.resourcecatalog.library.Index
+import org.bibletranslationtools.resourcecatalog.library.models.SourceLanguage
+import org.bibletranslationtools.resourcecatalog.library.models.toRcLanguage
 import org.bibletranslationtools.resourcecontainer.PackageInfo
 import org.bibletranslationtools.resourcecontainer.ResourceContainer
 import org.json.JSONException
@@ -24,15 +28,11 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import org.unfoldingword.door43client.Door43Client
-import org.unfoldingword.door43client.Index
-import org.unfoldingword.door43client.models.SourceLanguage
-import org.unfoldingword.door43client.models.toLanguage
 
 class ValidateProjectTest {
 
     @MockK private lateinit var context: Context
-    @MockK private lateinit var library: Door43Client
+    @MockK private lateinit var catalogClient: ResourceCatalogClient
     @MockK private lateinit var translator: Translator
     @MockK private lateinit var index: Index
     @MockK private lateinit var sourceContainer: ResourceContainer
@@ -48,7 +48,7 @@ class ValidateProjectTest {
     fun setup() {
         MockKAnnotations.init(this)
 
-        every { library.index } returns index
+        every { catalogClient.library } returns index
 
         every { translator.getTargetTranslation(sourceTranslationId) }
             .returns(sourceTranslation)
@@ -65,9 +65,9 @@ class ValidateProjectTest {
             every { contentMimeType }.returns("text/usfm")
         }
         every { sourceContainer.info }.returns(info)
-        every { sourceContainer.language }.returns(sourceLanguage.toLanguage())
+        every { sourceContainer.language }.returns(sourceLanguage.toRcLanguage())
 
-        every { library.open(any()) }.returns(sourceContainer)
+        every { catalogClient.openResourceContainer(any()) }.returns(sourceContainer)
 
         mockkObject(MergeConflictsHandler)
         every { MergeConflictsHandler.isMergeConflicted(any()) }.returns(false)
@@ -115,7 +115,7 @@ class ValidateProjectTest {
 
         val items = ValidateProject(
             context,
-            library,
+            catalogClient,
             translator
         ).execute(
             targetTranslationId,
@@ -161,7 +161,7 @@ class ValidateProjectTest {
 
         val items = ValidateProject(
             context,
-            library,
+            catalogClient,
             translator
         ).execute(
             targetTranslationId,
@@ -211,7 +211,7 @@ class ValidateProjectTest {
 
         val items = ValidateProject(
             context,
-            library,
+            catalogClient,
             translator
         ).execute(
             targetTranslationId,
@@ -264,7 +264,7 @@ class ValidateProjectTest {
 
         val items = ValidateProject(
             context,
-            library,
+            catalogClient,
             translator
         ).execute(
             targetTranslationId,
@@ -316,7 +316,7 @@ class ValidateProjectTest {
 
         val items = ValidateProject(
             context,
-            library,
+            catalogClient,
             translator
         ).execute(
             targetTranslationId,
@@ -346,7 +346,7 @@ class ValidateProjectTest {
 
         val items = ValidateProject(
             context,
-            library,
+            catalogClient,
             translator
         ).execute(
             targetTranslationId,
@@ -362,11 +362,11 @@ class ValidateProjectTest {
 
     @Test
     fun `test validate project, source translation not found`() {
-        every { library.open(sourceTranslationId) }.throws(Exception("Not found."))
+        every { catalogClient.openResourceContainer(sourceTranslationId) }.throws(Exception("Not found."))
 
         val items = ValidateProject(
             context,
-            library,
+            catalogClient,
             translator
         ).execute(
             targetTranslationId,
@@ -377,7 +377,7 @@ class ValidateProjectTest {
 
         verify { translator.getTargetTranslation(targetTranslationId) }
         verify { index.getTargetLanguage(any()) }
-        verify { library.open(sourceTranslationId) }
+        verify { catalogClient.openResourceContainer(sourceTranslationId) }
         // should not be called if there is no source translation
         verify(inverse = true) { sourceContainer.info }
     }
@@ -388,7 +388,7 @@ class ValidateProjectTest {
 
         val items = ValidateProject(
             context,
-            library,
+            catalogClient,
             translator
         ).execute(
             targetTranslationId,
@@ -399,7 +399,7 @@ class ValidateProjectTest {
 
         verify { translator.getTargetTranslation(targetTranslationId) }
         verify { index.getTargetLanguage(any()) }
-        verify { library.open(sourceTranslationId) }
+        verify { catalogClient.openResourceContainer(sourceTranslationId) }
         verify { sourceContainer.info }
         // should not be called if failed to parse format
         verify(inverse = true) { sourceContainer.readChunk("front", "title") }
@@ -447,11 +447,11 @@ class ValidateProjectTest {
         every { targetTranslation.getFrameTranslation(any(), any(), any()) }.answers {
             val chapterSlug = firstArg<String>()
             val chunkSlug = secondArg<String>()
-            when {
-                chapterSlug == "01" && chunkSlug == "01" -> chunks[0]
-                chapterSlug == "01" && chunkSlug == "04" -> chunks[1]
-                chapterSlug == "02" && chunkSlug == "01" -> chunks[2]
-                chapterSlug == "02" && chunkSlug == "03" -> chunks[3]
+            when (chapterSlug) {
+                "01" if chunkSlug == "01" -> chunks[0]
+                "01" if chunkSlug == "04" -> chunks[1]
+                "02" if chunkSlug == "01" -> chunks[2]
+                "02" if chunkSlug == "03" -> chunks[3]
                 else -> mockk()
             }
         }
@@ -471,7 +471,7 @@ class ValidateProjectTest {
     private fun verifyCommonStuff() {
         verify { translator.getTargetTranslation(any()) }
         verify { index.getTargetLanguage(any()) }
-        verify { library.open(any()) }
+        verify { catalogClient.openResourceContainer(any()) }
         verify { sourceContainer.chapters() }
         verify { sourceContainer.chunks(any()) }
         verify { sourceContainer.info }

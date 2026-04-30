@@ -16,6 +16,9 @@ import io.mockk.runs
 import io.mockk.unmockkAll
 import io.mockk.verify
 import kotlinx.coroutines.test.runTest
+import org.bibletranslationtools.resourcecatalog.ResourceCatalogClient
+import org.bibletranslationtools.resourcecatalog.library.Index
+import org.bibletranslationtools.resourcecatalog.library.models.Translation
 import org.bibletranslationtools.resourcecontainer.Language
 import org.bibletranslationtools.resourcecontainer.Project
 import org.bibletranslationtools.resourcecontainer.Resource
@@ -25,31 +28,28 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import org.unfoldingword.door43client.Door43Client
-import org.unfoldingword.door43client.Index
-import org.unfoldingword.door43client.models.Translation
 
 class UpdateSourceTest {
 
     @MockK private lateinit var context: Context
-    @MockK private lateinit var library: Door43Client
+    @MockK private lateinit var catalogClient: ResourceCatalogClient
     @MockK private lateinit var prefRepository: IPreferenceRepository
     @MockK private lateinit var index: Index
     @MockK private lateinit var resources: Resources
 
-    val onProgress = mockk<(Float, String?) -> Unit>(relaxed = true)
+    private val onProgress = mockk<(Float, String?) -> Unit>(relaxed = true)
 
     @Before
     fun setup() {
         MockKAnnotations.init(this)
 
         every { context.resources }.returns(resources)
-        every { library.index } returns index
+        every { catalogClient.library } returns index
 
         every { onProgress(any(), any()) }.just(runs)
-        every { library.getResourceContainerLastModified(any(), any(), any()) }
+        every { catalogClient.getResourceContainerLastModified(any(), any(), any()) }
             .returns(1234567890)
-        coEvery { library.updateSources(any(), any()) }.just(runs)
+        coEvery { catalogClient.updateSources(any(), any()) }.just(runs)
 
         every { prefRepository.getDefaultPref(
             IPreferenceRepository.KEY_PREF_MEDIA_SERVER,
@@ -73,7 +73,7 @@ class UpdateSourceTest {
 
         val result = UpdateSource(
             context,
-            library,
+            catalogClient,
             prefRepository
         ).execute(onProgress)
 
@@ -99,7 +99,7 @@ class UpdateSourceTest {
 
         val result = UpdateSource(
             context,
-            library,
+            catalogClient,
             prefRepository
         ).execute(onProgress)
 
@@ -115,7 +115,7 @@ class UpdateSourceTest {
         val translation = getTranslation("en", "mrk", "ulb")
 
         var called = 0
-        every { library.getResourceContainerLastModified(any(), any(), any()) }.answers {
+        every { catalogClient.getResourceContainerLastModified(any(), any(), any()) }.answers {
             when (++called) {
                 1 -> 123
                 else -> 234
@@ -127,7 +127,7 @@ class UpdateSourceTest {
 
         val result = UpdateSource(
             context,
-            library,
+            catalogClient,
             prefRepository
         ).execute(onProgress)
 
@@ -143,11 +143,11 @@ class UpdateSourceTest {
         every { index.findTranslations(any(), any(), any(), any(), any(), any(), any()) }
             .returns(listOf(getTranslation("en", "mrk", "ulb")))
 
-        coEvery { library.updateSources(any(), any()) }.throws(Exception("An error occurred."))
+        coEvery { catalogClient.updateSources(any(), any()) }.throws(Exception("An error occurred."))
 
         val result = UpdateSource(
             context,
-            library,
+            catalogClient,
             prefRepository
         ).execute(onProgress)
 
@@ -156,16 +156,16 @@ class UpdateSourceTest {
         assertEquals(0, result.addedCount)
 
         verify(exactly = 1) { index.findTranslations(any(), any(), any(), any(), any(), any(), any()) }
-        verify(exactly = 1) { library.getResourceContainerLastModified(any(), any(), any()) }
+        verify(exactly = 1) { catalogClient.getResourceContainerLastModified(any(), any(), any()) }
         verify { prefRepository.getRootCatalogApi() }
-        coVerify { library.updateSources(any(), any()) }
+        coVerify { catalogClient.updateSources(any(), any()) }
     }
 
     private fun verifyCommonStuff() {
         verify(exactly = 2) { index.findTranslations(any(), any(), any(), any(), any(), any(), any()) }
-        verify(exactly = 2) { library.getResourceContainerLastModified(any(), any(), any()) }
+        verify(exactly = 2) { catalogClient.getResourceContainerLastModified(any(), any(), any()) }
         verify { prefRepository.getRootCatalogApi() }
-        coVerify { library.updateSources(any(), any()) }
+        coVerify { catalogClient.updateSources(any(), any()) }
     }
 
     private fun getTranslation(lang: String, book: String, res: String): Translation {

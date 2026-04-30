@@ -27,7 +27,7 @@ class ImportDraftTest {
     @MockK private lateinit var profile: Profile
     @MockK private lateinit var draftTranslator: ResourceContainer
 
-    val onProgress = mockk<(Float, String?) -> Unit>(relaxed = true)
+    private val onProgress = mockk<(Float, String?) -> Unit>(relaxed = true)
 
     @Before
     fun setup() {

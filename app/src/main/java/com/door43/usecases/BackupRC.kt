@@ -1,6 +1,5 @@
 package com.door43.usecases
 
-import android.app.Application
 import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.core.ArchiveDetails
 import com.door43.translationstudio.core.Profile
@@ -8,28 +7,27 @@ import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.TargetTranslationMigrator
 import com.door43.translationstudio.core.Translator
 import com.door43.util.FileUtilities
+import org.bibletranslationtools.resourcecatalog.ResourceCatalogClient
+import org.bibletranslationtools.resourcecatalog.library.models.Translation
 import org.bibletranslationtools.resourcecontainer.ResourceContainer
-import org.unfoldingword.door43client.Door43Client
-import org.unfoldingword.door43client.models.Translation
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
 class BackupRC (
-    private val application: Application,
     private val directoryProvider: IDirectoryProvider,
     private val migrator: TargetTranslationMigrator,
     private val exportProjects: ExportProjects,
     private val profile: Profile,
-    private val library: Door43Client
+    private val catalogClient: ResourceCatalogClient
 ) {
     fun backupResourceContainer(translation: Translation): File {
         val dest = File(
             directoryProvider.backupsDir,
             translation.resourceContainerSlug + "." + ResourceContainer.FILE_EXTENSION
         )
-        library.exportResourceContainer(
+        catalogClient.exportResourceContainer(
             dest,
             translation.language.slug,
             translation.project.slug,
@@ -60,7 +58,7 @@ class BackupRC (
 
             // check if we need to back up
             if (!orphaned) {
-                val details = ArchiveDetails.Builder(directoryProvider, migrator, library)
+                val details = ArchiveDetails.Builder(directoryProvider, migrator, catalogClient)
                     .fromFile(backup, "en")
                     .build()
 

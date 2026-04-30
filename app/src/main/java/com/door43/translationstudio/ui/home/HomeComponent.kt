@@ -60,10 +60,10 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
+import org.bibletranslationtools.resourcecatalog.ResourceCatalogClient
 import org.bibletranslationtools.resourcecontainer.Project
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import org.unfoldingword.door43client.Door43Client
 import java.io.File
 
 private const val SORT_BY_PROJECT: String = "sort_by_project"
@@ -215,7 +215,7 @@ class DefaultHomeComponent(
     private val profile: Profile by inject()
     private val gogsLogout: GogsLogout by inject()
     private val backupRC: BackupRC by inject()
-    private val library: Door43Client by inject()
+    private val catalogClient: ResourceCatalogClient by inject()
     private val platform: Platform by inject()
 
     override val coroutineScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
@@ -590,14 +590,14 @@ class DefaultHomeComponent(
                 ?: targetTranslation.sourceTranslations.firstOrNull()
 
             selectedSourceId?.let {
-                library.index.getTranslation(it)?.project
-                    ?: library.index.getProject(
+                catalogClient.library.getTranslation(it)?.project
+                    ?: catalogClient.library.getProject(
                         targetTranslation.targetLanguageName,
                         targetTranslation.projectId,
                         true
                     )
             } ?: run {
-                library.index.getProject(
+                catalogClient.library.getProject(
                     targetTranslation.targetLanguageName,
                     targetTranslation.projectId,
                     true

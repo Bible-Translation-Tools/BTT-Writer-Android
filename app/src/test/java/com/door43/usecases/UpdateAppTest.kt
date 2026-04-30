@@ -30,15 +30,15 @@ import io.mockk.runs
 import io.mockk.unmockkAll
 import io.mockk.verify
 import kotlinx.coroutines.test.runTest
+import org.bibletranslationtools.resourcecatalog.ResourceCatalogClient
+import org.bibletranslationtools.resourcecatalog.library.Index
+import org.bibletranslationtools.resourcecatalog.library.models.Translation
 import org.bibletranslationtools.resourcecontainer.ResourceContainer
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
-import org.unfoldingword.door43client.Door43Client
-import org.unfoldingword.door43client.Index
-import org.unfoldingword.door43client.models.Translation
 import java.io.File
 
 class UpdateAppTest {
@@ -46,7 +46,7 @@ class UpdateAppTest {
     @MockK private lateinit var context: Context
     @MockK private lateinit var prefRepository: IPreferenceRepository
     @MockK private lateinit var directoryProvider: IDirectoryProvider
-    @MockK private lateinit var library: Door43Client
+    @MockK private lateinit var catalogClient: ResourceCatalogClient
     @MockK private lateinit var backupRC: BackupRC
     @MockK private lateinit var translator: Translator
     @MockK private lateinit var migrator: TargetTranslationMigrator
@@ -55,7 +55,7 @@ class UpdateAppTest {
     @MockK private lateinit var info: AppInfo
     @MockK private lateinit var platform: Platform
 
-    val onProgress = mockk<(Float, String?) -> Unit>(relaxed = true)
+    private val onProgress = mockk<(Float, String?) -> Unit>(relaxed = true)
 
     @JvmField
     @Rule
@@ -73,7 +73,7 @@ class UpdateAppTest {
         every { info.versionCode }.returns(10)
         every { platform.info }.returns(info)
 
-        every { library.index } returns index
+        every { catalogClient.library } returns index
         every { prefRepository.getPrivatePref("last_version_code", any<Int>()) }
             .returns(1)
         every { prefRepository.setPrivatePref(any(), any<Int>()) }.just(runs)
@@ -92,7 +92,8 @@ class UpdateAppTest {
         ) }.returns("font.ttf")
 
         every { index.getImportedTranslations() }.returns(listOf())
-        every { library.tearDown() }.just(runs)
+        every { catalogClient.openLibrary() }.just(runs)
+        every { catalogClient.closeLibrary() }.just(runs)
         every { directoryProvider.deleteLibrary() }.just(runs)
         every { directoryProvider.deployDefaultLibrary() }.just(runs)
         every { directoryProvider.internalAppDir }
@@ -100,8 +101,7 @@ class UpdateAppTest {
         every { directoryProvider.cacheDir }.returns(tempDir.newFolder("cache"))
 
         mockkObject(ResourceContainer)
-        coEvery { library.importResourceContainer(any()) }.returns(mockk())
-        every { library.updateLanguageUrl(any()) }.just(runs)
+        coEvery { catalogClient.importResourceContainer(any()) }.returns(mockk())
 
         mockkObject(FileUtilities)
         every { FileUtilities.deleteQuietly(any()) }.returns(true)
@@ -139,20 +139,20 @@ class UpdateAppTest {
     fun `test update app, fresh install`() = runTest {
         every { prefRepository.getPrivatePref("last_version_code", any<Int>()) }
             .returns(0)
-        every { library.isLibraryDeployed }.returns(true)
+        every { catalogClient.isLibraryDeployed }.returns(true)
 
         UpdateApp(
             context,
             prefRepository,
             directoryProvider,
-            library,
+            catalogClient,
             backupRC,
             translator,
             migrator,
             platform
         ).execute(onProgress)
 
-        verify { library.isLibraryDeployed }
+        verify { catalogClient.isLibraryDeployed }
 
         verifyCommonStuff()
         verifyUpdateLibrary()
@@ -163,20 +163,20 @@ class UpdateAppTest {
     fun `test update app, install update`() = runTest {
         every { prefRepository.getPrivatePref("last_version_code", any<Int>()) }
             .returns(9)
-        every { library.isLibraryDeployed }.returns(true)
+        every { catalogClient.isLibraryDeployed }.returns(true)
 
         UpdateApp(
             context,
             prefRepository,
             directoryProvider,
-            library,
+            catalogClient,
             backupRC,
             translator,
             migrator,
             platform
         ).execute(onProgress)
 
-        verify(exactly = 0) { library.isLibraryDeployed }
+        verify(exactly = 0) { catalogClient.isLibraryDeployed }
 
         verifyCommonStuff()
         verifyUpdateLibrary()
@@ -195,7 +195,7 @@ class UpdateAppTest {
     fun `test update app, backup imported sources`() = runTest {
         every { prefRepository.getPrivatePref("last_version_code", any<Int>()) }
             .returns(10)
-        every { library.isLibraryDeployed }.returns(false)
+        every { catalogClient.isLibraryDeployed }.returns(false)
 
         val translation: Translation = mockk()
         every { index.getImportedTranslations() }.returns(listOf(translation))
@@ -209,20 +209,20 @@ class UpdateAppTest {
             context,
             prefRepository,
             directoryProvider,
-            library,
+            catalogClient,
             backupRC,
             translator,
             migrator,
             platform
         ).execute(onProgress)
 
-        verify { library.isLibraryDeployed }
+        verify { catalogClient.isLibraryDeployed }
         verifyCommonStuff()
         verifyUpdateLibrary()
 
         verify { backupRC.backupResourceContainer(translation) }
         verify { ResourceContainer.open(file, any()) }
-        coVerify { library.importResourceContainer(any()) }
+        coVerify { catalogClient.importResourceContainer(any()) }
         verify { FileUtilities.deleteQuietly(any()) }
     }
 
@@ -230,7 +230,7 @@ class UpdateAppTest {
     fun `test update app, update target translations`() = runTest {
         every { prefRepository.getPrivatePref("last_version_code", any<Int>()) }
             .returns(10)
-        every { library.isLibraryDeployed }.returns(true)
+        every { catalogClient.isLibraryDeployed }.returns(true)
 
         val targetTranslationDir = File(translator.path, "aa_mrk_text_ulb")
         targetTranslationDir.mkdirs()
@@ -248,22 +248,16 @@ class UpdateAppTest {
             context,
             prefRepository,
             directoryProvider,
-            library,
+            catalogClient,
             backupRC,
             translator,
             migrator,
             platform
         ).execute(onProgress)
 
-        verify { library.isLibraryDeployed }
+        verify { catalogClient.isLibraryDeployed }
         verifyCommonStuff()
         verifyNoSourceTranslations()
-
-        verify { prefRepository.getDefaultPref(
-            IPreferenceRepository.KEY_PREF_LANGUAGES_URL,
-            any<String>()
-        ) }
-        verify { library.updateLanguageUrl(any()) }
 
         verify { translator.path }
         verify { migrator.migrate(targetTranslationDir) }
@@ -276,7 +270,7 @@ class UpdateAppTest {
     fun `test update app, upgrade build numbers`() = runTest {
         every { prefRepository.getPrivatePref("last_version_code", any<Int>()) }
             .returns(10)
-        every { library.isLibraryDeployed }.returns(true)
+        every { catalogClient.isLibraryDeployed }.returns(true)
 
         val targetTranslation: TargetTranslation = mockk {
             every { id }.returns("aa_mrk_text_ulb")
@@ -287,14 +281,14 @@ class UpdateAppTest {
             context,
             prefRepository,
             directoryProvider,
-            library,
+            catalogClient,
             backupRC,
             translator,
             migrator,
             platform
         ).execute(onProgress)
 
-        verify { library.isLibraryDeployed }
+        verify { catalogClient.isLibraryDeployed }
         verifyCommonStuff()
         verifyNoSourceTranslations()
 
@@ -308,20 +302,20 @@ class UpdateAppTest {
         every { info.versionCode }.returns(89)
         every { prefRepository.getPrivatePref("last_version_code", any<Int>()) }
             .returns(88)
-        every { library.isLibraryDeployed }.returns(false)
+        every { catalogClient.isLibraryDeployed }.returns(false)
 
         UpdateApp(
             context,
             prefRepository,
             directoryProvider,
-            library,
+            catalogClient,
             backupRC,
             translator,
             migrator,
             platform
         ).execute(onProgress)
 
-        verify(exactly = 0) { library.isLibraryDeployed }
+        verify(exactly = 0) { catalogClient.isLibraryDeployed }
         verifyCommonStuff()
         verifyUpdateLibrary()
         verifyNoSourceTranslations()
@@ -340,20 +334,20 @@ class UpdateAppTest {
         every { info.versionCode }.returns(105)
         every { prefRepository.getPrivatePref("last_version_code", any<Int>()) }
             .returns(104)
-        every { library.isLibraryDeployed }.returns(false)
+        every { catalogClient.isLibraryDeployed }.returns(false)
 
         UpdateApp(
             context,
             prefRepository,
             directoryProvider,
-            library,
+            catalogClient,
             backupRC,
             translator,
             migrator,
             platform
         ).execute(onProgress)
 
-        verify(exactly = 0) { library.isLibraryDeployed }
+        verify(exactly = 0) { catalogClient.isLibraryDeployed }
         verifyCommonStuff()
         verifyUpdateLibrary()
         verifyNoSourceTranslations()
@@ -372,20 +366,20 @@ class UpdateAppTest {
         every { info.versionCode }.returns(113)
         every { prefRepository.getPrivatePref("last_version_code", any<Int>()) }
             .returns(112)
-        every { library.isLibraryDeployed }.returns(false)
+        every { catalogClient.isLibraryDeployed }.returns(false)
 
         UpdateApp(
             context,
             prefRepository,
             directoryProvider,
-            library,
+            catalogClient,
             backupRC,
             translator,
             migrator,
             platform
         ).execute(onProgress)
 
-        verify(exactly = 0) { library.isLibraryDeployed }
+        verify(exactly = 0) { catalogClient.isLibraryDeployed }
         verifyCommonStuff()
         verifyUpdateLibrary()
         verifyNoSourceTranslations()
@@ -404,20 +398,20 @@ class UpdateAppTest {
         every { info.versionCode }.returns(124)
         every { prefRepository.getPrivatePref("last_version_code", any<Int>()) }
             .returns(123)
-        every { library.isLibraryDeployed }.returns(false)
+        every { catalogClient.isLibraryDeployed }.returns(false)
 
         UpdateApp(
             context,
             prefRepository,
             directoryProvider,
-            library,
+            catalogClient,
             backupRC,
             translator,
             migrator,
             platform
         ).execute(onProgress)
 
-        verify(exactly = 0) { library.isLibraryDeployed }
+        verify(exactly = 0) { catalogClient.isLibraryDeployed }
         verifyCommonStuff()
         verifyUpdateLibrary()
         verifyNoSourceTranslations()
@@ -436,20 +430,20 @@ class UpdateAppTest {
         every { info.versionCode }.returns(141)
         every { prefRepository.getPrivatePref("last_version_code", any<Int>()) }
             .returns(140)
-        every { library.isLibraryDeployed }.returns(false)
+        every { catalogClient.isLibraryDeployed }.returns(false)
 
         UpdateApp(
             context,
             prefRepository,
             directoryProvider,
-            library,
+            catalogClient,
             backupRC,
             translator,
             migrator,
             platform
         ).execute(onProgress)
 
-        verify(exactly = 0) { library.isLibraryDeployed }
+        verify(exactly = 0) { catalogClient.isLibraryDeployed }
         verifyCommonStuff()
         verifyUpdateLibrary()
         verifyNoSourceTranslations()
@@ -468,20 +462,20 @@ class UpdateAppTest {
         every { info.versionCode }.returns(144)
         every { prefRepository.getPrivatePref("last_version_code", any<Int>()) }
             .returns(143)
-        every { library.isLibraryDeployed }.returns(false)
+        every { catalogClient.isLibraryDeployed }.returns(false)
 
         UpdateApp(
             context,
             prefRepository,
             directoryProvider,
-            library,
+            catalogClient,
             backupRC,
             translator,
             migrator,
             platform
         ).execute(onProgress)
 
-        verify(exactly = 0) { library.isLibraryDeployed }
+        verify(exactly = 0) { catalogClient.isLibraryDeployed }
         verifyCommonStuff()
         verifyUpdateLibrary()
         verifyNoSourceTranslations()
@@ -500,20 +494,20 @@ class UpdateAppTest {
         every { info.versionCode }.returns(177)
         every { prefRepository.getPrivatePref("last_version_code", any<Int>()) }
             .returns(176)
-        every { library.isLibraryDeployed }.returns(false)
+        every { catalogClient.isLibraryDeployed }.returns(false)
 
         UpdateApp(
             context,
             prefRepository,
             directoryProvider,
-            library,
+            catalogClient,
             backupRC,
             translator,
             migrator,
             platform
         ).execute(onProgress)
 
-        verify(exactly = 0) { library.isLibraryDeployed }
+        verify(exactly = 0) { catalogClient.isLibraryDeployed }
         verifyCommonStuff()
         verifyNoSourceTranslations()
 
@@ -535,14 +529,14 @@ class UpdateAppTest {
 
     private fun verifyUpdateLibrary(called: Boolean = true) {
         verify(inverse = !called) { index.getImportedTranslations() }
-        verify(inverse = !called) { library.tearDown() }
+        verify(inverse = !called) { catalogClient.closeLibrary() }
         verify(inverse = !called) { directoryProvider.deleteLibrary() }
         verify(inverse = !called) { directoryProvider.deployDefaultLibrary() }
     }
 
     private fun verifyNoSourceTranslations() {
         verify(exactly = 0) { backupRC.backupResourceContainer(any()) }
-        coVerify(exactly = 0) { library.importResourceContainer(any()) }
+        coVerify(exactly = 0) { catalogClient.importResourceContainer(any()) }
     }
 
     private fun verifyUpgradePre87(called: Boolean = true) {

@@ -31,6 +31,8 @@ import io.mockk.mockkStatic
 import io.mockk.runs
 import io.mockk.unmockkAll
 import io.mockk.verify
+import org.bibletranslationtools.resourcecatalog.ResourceCatalogClient
+import org.bibletranslationtools.resourcecatalog.library.Index
 import org.bibletranslationtools.resourcecontainer.Project
 import org.bibletranslationtools.resourcecontainer.Resource
 import org.eclipse.jgit.errors.TransportException
@@ -43,8 +45,6 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
-import org.unfoldingword.door43client.Door43Client
-import org.unfoldingword.door43client.Index
 import java.io.File
 import java.io.OutputStream
 
@@ -57,7 +57,7 @@ class ExportProjectsTest {
 
     @MockK private lateinit var context: Context
     @MockK private lateinit var directoryProvider: IDirectoryProvider
-    @MockK private lateinit var library: Door43Client
+    @MockK private lateinit var catalogClient: ResourceCatalogClient
     @MockK private lateinit var typography: Typography
     @MockK private lateinit var targetTranslation: TargetTranslation
     @MockK private lateinit var contentResolver: ContentResolver
@@ -77,7 +77,7 @@ class ExportProjectsTest {
         mockkConstructor(PdfPrinter::class)
         mockkStatic(BaseFont::class)
 
-        every { library.index } returns index
+        every { catalogClient.library } returns index
         val project: Project = mockk {
             every { slug }.returns("mrk")
             every { languageSlug }.returns("en")
@@ -141,7 +141,7 @@ class ExportProjectsTest {
         ExportProjects(
             context,
             directoryProvider,
-            library,
+            catalogClient,
             typography,
             platform
         ).exportProject(targetTranslation, outputFile)
@@ -176,7 +176,7 @@ class ExportProjectsTest {
         ExportProjects(
             context,
             directoryProvider,
-            library,
+            catalogClient,
             typography,
             platform
         ).exportProject(targetTranslation, uri)
@@ -198,7 +198,7 @@ class ExportProjectsTest {
         ExportProjects(
             context,
             directoryProvider,
-            library,
+            catalogClient,
             typography,
             platform
         ).exportProject(projectDir, outFile)
@@ -218,7 +218,7 @@ class ExportProjectsTest {
             ExportProjects(
                 context,
                 directoryProvider,
-                library,
+                catalogClient,
                 typography,
                 platform
             ).exportProject(projectDir, outFile)
@@ -239,7 +239,7 @@ class ExportProjectsTest {
             ExportProjects(
                 context,
                 directoryProvider,
-                library,
+                catalogClient,
                 typography,
                 platform
             ).exportProject(projectDir, outFile)
@@ -274,7 +274,7 @@ class ExportProjectsTest {
         val result = ExportProjects(
             context,
             directoryProvider,
-            library,
+            catalogClient,
             typography,
             platform
         ).exportUSFM(targetTranslation, uri)
@@ -331,7 +331,7 @@ class ExportProjectsTest {
         val result = ExportProjects(
             context,
             directoryProvider,
-            library,
+            catalogClient,
             typography,
             platform
         ).exportUSFM(targetTranslation, uri)
@@ -365,7 +365,7 @@ class ExportProjectsTest {
         val result = ExportProjects(
             context,
             directoryProvider,
-            library,
+            catalogClient,
             typography,
             platform
         ).exportPDF(
@@ -400,7 +400,7 @@ class ExportProjectsTest {
         val result = ExportProjects(
             context,
             directoryProvider,
-            library,
+            catalogClient,
             typography,
             platform
         ).exportPDF(

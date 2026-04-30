@@ -3,6 +3,7 @@ package com.door43.translationstudio
 import android.app.Application
 import com.door43.di.appModule
 import com.door43.translationstudio.di.testDataModule
+import org.bibletranslationtools.resourcecatalog.initAndroid
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.startKoin
@@ -12,6 +13,8 @@ class KoinTestApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+
+        initAndroid(this)
 
         startKoin {
             androidLogger(Level.DEBUG)

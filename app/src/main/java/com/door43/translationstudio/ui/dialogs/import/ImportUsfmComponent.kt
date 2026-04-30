@@ -32,11 +32,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
+import org.bibletranslationtools.resourcecatalog.ResourceCatalogClient
+import org.bibletranslationtools.resourcecatalog.library.models.CategoryEntry
+import org.bibletranslationtools.resourcecatalog.library.models.TargetLanguage
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import org.unfoldingword.door43client.Door43Client
-import org.unfoldingword.door43client.models.CategoryEntry
-import org.unfoldingword.door43client.models.TargetLanguage
 import java.util.Locale
 
 enum class UsfmStep {
@@ -98,7 +98,7 @@ class DefaultImportUsfmComponent(
     private val application: Application by inject()
     private val translator: Translator by inject()
     private val importProjects: ImportProjects by inject()
-    private val library: Door43Client by inject()
+    private val catalogClient: ResourceCatalogClient by inject()
     private val directoryProvider: IDirectoryProvider by inject()
     private val assetsProvider: AssetsProvider by inject()
     private val profile: Profile by inject()
@@ -174,7 +174,7 @@ class DefaultImportUsfmComponent(
         val stack = _state.value.categoryStack
         if (stack.size <= 1) return
         val parentId = stack[stack.size - 2]
-        val categories = library.index.getProjectCategories(
+        val categories = catalogClient.library.getProjectCategories(
             parentId, platform.deviceLanguageCode, "all"
         )
         _state.update {
@@ -212,7 +212,7 @@ class DefaultImportUsfmComponent(
         if (isUsfm || isTxt || isZip) {
             launchWithProgress {
                 val languages = withContext(Dispatchers.IO) {
-                    library.index.getTargetLanguages().sortedBy { it.slug }
+                    catalogClient.library.getTargetLanguages().sortedBy { it.slug }
                 }
 
                 _state.update {
@@ -249,7 +249,7 @@ class DefaultImportUsfmComponent(
                     platform,
                     directoryProvider,
                     profile,
-                    library,
+                    catalogClient,
                     assetsProvider
                 )
                     .fromUri(language, uri) { progress, message ->
@@ -285,7 +285,7 @@ class DefaultImportUsfmComponent(
             application.getString(R.string.missing_book_name_prompt, description)
         }
 
-        val categories = library.index.getProjectCategories(
+        val categories = catalogClient.library.getProjectCategories(
             0L, platform.deviceLanguageCode, "all"
         )
         _state.update {
@@ -395,7 +395,7 @@ class DefaultImportUsfmComponent(
     }
 
     private fun navigateToCategory(categoryId: Long) {
-        val categories = library.index.getProjectCategories(
+        val categories = catalogClient.library.getProjectCategories(
             categoryId, platform.deviceLanguageCode, "all"
         )
         _state.update {

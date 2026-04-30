@@ -16,15 +16,15 @@ import com.door43.translationstudio.core.Translator
 import com.door43.util.FileUtilities
 import kotlinx.io.IOException
 import org.bibletranslationtools.logger.Logger
+import org.bibletranslationtools.resourcecatalog.ResourceCatalogClient
 import org.bibletranslationtools.resourcecontainer.ResourceContainer
-import org.unfoldingword.door43client.Door43Client
 import java.io.File
 
 class UpdateApp(
     private val context: Context,
     private val prefRepository: IPreferenceRepository,
     private val directoryProvider: IDirectoryProvider,
-    private val library: Door43Client,
+    private val catalogClient: ResourceCatalogClient,
     private val backupRC: BackupRC,
     private val translator: Translator,
     private val migrator: TargetTranslationMigrator,
@@ -50,12 +50,12 @@ class UpdateApp(
             performUpdates(lastVersionCode, onProgress)
         } else {
             // update if not deployed or if a fresh install
-            updateLibrary = !library.isLibraryDeployed || newInstall
+            updateLibrary = !catalogClient.isLibraryDeployed || newInstall
         }
 
         if (updateLibrary) {
             // preserve manually imported source translations
-            val translations = library.index.getImportedTranslations()
+            val translations = catalogClient.library.getImportedTranslations()
             val backupFiles = arrayListOf<File>()
             if (translations.isNotEmpty()) {
                 Logger.i("UpdateAppTask", "Backing up imported RCs")
@@ -69,7 +69,7 @@ class UpdateApp(
             }
 
             try {
-                library.tearDown()
+                catalogClient.closeLibrary()
                 directoryProvider.deleteLibrary()
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -85,7 +85,7 @@ class UpdateApp(
                     val opened = File("$f.tmp")
                     try {
                         ResourceContainer.open(f, opened)
-                        library.importResourceContainer(opened)
+                        catalogClient.importResourceContainer(opened)
                     } catch (_: Exception) {
                         Logger.e("UpdateAppTask", "Failed to restore RC from $f")
                     }
@@ -95,29 +95,17 @@ class UpdateApp(
                 e.printStackTrace()
             }
 
-            platform.restart()
-            return
+            catalogClient.openLibrary()
         }
 
-        updateTargetTranslations()
+        migrateTargetTranslations()
         updateBuildNumbers()
-
-        // initialize the language url (langnames) from preference
-        try {
-            val languageUrl = prefRepository.getDefaultPref(
-                IPreferenceRepository.KEY_PREF_LANGUAGES_URL,
-                context.resources.getString(R.string.pref_default_language_url)
-            )
-            library.updateLanguageUrl(languageUrl)
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
     }
 
     /**
      * Performs required updates between the two app versions
      * @param lastVersion
-     * @param progressListener
+     * @param onProgress
      */
     private fun performUpdates(
         lastVersion: Int,
@@ -162,7 +150,7 @@ class UpdateApp(
      * NOTE: we used to do this manually but now we run this every time so we don't have to manually
      * add a new migration path each time
      */
-    private fun updateTargetTranslations() {
+    private fun migrateTargetTranslations() {
         // TRICKY: we manually list the target translations because they won't be viewable until updated
         val translatorDir: File = translator.path
         val dirs = translatorDir.listFiles { pathname ->

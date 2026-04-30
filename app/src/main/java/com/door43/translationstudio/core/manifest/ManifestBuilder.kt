@@ -2,7 +2,7 @@ package com.door43.translationstudio.core.manifest
 
 import com.door43.translationstudio.core.NativeSpeaker
 import com.door43.translationstudio.core.ResourceType
-import org.unfoldingword.door43client.models.TargetLanguage
+import org.bibletranslationtools.resourcecatalog.library.models.TargetLanguage
 
 class ManifestBuilder {
     private var packageVersion = 0

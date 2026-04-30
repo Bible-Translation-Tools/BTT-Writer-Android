@@ -14,11 +14,11 @@ import junit.framework.TestCase
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.bibletranslationtools.gogsclient.User
+import org.bibletranslationtools.resourcecatalog.ResourceCatalogClient
 import org.json.JSONArray
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
-import org.unfoldingword.door43client.Door43Client
 import java.lang.reflect.Field
 import java.util.UUID
 
@@ -81,7 +81,7 @@ object TestUtils {
      * @return created TargetTranslation
      */
     fun importTargetTranslation(
-        library: Door43Client,
+        catalogClient: ResourceCatalogClient,
         appContext: Context,
         platform: Platform,
         directoryProvider: IDirectoryProvider,
@@ -92,13 +92,13 @@ object TestUtils {
         langCode: String,
         path: String
     ): TargetTranslation? {
-        val targetLanguage = library.index.getTargetLanguage(langCode)
+        val targetLanguage = catalogClient.library.getTargetLanguage(langCode)
         val usfm = ProcessUSFM.Builder(
             appContext,
             platform,
             directoryProvider,
             profile,
-            library,
+            catalogClient,
             assetsProvider
         )
             .fromRc(targetLanguage!!, path)

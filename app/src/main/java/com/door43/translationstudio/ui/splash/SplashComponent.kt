@@ -187,7 +187,6 @@ class DefaultSplashComponent(
         ) { handle ->
             withContext(Dispatchers.IO) {
                 updateApp.execute { progress, message ->
-                    println("Update in progress $progress")
                     handle.update(progress, message)
                 }
             }

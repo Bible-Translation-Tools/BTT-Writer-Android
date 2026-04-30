@@ -28,12 +28,12 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
+import org.bibletranslationtools.resourcecatalog.ResourceCatalogClient
+import org.bibletranslationtools.resourcecatalog.library.models.SourceLanguage
+import org.bibletranslationtools.resourcecatalog.library.models.Translation
 import org.bibletranslationtools.resourcecontainer.ResourceContainer
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import org.unfoldingword.door43client.Door43Client
-import org.unfoldingword.door43client.models.SourceLanguage
-import org.unfoldingword.door43client.models.Translation
 
 data class ChapterContent(
     val heading: String,
@@ -79,7 +79,7 @@ class DefaultDraftComponent(
 
     private val application: Application by inject()
     private val translator: Translator by inject()
-    private val library: Door43Client by inject()
+    private val catalogClient: ResourceCatalogClient by inject()
     private val importDraft: ImportDraft by inject()
 
     override val coroutineScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
@@ -108,7 +108,7 @@ class DefaultDraftComponent(
 
     override fun getResourceContainer(rcSlug: String): ResourceContainer? {
         return try {
-            library.open(rcSlug)
+            catalogClient.openResourceContainer(rcSlug)
         } catch (e: Exception) {
             e.printStackTrace()
             null
@@ -117,7 +117,7 @@ class DefaultDraftComponent(
 
     override fun getSourceLanguage(draftTranslation: ResourceContainer): SourceLanguage? {
         return try {
-            library.index.getSourceLanguage(draftTranslation.info.language.slug)
+            catalogClient.library.getSourceLanguage(draftTranslation.info.language.slug)
         } catch (e: Exception) {
             e.printStackTrace()
             null
@@ -195,7 +195,7 @@ class DefaultDraftComponent(
         ) {
             targetTranslationId?.let { id ->
                 translator.getTargetTranslation(id)?.let { targetTranslation ->
-                    val translations = library.index.findTranslations(
+                    val translations = catalogClient.library.findTranslations(
                         targetTranslation.targetLanguage.slug,
                         targetTranslation.projectId,
                         null,

@@ -1,7 +1,8 @@
 package com.door43.translationstudio.core
 
-import org.unfoldingword.door43client.models.SourceLanguage
-import org.unfoldingword.door43client.models.TargetLanguage
+import org.bibletranslationtools.resourcecatalog.library.models.SourceLanguage
+import org.bibletranslationtools.resourcecatalog.library.models.TargetLanguage
+
 
 /**
  * A sealed hierarchy representing a validation set on a translation.

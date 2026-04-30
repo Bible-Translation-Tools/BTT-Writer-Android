@@ -16,10 +16,10 @@ class PassageLinkSpan(
     var projectId: String? = null
         private set
 
-    lateinit var chapterId: String
+    var chapterId: String = ""
         private set
 
-    lateinit var frameId: String
+    var frameId: String = ""
         private set
 
     companion object {

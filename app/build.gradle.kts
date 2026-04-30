@@ -125,6 +125,7 @@ dependencies {
     implementation(libs.itextg)
     implementation(libs.gogs.client)
     implementation(libs.resource.container)
+    implementation(libs.resource.catalog.client)
     implementation(libs.bible.logger)
     implementation(libs.foreground)
     implementation(libs.firebase.appindexing)

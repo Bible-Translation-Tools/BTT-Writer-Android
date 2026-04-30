@@ -12,8 +12,8 @@ import com.door43.translationstudio.core.ProgressOwner
 import com.door43.translationstudio.core.TaskHandle
 import com.door43.translationstudio.core.launchWithProgress
 import com.door43.usecases.CheckForLatestRelease
-import com.door43.usecases.DownloadIndex
 import com.door43.usecases.DownloadLatestRelease
+import com.door43.usecases.ImportIndex
 import com.door43.usecases.UpdateCatalogs
 import com.door43.usecases.UpdateSource
 import com.door43.util.FileUtilities
@@ -72,7 +72,7 @@ class DefaultUpdateLibraryComponent(
     ComponentScope, ProgressOwner, KoinComponent {
 
     private val application: Application by inject()
-    private val downloadIndex: DownloadIndex by inject()
+    private val importIndex: ImportIndex by inject()
     private val updateCatalogs: UpdateCatalogs by inject()
     private val checkForLatestRelease: CheckForLatestRelease by inject()
     private val downloadLatestRelease: DownloadLatestRelease by inject()
@@ -137,7 +137,7 @@ class DefaultUpdateLibraryComponent(
                 application.getString(R.string.importing_index)
             ) {
                 val success = withContext(Dispatchers.IO) {
-                    downloadIndex.import(uri)
+                    importIndex.import(uri)
                 }
                 if (success) {
                     _event.trySend(UpdateLibraryComponent.Event.IndexUpdated)
@@ -161,7 +161,7 @@ class DefaultUpdateLibraryComponent(
             application.getString(R.string.importing_index)
         ) { handle ->
             val success = withContext(Dispatchers.IO) {
-                downloadIndex.download { progress, message ->
+                importIndex.download { progress, message ->
                     handle.update(progress, message)
                 }
             }

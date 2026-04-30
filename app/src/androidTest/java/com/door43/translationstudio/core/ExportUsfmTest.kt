@@ -13,6 +13,9 @@ import com.door43.usecases.ExportProjects
 import com.door43.util.FileUtilities
 import com.door43.util.Zip
 import org.bibletranslationtools.logger.Logger
+import org.bibletranslationtools.resourcecatalog.ResourceCatalogClient
+import org.bibletranslationtools.resourcecatalog.library.models.TargetLanguage
+import org.bibletranslationtools.resourcecatalog.library.models.Translation
 import org.bibletranslationtools.resourcecontainer.ResourceContainer
 import org.junit.After
 import org.junit.Assert
@@ -21,9 +24,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.koin.test.KoinTest
 import org.koin.test.inject
-import org.unfoldingword.door43client.Door43Client
-import org.unfoldingword.door43client.models.TargetLanguage
-import org.unfoldingword.door43client.models.Translation
 import java.io.File
 import java.io.FileInputStream
 import java.io.IOException
@@ -40,7 +40,7 @@ import java.util.regex.Pattern
 class ExportUsfmTest : KoinTest {
 
     private val appContext: Context by inject()
-    private val library: Door43Client by inject()
+    private val catalogClient: ResourceCatalogClient by inject()
     private val directoryProvider: IDirectoryProvider by inject()
     private val profile: Profile by inject()
     private val exportProjects: ExportProjects by inject()
@@ -60,7 +60,7 @@ class ExportUsfmTest : KoinTest {
         errorLog = null
         Logger.flush()
 
-        targetLanguage = library.index.getTargetLanguage("aae")
+        targetLanguage = catalogClient.library.getTargetLanguage("aae")
     }
 
     @After
@@ -673,7 +673,7 @@ class ExportUsfmTest : KoinTest {
                 platform,
                 directoryProvider,
                 profile,
-                library,
+                catalogClient,
                 assetsProvider
             )
                 .fromRc(language, "usfm/$source")
@@ -702,7 +702,7 @@ class ExportUsfmTest : KoinTest {
      */
     fun getResourceTOC(
         targetTranslation: TargetTranslation,
-        library: Door43Client
+        catalogClient: ResourceCatalogClient
     ): MutableList<MutableMap<*, *>?>? {
         var sourceTranslationSlug = prefRepository.getSelectedSourceTranslationId(
             targetTranslation.id
@@ -721,10 +721,10 @@ class ExportUsfmTest : KoinTest {
         // if none selected, try list of selected translations
         if (sourceTranslationSlug == null) {
             val projectId = targetTranslation.projectId
-            sourceTranslationSlug = getAvailableTargetTranslations(library, projectId)
+            sourceTranslationSlug = getAvailableTargetTranslations(catalogClient, projectId)
         }
 
-        return getResourceToc(library, sourceTranslationSlug!!)
+        return getResourceToc(catalogClient, sourceTranslationSlug!!)
     }
 
     companion object {
@@ -733,12 +733,12 @@ class ExportUsfmTest : KoinTest {
         val PATTERN_CHAPTER_LABEL_MARKER: Pattern = Pattern.compile(CHAPTER_LABEL_MARKER)
 
         private fun getResourceToc(
-            library: Door43Client,
+            catalogClient: ResourceCatalogClient,
             sourceTranslationSlug: String
         ): MutableList<MutableMap<*, *>?>? {
-            val sourceTranslation: Translation? = library.index.getTranslation(sourceTranslationSlug)
+            val sourceTranslation: Translation? = catalogClient.library.getTranslation(sourceTranslationSlug)
             val mSourceContainer: ResourceContainer =
-                ContainerCache.cache(library, sourceTranslation!!.resourceContainerSlug)!!
+                ContainerCache.cache(catalogClient, sourceTranslation!!.resourceContainerSlug)!!
             return mSourceContainer.toc as MutableList<MutableMap<*, *>?>?
         }
 
@@ -750,18 +750,18 @@ class ExportUsfmTest : KoinTest {
          * @return
          */
         private fun getAvailableTargetTranslations(
-            library: Door43Client,
+            catalogClient: ResourceCatalogClient,
             projectId: String?
         ): String? {
             var sourceTranslationSlug: String? = null
-            val availableTranslations: MutableList<Translation> = library.index.findTranslations(
+            val availableTranslations: MutableList<Translation> = catalogClient.library.findTranslations(
                 null, projectId,
                 null, "book", "all", Platform.MIN_CHECKING_LEVEL, -1
             ).toMutableList()
             if (availableTranslations.isNotEmpty()) {
                 for (availableTranslation in availableTranslations) {
                     val isDownloaded: Boolean =
-                        library.exists(availableTranslation.resourceContainerSlug)
+                        catalogClient.resourceContainerExists(availableTranslation.resourceContainerSlug)
                     if (isDownloaded) {
                         sourceTranslationSlug = availableTranslation.resourceContainerSlug
                         break

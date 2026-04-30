@@ -2,12 +2,12 @@ package com.door43.usecases
 
 import com.door43.translationstudio.Platform
 import com.door43.translationstudio.core.BibleCodes
-import org.unfoldingword.door43client.Door43Client
-import org.unfoldingword.door43client.models.Translation
+import org.bibletranslationtools.resourcecatalog.ResourceCatalogClient
+import org.bibletranslationtools.resourcecatalog.library.models.Translation
 import java.util.TreeMap
 
 class GetAvailableSources(
-    private val library: Door43Client
+    private val catalogClient: ResourceCatalogClient
 ) {
     data class Result(
         val sources: List<Translation>,
@@ -25,7 +25,7 @@ class GetAvailableSources(
 
         val allSources = mutableListOf<Translation>()
 
-        val sources = library.index.findTranslations(
+        val sources = catalogClient.library.findTranslations(
             null,
             null,
             null,
@@ -35,7 +35,7 @@ class GetAvailableSources(
             -1
         )
 
-        val tw = library.index.findTranslations(
+        val tw = catalogClient.library.findTranslations(
             null,
             null,
             null,
@@ -49,7 +49,7 @@ class GetAvailableSources(
         allSources.addAll(tw)
 
 //        02/20/2017 - for now we are disabling updating of TA since a major change coming up could break the app
-//        List<Translation> man = library.index.findTranslations(null, null, null, "man", null, App.MIN_CHECKING_LEVEL, -1);
+//        List<Translation> man = catalogClient.library.findTranslations(null, null, null, "man", null, App.MIN_CHECKING_LEVEL, -1);
 //        availableTranslations.addAll(man);
 
         val byLanguage = TreeMap<String, ArrayList<Int>>()

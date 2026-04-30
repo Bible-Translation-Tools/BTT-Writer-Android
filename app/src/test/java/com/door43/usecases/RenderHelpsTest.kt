@@ -9,6 +9,9 @@ import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.unmockkAll
 import io.mockk.verify
+import org.bibletranslationtools.resourcecatalog.ResourceCatalogClient
+import org.bibletranslationtools.resourcecatalog.library.Index
+import org.bibletranslationtools.resourcecatalog.library.models.Translation
 import org.bibletranslationtools.resourcecontainer.Language
 import org.bibletranslationtools.resourcecontainer.Link
 import org.bibletranslationtools.resourcecontainer.Project
@@ -17,13 +20,10 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
-import org.unfoldingword.door43client.Door43Client
-import org.unfoldingword.door43client.Index
-import org.unfoldingword.door43client.models.Translation
 
 class RenderHelpsTest {
 
-    @MockK private lateinit var library: Door43Client
+    @MockK private lateinit var catalogClient: ResourceCatalogClient
     @MockK private lateinit var language: Language
     @MockK private lateinit var project: Project
     @MockK private lateinit var index: Index
@@ -35,10 +35,10 @@ class RenderHelpsTest {
         every { language.slug }.returns("en")
         every { project.slug }.returns("mrk")
 
-        every { library.index } returns index
+        every { catalogClient.library } returns index
 
         mockkObject(ContainerCache)
-        every { ContainerCache.cache(library, any()) }
+        every { ContainerCache.cache(catalogClient, any()) }
             .answers {
                 val slug = secondArg<String>()
                 when (slug) {
@@ -78,7 +78,7 @@ class RenderHelpsTest {
         }
         every { listItem.source } returns source
 
-        val result = RenderHelps(library).execute(listItem)
+        val result = RenderHelps(catalogClient).execute(listItem)
 
         assertEquals(3, result.size)
         assertEquals(3, (result["questions"]!! as List<*>).size)
@@ -105,7 +105,7 @@ class RenderHelpsTest {
         }
         every { listItem.source } returns source
 
-        val result = RenderHelps(library).execute(listItem)
+        val result = RenderHelps(catalogClient).execute(listItem)
 
         assertEquals(3, result.size)
         assertEquals(3, (result["questions"]!! as List<*>).size)
@@ -135,7 +135,7 @@ class RenderHelpsTest {
         every { index.findTranslations(any(), any(), "tq", any(), any(), any(), any()) }
             .returns(listOf())
 
-        val result = RenderHelps(library).execute(listItem)
+        val result = RenderHelps(catalogClient).execute(listItem)
 
         assertEquals(3, result.size)
         assertEquals(0, (result["questions"]!! as List<*>).size)
@@ -162,10 +162,10 @@ class RenderHelpsTest {
         }
         every { listItem.source } returns source
 
-        every { ContainerCache.cache(library, "en_mrk_tq") }
+        every { ContainerCache.cache(catalogClient, "en_mrk_tq") }
             .returns(null)
 
-        val result = RenderHelps(library).execute(listItem)
+        val result = RenderHelps(catalogClient).execute(listItem)
 
         assertEquals(3, result.size)
         assertEquals(0, (result["questions"]!! as List<*>).size)
@@ -194,7 +194,7 @@ class RenderHelpsTest {
         every { index.findTranslations(any(), any(), "tn", any(), any(), any(), any()) }
             .returns(listOf())
 
-        val result = RenderHelps(library).execute(listItem)
+        val result = RenderHelps(catalogClient).execute(listItem)
 
         assertEquals(3, result.size)
         assertEquals(3, (result["questions"]!! as List<*>).size)
@@ -221,10 +221,10 @@ class RenderHelpsTest {
         }
         every { listItem.source } returns source
 
-        every { ContainerCache.cache(library, "en_mrk_tn") }
+        every { ContainerCache.cache(catalogClient, "en_mrk_tn") }
             .returns(null)
 
-        val result = RenderHelps(library).execute(listItem)
+        val result = RenderHelps(catalogClient).execute(listItem)
 
         assertEquals(3, result.size)
         assertEquals(3, (result["questions"]!! as List<*>).size)

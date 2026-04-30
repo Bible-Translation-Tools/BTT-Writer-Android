@@ -31,8 +31,8 @@ import com.door43.translationstudio.ui.dialogs.OverlayDialog
 import com.door43.translationstudio.ui.dialogs.ProgressDialog
 import com.door43.translationstudio.ui.newtranslation.LanguagesList
 import com.door43.translationstudio.ui.newtranslation.ProjectList
-import org.unfoldingword.door43client.models.CategoryEntry
-import org.unfoldingword.door43client.models.TargetLanguage
+import org.bibletranslationtools.resourcecatalog.library.models.CategoryEntry
+import org.bibletranslationtools.resourcecatalog.library.models.TargetLanguage
 
 @Composable
 fun ImportUsfmDialog(

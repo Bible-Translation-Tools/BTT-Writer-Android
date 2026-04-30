@@ -41,7 +41,7 @@ class RegisterSSHKeysTest {
     @MockK private lateinit var resources: Resources
     @MockK private lateinit var platform: Platform
 
-    val onProgress = mockk<(Float, String?) -> Unit>(relaxed = true)
+    private val onProgress = mockk<(Float, String?) -> Unit>(relaxed = true)
 
     @Before
     fun setup() {

@@ -11,6 +11,9 @@ import com.door43.translationstudio.rendering.spannables.USFMVerseSpan
 import com.door43.util.FileUtilities
 import junit.framework.TestCase.assertFalse
 import org.bibletranslationtools.logger.Logger
+import org.bibletranslationtools.resourcecatalog.ResourceCatalogClient
+import org.bibletranslationtools.resourcecatalog.library.models.ChunkMarker
+import org.bibletranslationtools.resourcecatalog.library.models.TargetLanguage
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
@@ -20,9 +23,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.koin.test.KoinTest
 import org.koin.test.inject
-import org.unfoldingword.door43client.Door43Client
-import org.unfoldingword.door43client.models.ChunkMarker
-import org.unfoldingword.door43client.models.TargetLanguage
 import java.io.File
 import java.io.IOException
 import java.util.regex.Pattern
@@ -39,7 +39,7 @@ import kotlin.test.assertNotNull
 class ImportUsfmTest : KoinTest {
 
     private val appContext: Context by inject()
-    private val library: Door43Client by inject()
+    private val catalogClient: ResourceCatalogClient by inject()
     private val directoryProvider: IDirectoryProvider by inject()
     private val profile: Profile by inject()
     private val assetsProvider: AssetsProvider by inject()
@@ -56,7 +56,7 @@ class ImportUsfmTest : KoinTest {
         expectedBooks = JSONArray()
 
         Logger.flush()
-        targetLanguage = library.index.getTargetLanguage("es")!!
+        targetLanguage = catalogClient.library.getTargetLanguage("es")!!
     }
 
     @After
@@ -80,7 +80,7 @@ class ImportUsfmTest : KoinTest {
             platform,
             directoryProvider,
             profile,
-            library,
+            catalogClient,
             assetsProvider
         )
             .fromRc(targetLanguage, "usfm/$source")
@@ -118,7 +118,7 @@ class ImportUsfmTest : KoinTest {
             platform,
             directoryProvider,
             profile,
-            library,
+            catalogClient,
             assetsProvider
         )
             .fromRc(targetLanguage, "usfm/$source")
@@ -151,7 +151,7 @@ class ImportUsfmTest : KoinTest {
             platform,
             directoryProvider,
             profile,
-            library,
+            catalogClient,
             assetsProvider
         )
             .fromRc(targetLanguage, "usfm/$source")
@@ -184,7 +184,7 @@ class ImportUsfmTest : KoinTest {
             platform,
             directoryProvider,
             profile,
-            library,
+            catalogClient,
             assetsProvider
         )
             .fromRc(targetLanguage, "usfm/$source")
@@ -215,7 +215,7 @@ class ImportUsfmTest : KoinTest {
             platform,
             directoryProvider,
             profile,
-            library,
+            catalogClient,
             assetsProvider
         )
             .fromRc(targetLanguage, "usfm/$source")
@@ -245,7 +245,7 @@ class ImportUsfmTest : KoinTest {
             platform,
             directoryProvider,
             profile,
-            library,
+            catalogClient,
             assetsProvider
         )
             .fromRc(targetLanguage, "usfm/$source")
@@ -277,7 +277,7 @@ class ImportUsfmTest : KoinTest {
             platform,
             directoryProvider,
             profile,
-            library,
+            catalogClient,
             assetsProvider
         )
             .fromRc(targetLanguage, "usfm/$source")
@@ -309,7 +309,7 @@ class ImportUsfmTest : KoinTest {
             platform,
             directoryProvider,
             profile,
-            library,
+            catalogClient,
             assetsProvider
         )
             .fromRc(targetLanguage, "usfm/$source")
@@ -341,7 +341,7 @@ class ImportUsfmTest : KoinTest {
             platform,
             directoryProvider,
             profile,
-            library,
+            catalogClient,
             assetsProvider
         )
             .fromRc(targetLanguage, "usfm/$source")
@@ -373,7 +373,7 @@ class ImportUsfmTest : KoinTest {
             platform,
             directoryProvider,
             profile,
-            library,
+            catalogClient,
             assetsProvider
         )
             .fromRc(targetLanguage, "usfm/$source")
@@ -405,7 +405,7 @@ class ImportUsfmTest : KoinTest {
             platform,
             directoryProvider,
             profile,
-            library,
+            catalogClient,
             assetsProvider
         )
             .fromRc(targetLanguage, "usfm/$source")
@@ -437,7 +437,7 @@ class ImportUsfmTest : KoinTest {
             platform,
             directoryProvider,
             profile,
-            library,
+            catalogClient,
             assetsProvider
         )
             .fromRc(targetLanguage, "usfm/$source")
@@ -469,7 +469,7 @@ class ImportUsfmTest : KoinTest {
             platform,
             directoryProvider,
             profile,
-            library,
+            catalogClient,
             assetsProvider
         )
             .fromRc(targetLanguage, "usfm/$source")
@@ -500,7 +500,7 @@ class ImportUsfmTest : KoinTest {
             platform,
             directoryProvider,
             profile,
-            library,
+            catalogClient,
             assetsProvider
         )
             .fromRc(targetLanguage, "usfm/$source")
@@ -530,7 +530,7 @@ class ImportUsfmTest : KoinTest {
             platform,
             directoryProvider,
             profile,
-            library,
+            catalogClient,
             assetsProvider
         )
             .fromRc(targetLanguage, "usfm/$source")
@@ -562,7 +562,7 @@ class ImportUsfmTest : KoinTest {
             platform,
             directoryProvider,
             profile,
-            library,
+            catalogClient,
             assetsProvider
         )
             .fromRc(targetLanguage, "usfm/$source")
@@ -594,7 +594,7 @@ class ImportUsfmTest : KoinTest {
             platform,
             directoryProvider,
             profile,
-            library,
+            catalogClient,
             assetsProvider
         )
             .fromRc(targetLanguage, "usfm/$source")
@@ -626,7 +626,7 @@ class ImportUsfmTest : KoinTest {
             platform,
             directoryProvider,
             profile,
-            library,
+            catalogClient,
             assetsProvider
         )
             .fromRc(targetLanguage, "usfm/$source")
@@ -658,7 +658,7 @@ class ImportUsfmTest : KoinTest {
             platform,
             directoryProvider,
             profile,
-            library,
+            catalogClient,
             assetsProvider
         )
             .fromRc(targetLanguage, "usfm/$source")
@@ -690,7 +690,7 @@ class ImportUsfmTest : KoinTest {
             platform,
             directoryProvider,
             profile,
-            library,
+            catalogClient,
             assetsProvider
         )
             .fromRc(targetLanguage, "usfm/$source")
@@ -867,7 +867,7 @@ class ImportUsfmTest : KoinTest {
             )
 
             for (project in projects) {
-                val chunksList = library.index.getChunkMarkers(
+                val chunksList = catalogClient.library.getChunkMarkers(
                     book.lowercase(),
                     "en-US"
                 )

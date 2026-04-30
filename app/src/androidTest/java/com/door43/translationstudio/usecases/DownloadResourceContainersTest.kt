@@ -15,7 +15,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.koin.core.component.inject
-import org.unfoldingword.door43client.Door43Client
+import org.bibletranslationtools.resourcecatalog.ResourceCatalogClient
 
 
 @RunWith(AndroidJUnit4::class)
@@ -24,7 +24,7 @@ class DownloadResourceContainersTest : KoinAndroidTest() {
 
     private val directoryProvider: IDirectoryProvider by inject()
     private val downloadResourceContainers: DownloadResourceContainers by inject()
-    private val library: Door43Client by inject()
+    private val catalogClient: ResourceCatalogClient by inject()
 
     @Before
     fun setUp() {
@@ -38,7 +38,7 @@ class DownloadResourceContainersTest : KoinAndroidTest() {
 
     @Test
     fun downloadResourceContainerSucceeded() = runTest {
-        val translation = library.index.getTranslation("en_gen_ulb")
+        val translation = catalogClient.library.getTranslation("en_gen_ulb")
         assertNotNull("Translation should not be null", translation)
 
         var progressMessage: String? = null

@@ -16,10 +16,10 @@ import com.door43.util.Zip
 import com.door43.util.sortNumerically
 import com.door43.util.sortNumericallyComparator
 import org.bibletranslationtools.logger.Logger
+import org.bibletranslationtools.resourcecatalog.ResourceCatalogClient
+import org.bibletranslationtools.resourcecatalog.library.models.ChunkMarker
+import org.bibletranslationtools.resourcecatalog.library.models.TargetLanguage
 import org.bibletranslationtools.resourcecontainer.Resource
-import org.unfoldingword.door43client.Door43Client
-import org.unfoldingword.door43client.models.ChunkMarker
-import org.unfoldingword.door43client.models.TargetLanguage
 import java.io.File
 import java.io.FileInputStream
 import java.io.InputStream
@@ -34,7 +34,7 @@ class ProcessUSFM {
     private var platform: Platform
     private val directoryProvider: IDirectoryProvider
     private val profile: Profile
-    private val library: Door43Client
+    private val catalogClient: ResourceCatalogClient
     private val assetsProvider: AssetsProvider
     private var targetLanguage: TargetLanguage? = null
     private var onProgress: (Float, String?) -> Unit = { _, _->}
@@ -79,7 +79,7 @@ class ProcessUSFM {
         platform: Platform,
         directoryProvider: IDirectoryProvider,
         profile: Profile,
-        library: Door43Client,
+        catalogClient: ResourceCatalogClient,
         assetsProvider: AssetsProvider,
         targetLanguage: TargetLanguage?,
         onProgress: (Float, String?) -> Unit = {_,_->}
@@ -88,7 +88,7 @@ class ProcessUSFM {
         this.platform = platform
         this.directoryProvider = directoryProvider
         this.profile = profile
-        this.library = library
+        this.catalogClient = catalogClient
         this.assetsProvider = assetsProvider
         this.targetLanguage = targetLanguage
         this.onProgress = onProgress
@@ -104,7 +104,7 @@ class ProcessUSFM {
         platform: Platform,
         directoryProvider: IDirectoryProvider,
         profile: Profile,
-        library: Door43Client,
+        catalogClient: ResourceCatalogClient,
         assetsProvider: AssetsProvider,
         targetLanguage: TargetLanguage,
         file: File,
@@ -114,7 +114,7 @@ class ProcessUSFM {
         platform,
         directoryProvider,
         profile,
-        library,
+        catalogClient,
         assetsProvider,
         targetLanguage,
         onProgress
@@ -128,7 +128,7 @@ class ProcessUSFM {
         platform: Platform,
         directoryProvider: IDirectoryProvider,
         profile: Profile,
-        library: Door43Client,
+        catalogClient: ResourceCatalogClient,
         assetsProvider: AssetsProvider,
         targetLanguage: TargetLanguage,
         uri: Uri,
@@ -138,7 +138,7 @@ class ProcessUSFM {
         platform,
         directoryProvider,
         profile,
-        library,
+        catalogClient,
         assetsProvider,
         targetLanguage,
         onProgress
@@ -152,7 +152,7 @@ class ProcessUSFM {
         platform: Platform,
         directoryProvider: IDirectoryProvider,
         profile: Profile,
-        library: Door43Client,
+        catalogClient: ResourceCatalogClient,
         assetsProvider: AssetsProvider,
         targetLanguage: TargetLanguage,
         rcPath: String,
@@ -162,7 +162,7 @@ class ProcessUSFM {
         platform,
         directoryProvider,
         profile,
-        library,
+        catalogClient,
         assetsProvider,
         targetLanguage,
         onProgress
@@ -176,7 +176,7 @@ class ProcessUSFM {
         private val platform: Platform,
         private val directoryProvider: IDirectoryProvider,
         private val profile: Profile,
-        private val library: Door43Client,
+        private val catalogClient: ResourceCatalogClient,
         private val assetsProvider: AssetsProvider
     ) {
         private var onProgress: (Float, String?) -> Unit = {_,_->}
@@ -231,7 +231,7 @@ class ProcessUSFM {
                         platform,
                         directoryProvider,
                         profile,
-                        library,
+                        catalogClient,
                         assetsProvider,
                         currentLang,
                         currentFile,
@@ -242,7 +242,7 @@ class ProcessUSFM {
                         platform,
                         directoryProvider,
                         profile,
-                        library,
+                        catalogClient,
                         assetsProvider,
                         currentLang,
                         currentUri,
@@ -253,7 +253,7 @@ class ProcessUSFM {
                         platform,
                         directoryProvider,
                         profile,
-                        library,
+                        catalogClient,
                         assetsProvider,
                         currentLang,
                         currentRcPath,
@@ -695,9 +695,9 @@ class ProcessUSFM {
                 bookName = bookShortName
             }
 
-            val versifications = library.index.getVersifications("en")
+            val versifications = catalogClient.library.getVersifications("en")
             val markers = bookShortName?.let { shortName ->
-                library.index.getChunkMarkers(shortName, versifications[0].slug)
+                catalogClient.library.getChunkMarkers(shortName, versifications[0].slug)
             } ?: emptyList()
             val haveChunksList = markers.isNotEmpty()
 

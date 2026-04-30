@@ -17,14 +17,14 @@ import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.bibletranslationtools.logger.Logger
+import org.bibletranslationtools.resourcecatalog.ResourceCatalogClient
+import org.bibletranslationtools.resourcecatalog.library.models.TargetLanguage
 import org.bibletranslationtools.resourcecontainer.ResourceContainer
-import org.unfoldingword.door43client.Door43Client
-import org.unfoldingword.door43client.models.TargetLanguage
 import java.io.File
 
 class TargetTranslationMigrator(
     private val directoryProvider: IDirectoryProvider,
-    private val library: Door43Client,
+    private val catalogClient: ResourceCatalogClient,
     private val assetProvider: AssetsProvider,
 ) {
     companion object {
@@ -119,7 +119,7 @@ class TargetTranslationMigrator(
             file.isDirectory && file.name != ".git" && file.name != "cache"
         } ?: emptyArray()
 
-        val translations = library.index.findTranslations(
+        val translations = catalogClient.library.findTranslations(
             "en",
             projectSlug,
             null,
@@ -132,7 +132,7 @@ class TargetTranslationMigrator(
 
         if (translations.isNotEmpty()) {
             val sourceTranslation = translations.find { it.resource.slug == "ulb" } ?: translations.first()
-            val container = library.open(sourceTranslation.resourceContainerSlug)
+            val container = catalogClient.openResourceContainer(sourceTranslation.resourceContainerSlug)
 
             for (dir in chapters) {
                 val chunk00 = File(dir, "00.txt")
@@ -376,12 +376,24 @@ class TargetTranslationMigrator(
         list.mapNotNull { it.toIntOrNull() }.maxOrNull()?.toString()
 
     private fun migrateChunkChanges(targetTranslationDir: File, projectSlug: String): Boolean {
-        val p = library.index.getProject("en", projectSlug, true) ?: return true
-        val resources = library.index.getResources(p.languageSlug, p.slug)
-        val resource = resources.firstOrNull { it.type.equals("book", ignoreCase = true) } ?: return true
+        val p = catalogClient.library.getProject(
+            "en",
+            projectSlug,
+            true
+        ) ?: return true
+        val resources = catalogClient.library.getResources(
+            p.languageSlug,
+            p.slug
+        )
+        val resource = resources.firstOrNull {
+            it.type.equals("book", ignoreCase = true)
+        } ?: return true
 
         val resourceContainer = runCatching {
-            library.open(p.languageSlug, p.slug, resource.slug)
+            catalogClient.openResourceContainer(
+                p.languageSlug,
+                p.slug, resource.slug
+            )
         }.getOrElse { return true }
 
         val chapterDirs = targetTranslationDir.listFiles { f ->
@@ -428,7 +440,9 @@ class TargetTranslationMigrator(
                 if (lastValidFrameFile == null) {
                     invalidChunks += frameBody + chunkMergeMarker
                 } else {
-                    val lastBody = runCatching { lastValidFrameFile.readText() }.getOrDefault("")
+                    val lastBody = runCatching {
+                        lastValidFrameFile.readText()
+                    }.getOrDefault("")
                     lastValidFrameFile.writeText(lastBody + chunkMergeMarker + frameBody)
                     updatedFinishedFrames.remove("$chapterId-${lastValidFrameFile.name}")
                 }

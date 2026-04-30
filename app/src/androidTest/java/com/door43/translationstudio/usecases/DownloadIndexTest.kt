@@ -1,31 +1,29 @@
 package com.door43.translationstudio.usecases
 
-import android.content.Context
 import android.net.Uri
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.IntegrationTest
 import com.door43.translationstudio.KoinAndroidTest
-import com.door43.usecases.DownloadIndex
+import com.door43.usecases.ImportIndex
 import junit.framework.TestCase.assertNotNull
 import junit.framework.TestCase.assertTrue
+import org.bibletranslationtools.resourcecatalog.ResourceCatalogClient
 import org.junit.Assert.assertNotEquals
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.koin.core.component.inject
-import org.unfoldingword.door43client.Door43Client
 
 
 @RunWith(AndroidJUnit4::class)
 @IntegrationTest
 class DownloadIndexTest : KoinAndroidTest() {
 
-    private val appContext: Context by inject()
     private val directoryProvider: IDirectoryProvider by inject()
-    private val downloadIndex: DownloadIndex by inject()
-    private val library: Door43Client by inject()
+    private val downloadIndex: ImportIndex by inject()
+    private val catalogClient: ResourceCatalogClient by inject()
     private val assetsProvider: AssetsProvider by inject()
 
     @Before
@@ -40,7 +38,7 @@ class DownloadIndexTest : KoinAndroidTest() {
             progressMessage = message
         }
 
-        val languagesBefore = library.index.getTargetLanguages()
+        val languagesBefore = catalogClient.library.getTargetLanguages()
         assertTrue("Languages before should not be empty", languagesBefore.isNotEmpty())
 
         val downloaded = downloadIndex.download(onProgress)
@@ -50,10 +48,13 @@ class DownloadIndexTest : KoinAndroidTest() {
 
         // Create new instance of the library, because after downloading index,
         // library is closed and can't be used anymore
-        val newLibrary = Door43Client(appContext, directoryProvider)
-        val languagesAfter = newLibrary.index.getTargetLanguages()
+        val newLibrary = ResourceCatalogClient(
+            directoryProvider.databaseFile,
+            directoryProvider.containersDir
+        )
+        val languagesAfter = newLibrary.library.getTargetLanguages()
 
-        assertTrue("Languages after should not be empty", languagesAfter.size > 0)
+        assertTrue("Languages after should not be empty", languagesAfter.isNotEmpty())
         assertNotEquals(
             "Target languages should have changed",
             languagesBefore.size, languagesAfter.size
@@ -62,7 +63,7 @@ class DownloadIndexTest : KoinAndroidTest() {
 
     @Test
     fun importIndexSucceeds() {
-        val languagesBefore = library.index.getTargetLanguages()
+        val languagesBefore = catalogClient.library.getTargetLanguages()
         assertTrue("Languages before should not be empty", languagesBefore.isNotEmpty())
 
         val indexFile = directoryProvider.createTempFile("index", ".sqlite")
@@ -78,10 +79,13 @@ class DownloadIndexTest : KoinAndroidTest() {
 
         // Create new instance of the library, because after downloading index,
         // library is closed and can't be used anymore
-        val newLibrary = Door43Client(appContext, directoryProvider)
-        val languagesAfter = newLibrary.index.getTargetLanguages()
+        val newLibrary = ResourceCatalogClient(
+            directoryProvider.databaseFile,
+            directoryProvider.containersDir
+        )
+        val languagesAfter = newLibrary.library.getTargetLanguages()
 
-        assertTrue("Languages after should not be empty", languagesAfter.size > 0)
+        assertTrue("Languages after should not be empty", languagesAfter.isNotEmpty())
         assertNotEquals(
             "Target languages should have changed",
             languagesBefore.size, languagesAfter.size

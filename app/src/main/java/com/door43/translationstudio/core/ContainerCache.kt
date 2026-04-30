@@ -1,12 +1,12 @@
 package com.door43.translationstudio.core
 
 import org.bibletranslationtools.logger.Logger
+import org.bibletranslationtools.resourcecatalog.ResourceCatalogClient
 import org.bibletranslationtools.resourcecontainer.ContainerTools
 import org.bibletranslationtools.resourcecontainer.Language
 import org.bibletranslationtools.resourcecontainer.Link
 import org.bibletranslationtools.resourcecontainer.ResourceContainer
 import org.bibletranslationtools.resourcecontainer.errors.InvalidRCException
-import org.unfoldingword.door43client.Door43Client
 import java.util.Collections
 import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
@@ -46,7 +46,7 @@ object ContainerCache {
      * Caches resource container if it exists.
      * If the container has already been cached it will not touch the disk.
      */
-    fun cache(client: Door43Client, resourceContainerSlug: String): ResourceContainer? {
+    fun cache(client: ResourceCatalogClient, resourceContainerSlug: String): ResourceContainer? {
         // wait for other threads
         waitForLoadingContainers(resourceContainerSlug)
 
@@ -58,13 +58,13 @@ object ContainerCache {
             // flag as loading
             loadingContainers.add(resourceContainerSlug)
             try {
-                val rc = client.open(resourceContainerSlug)
+                val rc = client.openResourceContainer(resourceContainerSlug)
                 resourceContainers[rc.slug] = rc
                 return rc
             } catch (e: InvalidRCException) {
                 Logger.w("ContainerCache", "Deleting corrupt RC $resourceContainerSlug", e)
                 // delete invalid container
-                client.delete(resourceContainerSlug)
+                client.deleteResourceContainer(resourceContainerSlug)
             } catch (e: Exception) {
                 Logger.w("ContainerCache", "Failed to open the RC $resourceContainerSlug", e)
             } finally {
@@ -83,7 +83,7 @@ object ContainerCache {
      * will be cached and returned.
      */
     fun cacheClosest(
-        client: Door43Client,
+        client: ResourceCatalogClient,
         languageSlug: String?,
         projectSlug: String,
         resourceSlug: String
@@ -91,7 +91,7 @@ object ContainerCache {
         val lang = if (languageSlug.isNullOrEmpty()) Locale.getDefault().language else languageSlug
 
         // search for translation
-        var translations = client.index.findTranslations(
+        var translations = client.library.findTranslations(
             lang,
             projectSlug,
             resourceSlug,
@@ -102,7 +102,7 @@ object ContainerCache {
         )
         if (translations.isEmpty()) {
             // search for similar translations
-            translations = client.index.findTranslations(
+            translations = client.library.findTranslations(
                 null,
                 projectSlug,
                 resourceSlug,
@@ -149,7 +149,7 @@ object ContainerCache {
      */
     @Deprecated("TRICKY: only english RCs have links, this won't matter for rc0.1 spec")
     fun cacheClosestFromLinks(
-        client: Door43Client,
+        client: ResourceCatalogClient,
         linkData: List<String>
     ): List<Link> {
         val links = mutableListOf<Link>()
@@ -183,7 +183,7 @@ object ContainerCache {
      * Same as cacheClosestFromLinks except it requires an exact match.
      */
     fun cacheFromLinks(
-        client: Door43Client,
+        client: ResourceCatalogClient,
         linkData: List<String>,
         language: Language
     ): List<Link> {

@@ -30,10 +30,10 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.bibletranslationtools.resourcecatalog.ResourceCatalogClient
+import org.bibletranslationtools.resourcecatalog.library.models.Translation
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import org.unfoldingword.door43client.Door43Client
-import org.unfoldingword.door43client.models.Translation
 
 const val MAX_SOURCE_ITEMS = 3
 
@@ -93,7 +93,7 @@ class DefaultSelectSourcesComponent(
     KoinComponent, ComponentScope, ProgressOwner {
 
     private val application: Application by inject()
-    private val library: Door43Client by inject()
+    private val catalogClient: ResourceCatalogClient by inject()
     private val prefRepository: IPreferenceRepository by inject()
     private val downloadResourceContainers: DownloadResourceContainers by inject()
     private val translator: Translator by inject()
@@ -189,7 +189,7 @@ class DefaultSelectSourcesComponent(
     override fun deleteSource(source: RCItem) {
         coroutineScope.launch {
             source.containerSlug?.let {
-                library.delete(it)
+                catalogClient.deleteResourceContainer(it)
                 loadAvailableSources()
             }
         }
@@ -202,14 +202,14 @@ class DefaultSelectSourcesComponent(
                 // add selected source translations
                 val sourceTranslationSlugs = getOpenSources()
                 for (slug in sourceTranslationSlugs) {
-                    val st = library.index.getTranslation(slug)
+                    val st = catalogClient.library.getTranslation(slug)
                     if (st != null) {
                         handle.update(-1f, st.resourceContainerSlug)
                         items.add(addSource(st, true))
                     }
                 }
 
-                val availableTranslations = library.index.findTranslations(
+                val availableTranslations = catalogClient.library.findTranslations(
                     null,
                     targetTranslation.projectId,
                     null,
@@ -238,7 +238,7 @@ class DefaultSelectSourcesComponent(
 
     private fun addSource(sourceTranslation: Translation, selected: Boolean): RCItem {
         val title = sourceTranslation.language.name + " (" + sourceTranslation.language.slug + ") - " + sourceTranslation.resource.name
-        val isDownloaded = library.exists(sourceTranslation.resourceContainerSlug)
+        val isDownloaded = catalogClient.resourceContainerExists(sourceTranslation.resourceContainerSlug)
         var hasUpdates = false
         var checkedUpdates = false
 
@@ -248,8 +248,8 @@ class DefaultSelectSourcesComponent(
                 "Checking for updates on " + sourceTranslation.resourceContainerSlug
             )
             try {
-                ContainerCache.cache(library, sourceTranslation.resourceContainerSlug)?.let { container ->
-                    val lastModified: Int = library.getResourceContainerLastModified(
+                ContainerCache.cache(catalogClient, sourceTranslation.resourceContainerSlug)?.let { container ->
+                    val lastModified: Int = catalogClient.getResourceContainerLastModified(
                         container.language.slug,
                         container.project.slug,
                         container.resource.slug

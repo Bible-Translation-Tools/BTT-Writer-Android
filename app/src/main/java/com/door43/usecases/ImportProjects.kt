@@ -14,8 +14,8 @@ import com.door43.util.FileUtilities.moveOrCopyQuietly
 import com.door43.util.FileUtilities.safeDelete
 import com.door43.util.Zip
 import org.bibletranslationtools.logger.Logger
+import org.bibletranslationtools.resourcecatalog.ResourceCatalogClient
 import org.bibletranslationtools.resourcecontainer.ResourceContainer
-import org.unfoldingword.door43client.Door43Client
 import java.io.File
 import java.io.FileInputStream
 import java.io.InputStream
@@ -27,7 +27,7 @@ class ImportProjects(
     private val backupRC: BackupRC,
     private val directoryProvider: IDirectoryProvider,
     private val archiveImporter: ArchiveImporter,
-    private val library: Door43Client,
+    private val catalogClient: ResourceCatalogClient,
     private val platform: Platform
 ) {
     fun importProject(
@@ -192,7 +192,7 @@ class ImportProjects(
         }
 
         return try {
-            library.open(externalContainer.slug)
+            catalogClient.openResourceContainer(externalContainer.slug)
             if (overwrite) {
                 importSource(tempDir)
             } else {
@@ -218,7 +218,7 @@ class ImportProjects(
 
     private suspend fun importSource(dir: File): ImportSourceResult {
         return try {
-            library.importResourceContainer(dir)
+            catalogClient.importResourceContainer(dir)
             ImportSourceResult(
                 success = true,
                 hasConflict = false

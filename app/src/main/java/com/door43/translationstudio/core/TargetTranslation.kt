@@ -13,6 +13,8 @@ import com.door43.translationstudio.rendering.RenderingProvider
 import com.door43.util.FileUtilities
 import com.door43.util.NumericStringComparator
 import org.bibletranslationtools.logger.Logger
+import org.bibletranslationtools.resourcecatalog.library.models.TargetLanguage
+import org.bibletranslationtools.resourcecatalog.library.models.Translation
 import org.bibletranslationtools.resourcecontainer.ContainerTools
 import org.bibletranslationtools.resourcecontainer.ResourceContainer
 import org.eclipse.jgit.api.MergeCommand
@@ -21,8 +23,6 @@ import org.eclipse.jgit.api.ResetCommand
 import org.eclipse.jgit.api.errors.GitAPIException
 import org.eclipse.jgit.lib.PersonIdent
 import org.eclipse.jgit.revwalk.RevCommit
-import org.unfoldingword.door43client.models.TargetLanguage
-import org.unfoldingword.door43client.models.Translation
 import java.io.File
 import java.io.IOException
 import java.util.Arrays

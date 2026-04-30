@@ -10,10 +10,10 @@ import com.door43.data.IPreferenceRepository
 import com.door43.data.getDefaultPref
 import com.door43.translationstudio.MainActivity
 import com.door43.translationstudio.R
-import org.koin.android.ext.android.inject
-import org.unfoldingword.door43client.Door43Client
-import org.unfoldingword.tools.foreground.Foreground
 import org.bibletranslationtools.logger.Logger
+import org.bibletranslationtools.resourcecatalog.ResourceCatalogClient
+import org.koin.android.ext.android.inject
+import org.unfoldingword.tools.foreground.Foreground
 
 /**
  * This should be extended by all activities in the app so that we can perform verification on
@@ -22,7 +22,7 @@ import org.bibletranslationtools.logger.Logger
  */
 abstract class BaseActivity : ComponentActivity(), Foreground.Listener {
 
-    private val library: Door43Client by inject()
+    private val catalogClient: ResourceCatalogClient by inject()
     private val preRepository: IPreferenceRepository by inject()
 
     protected open val isBootActivity: Boolean = false
@@ -72,7 +72,7 @@ abstract class BaseActivity : ComponentActivity(), Foreground.Listener {
     }
 
     override fun onBecameForeground() {
-        if (!isBootActivity && !library.isLibraryDeployed) {
+        if (!isBootActivity && !catalogClient.isLibraryDeployed) {
             Logger.w(this.javaClass.name, "The library was not deployed.")
 
             val intent = Intent(this, MainActivity::class.java).apply {

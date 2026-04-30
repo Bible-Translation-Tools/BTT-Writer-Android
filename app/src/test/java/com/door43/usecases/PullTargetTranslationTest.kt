@@ -59,7 +59,7 @@ class PullTargetTranslationTest {
     @MockK private lateinit var checkoutCommand: CheckoutCommand
     @MockK private lateinit var manifestAccessor: ManifestAccessor
 
-    val onProgress = mockk<(Float, String?) -> Unit>(relaxed = true)
+    private val onProgress = mockk<(Float, String?) -> Unit>(relaxed = true)
 
     @Before
     fun setup() {

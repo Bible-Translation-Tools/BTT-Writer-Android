@@ -18,6 +18,7 @@ import io.mockk.verify
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okio.Buffer
+import org.bibletranslationtools.resourcecatalog.ResourceCatalogClient
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -26,7 +27,6 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
-import org.unfoldingword.door43client.Door43Client
 import java.io.File
 
 class DownloadIndexTest {
@@ -34,11 +34,11 @@ class DownloadIndexTest {
     @MockK private lateinit var context: Context
     @MockK private lateinit var prefRepository: IPreferenceRepository
     @MockK private lateinit var directoryProvider: IDirectoryProvider
-    @MockK private lateinit var library: Door43Client
+    @MockK private lateinit var catalogClient: ResourceCatalogClient
     @MockK private lateinit var resources: Resources
     @MockK private lateinit var contentResolver: ContentResolver
 
-    val onProgress = mockk<(Float, String?) -> Unit>(relaxed = true)
+    private val onProgress = mockk<(Float, String?) -> Unit>(relaxed = true)
 
     @get:Rule var tempFolder = TemporaryFolder()
 
@@ -64,7 +64,8 @@ class DownloadIndexTest {
             it.deleteOnExit()
         }
 
-        every { library.tearDown() }.just(runs)
+        every { catalogClient.openLibrary() }.just(runs)
+        every { catalogClient.closeLibrary() }.just(runs)
         every { directoryProvider.databaseFile }.returns(dbFile)
     }
 
@@ -78,7 +79,7 @@ class DownloadIndexTest {
     fun `test download index successful`() {
         server.enqueue(createDownloadResponse())
 
-        val success = DownloadIndex(context, directoryProvider, prefRepository, library)
+        val success = ImportIndex(context, directoryProvider, prefRepository, catalogClient)
             .download(onProgress)
 
         assertTrue(success)
@@ -88,36 +89,36 @@ class DownloadIndexTest {
         verify { resources.getString(R.string.downloading_index) }
         verify { resources.getString(R.string.pref_default_index_sqlite_url) }
         verify { prefRepository.getDefaultPref(any(), any(), String::class.java) }
-        verify { library.tearDown() }
+        verify { catalogClient.closeLibrary() }
         verify { directoryProvider.databaseFile }
     }
 
     @Test
     fun `test an exception is thrown during download`() {
-        every { library.tearDown() }.throws(Exception("An error occurred"))
+        every { catalogClient.closeLibrary() }.throws(Exception("An error occurred"))
 
-        val success = DownloadIndex(context, directoryProvider, prefRepository, library)
+        val success = ImportIndex(context, directoryProvider, prefRepository, catalogClient)
             .download(onProgress)
 
         assertFalse(success)
 
         verify { onProgress(any(), "Downloading index") }
         verify { resources.getString(R.string.downloading_index) }
-        verify { library.tearDown() }
+        verify { catalogClient.closeLibrary() }
     }
 
     @Test
     fun `test server returned error code`() {
         server.enqueue(MockResponse().setResponseCode(500))
 
-        val success = DownloadIndex(context, directoryProvider, prefRepository, library)
+        val success = ImportIndex(context, directoryProvider, prefRepository, catalogClient)
             .download(onProgress)
 
         assertFalse(success)
 
         verify { onProgress(any(), "Downloading index") }
         verify { resources.getString(R.string.downloading_index) }
-        verify { library.tearDown() }
+        verify { catalogClient.closeLibrary() }
     }
 
     @Test
@@ -131,13 +132,13 @@ class DownloadIndexTest {
         every { contentResolver.openInputStream(any()) }
             .returns(indexFile.inputStream())
 
-        val success = DownloadIndex(context, directoryProvider, prefRepository, library)
+        val success = ImportIndex(context, directoryProvider, prefRepository, catalogClient)
             .import(uri)
 
         assertTrue(success)
         assertEquals("1234567890", directoryProvider.databaseFile.readText())
 
-        verify { library.tearDown() }
+        verify { catalogClient.closeLibrary() }
         verify { directoryProvider.databaseFile }
     }
 

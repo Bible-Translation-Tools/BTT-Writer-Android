@@ -37,9 +37,9 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
 import org.bibletranslationtools.logger.Logger
+import org.bibletranslationtools.resourcecatalog.ResourceCatalogClient
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import org.unfoldingword.door43client.Door43Client
 import java.io.IOException
 
 data class TypefaceOption(
@@ -155,7 +155,7 @@ class DefaultSettingsComponent(
 
     private val checkForLatestRelease: CheckForLatestRelease by inject()
     private val downloadLatestRelease: DownloadLatestRelease by inject()
-    private val library: Door43Client by inject()
+    private val catalogClient: ResourceCatalogClient by inject()
     private val profile: Profile by inject()
     private val logout: GogsLogout by inject()
     private val migrateTranslations: MigrateTranslations by inject()
@@ -522,7 +522,6 @@ class DefaultSettingsComponent(
     override fun updateLanguageUrl(newValue: String) {
         prefRepository.setDefaultPref(IPreferenceRepository.KEY_PREF_LANGUAGES_URL, newValue)
         _state.update { it.copy(languagesUrl = newValue) }
-        library.updateLanguageUrl(newValue)
     }
 
     override fun updateIndexSqliteUrl(newValue: String) {

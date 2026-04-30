@@ -22,8 +22,8 @@ import com.door43.translationstudio.core.Util
 import com.door43.util.FileUtilities
 import com.door43.util.RepoUtils
 import com.door43.util.Zip
+import org.bibletranslationtools.resourcecatalog.ResourceCatalogClient
 import org.eclipse.jgit.errors.TransportException
-import org.unfoldingword.door43client.Door43Client
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -33,7 +33,7 @@ import java.util.Locale
 class ExportProjects(
     private val context: Context,
     private val directoryProvider: IDirectoryProvider,
-    private val library: Door43Client,
+    private val catalogClient: ResourceCatalogClient,
     private val typography: Typography,
     private val platform: Platform
 ) {
@@ -122,7 +122,7 @@ class ExportProjects(
             tempDir.mkdirs()
             val chapters = targetTranslation.chapterTranslations
 
-            val bookData = BookData.generate(targetTranslation, library)
+            val bookData = BookData.generate(targetTranslation, catalogClient)
             val bookCode = bookData.bookCode
             val bookTitle = bookData.bookTitle
             val bookName = bookData.bookName
@@ -237,7 +237,7 @@ class ExportProjects(
             val printer = PdfPrinter(
                 context, targetTranslation, targetTranslation.format, fontPath,
                 fontSize, targetLanguageRtl, licenseFontPath, imagesDir, directoryProvider,
-                library
+                catalogClient
             )
             printer.includeMedia(includeImages)
             printer.includeIncomplete(includeIncompleteFrames)
@@ -322,7 +322,7 @@ class ExportProjects(
      */
     class BookData private constructor(
         targetTranslation: TargetTranslation,
-        library: Door43Client,
+        catalogClient: ResourceCatalogClient,
     ) {
         val defaultUSFMFileName: String
         val bookCode: String = targetTranslation.projectId.uppercase(Locale.getDefault())
@@ -335,25 +335,20 @@ class ExportProjects(
 
         init {
             val projectTranslation = targetTranslation.projectTranslation
-            // TODO refactor
-            val project = library.index.getProject(
+            val project = catalogClient.library.getProject(
                 languageId,
                 targetTranslation.projectId,
                 true
             )
 
             bookName = bookCode
-            if ((project != null) && (project.name != null)) {
+            if (project != null) {
                 bookName = project.name
             }
 
             bookTitle = ""
-            if (projectTranslation != null) {
-                val title = projectTranslation.title
-                if (title != null) {
-                    bookTitle = title.trim()
-                }
-            }
+            val title = projectTranslation.title
+            bookTitle = title.trim()
             if (bookTitle.isEmpty()) {
                 bookTitle = bookName
             }
@@ -369,9 +364,9 @@ class ExportProjects(
         companion object {
             fun generate(
                 targetTranslation: TargetTranslation,
-                library: Door43Client
+                catalogClient: ResourceCatalogClient
             ): BookData {
-                return BookData(targetTranslation, library)
+                return BookData(targetTranslation, catalogClient)
             }
         }
     }

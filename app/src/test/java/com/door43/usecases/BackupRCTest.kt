@@ -1,6 +1,5 @@
 package com.door43.usecases
 
-import android.app.Application
 import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TargetTranslation
@@ -17,6 +16,8 @@ import io.mockk.unmockkAll
 import io.mockk.verify
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertTrue
+import org.bibletranslationtools.resourcecatalog.ResourceCatalogClient
+import org.bibletranslationtools.resourcecatalog.library.models.Translation
 import org.bibletranslationtools.resourcecontainer.Language
 import org.bibletranslationtools.resourcecontainer.Project
 import org.bibletranslationtools.resourcecontainer.Resource
@@ -25,18 +26,15 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertThrows
 import org.junit.Before
 import org.junit.Test
-import org.unfoldingword.door43client.Door43Client
-import org.unfoldingword.door43client.models.Translation
 import java.io.File
 
 class BackupRCTest {
 
-    @MockK private lateinit var context: Application
     @MockK private lateinit var directoryProvider: IDirectoryProvider
     @MockK private lateinit var migrator: TargetTranslationMigrator
     @MockK private lateinit var exportProjects: ExportProjects
     @MockK private lateinit var profile: Profile
-    @MockK private lateinit var library: Door43Client
+    @MockK private lateinit var catalogClient: ResourceCatalogClient
     @MockK private lateinit var translation: Translation
     @MockK private lateinit var language: Language
     @MockK private lateinit var project: Project
@@ -50,12 +48,11 @@ class BackupRCTest {
         MockKAnnotations.init(this)
 
         backupRC = BackupRC(
-            context,
             directoryProvider,
             migrator,
             exportProjects,
             profile,
-            library
+            catalogClient
         )
 
         mockkObject(FileUtilities)
@@ -85,7 +82,7 @@ class BackupRCTest {
         every { translation.resourceContainerSlug } returns "fa_mrk_nmv"
 
         every {
-            library.exportResourceContainer(
+            catalogClient.exportResourceContainer(
                 any(),
                 "fa",
                 "mrk",
@@ -98,7 +95,7 @@ class BackupRCTest {
         assertEquals("/backups/fa_mrk_nmv.tsrc", backupFile.path)
 
         verify {
-            library.exportResourceContainer(
+            catalogClient.exportResourceContainer(
                 any(),
                 "fa",
                 "mrk",
@@ -116,7 +113,7 @@ class BackupRCTest {
         every { translation.resourceContainerSlug } returns "fa_mrk_nmv"
 
         every {
-            library.exportResourceContainer(
+            catalogClient.exportResourceContainer(
                 any(),
                 "fa",
                 "mrk",
@@ -129,7 +126,7 @@ class BackupRCTest {
         }
 
         verify {
-            library.exportResourceContainer(
+            catalogClient.exportResourceContainer(
                 any(),
                 "fa",
                 "mrk",

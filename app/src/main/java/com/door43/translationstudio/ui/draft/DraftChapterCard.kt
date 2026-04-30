@@ -29,7 +29,7 @@ import com.door43.translationstudio.core.TranslationType
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.getComposeTextStyle
 import com.door43.translationstudio.ui.textadapters.ComposeTextAdapter
-import org.unfoldingword.door43client.models.SourceLanguage
+import org.bibletranslationtools.resourcecatalog.library.models.SourceLanguage
 
 @Composable
 fun DraftChapterCard(

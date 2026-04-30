@@ -41,11 +41,11 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
 import org.bibletranslationtools.logger.Logger
+import org.bibletranslationtools.resourcecatalog.ResourceCatalogClient
 import org.bibletranslationtools.resourcecontainer.Project
 import org.eclipse.jgit.merge.MergeStrategy
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import org.unfoldingword.door43client.Door43Client
 import java.io.File
 
 data class DialogMessage(
@@ -122,7 +122,7 @@ class DefaultExportComponent(
     private val translator: Translator by inject()
     private val profile: Profile by inject()
     private val directoryProvider: IDirectoryProvider by inject()
-    private val library: Door43Client by inject()
+    private val catalogClient: ResourceCatalogClient by inject()
     private val gogsLogout: GogsLogout by inject()
     private val createRepository: CreateRepository by inject()
     private val pullTargetTranslation: PullTargetTranslation by inject()
@@ -564,7 +564,7 @@ class DefaultExportComponent(
     }
 
     private fun getProject(): Project? {
-        return library.index.getProject(
+        return catalogClient.library.getProject(
             platform.deviceLanguageCode,
             targetTranslation.projectId,
             true

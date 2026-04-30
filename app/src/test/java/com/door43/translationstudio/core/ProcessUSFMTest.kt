@@ -26,15 +26,15 @@ import io.mockk.verify
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertNotNull
 import junit.framework.TestCase.assertTrue
+import org.bibletranslationtools.resourcecatalog.ResourceCatalogClient
+import org.bibletranslationtools.resourcecatalog.library.Index
+import org.bibletranslationtools.resourcecatalog.library.models.ChunkMarker
+import org.bibletranslationtools.resourcecatalog.library.models.TargetLanguage
+import org.bibletranslationtools.resourcecatalog.library.models.Versification
 import org.junit.After
 import org.junit.Assert.assertFalse
 import org.junit.Before
 import org.junit.Test
-import org.unfoldingword.door43client.Door43Client
-import org.unfoldingword.door43client.Index
-import org.unfoldingword.door43client.models.ChunkMarker
-import org.unfoldingword.door43client.models.TargetLanguage
-import org.unfoldingword.door43client.models.Versification
 import java.io.File
 import java.io.InputStream
 
@@ -46,7 +46,7 @@ class ProcessUSFMTest {
     @MockK private lateinit var directoryProvider: IDirectoryProvider
     @MockK private lateinit var platform: Platform
     @MockK private lateinit var profile: Profile
-    @MockK private lateinit var library: Door43Client
+    @MockK private lateinit var catalogClient: ResourceCatalogClient
     @MockK private lateinit var assetsProvider: AssetsProvider
     @MockK private lateinit var targetLanguage: TargetLanguage
     @MockK private lateinit var index: Index
@@ -56,7 +56,7 @@ class ProcessUSFMTest {
     @MockK private lateinit var mockFile: File
     @MockK private lateinit var mockUri: Uri
 
-    val onProgress = mockk<(Float, String?) -> Unit>(relaxed = true)
+    private val onProgress = mockk<(Float, String?) -> Unit>(relaxed = true)
 
     @Before
     fun setUp() {
@@ -85,7 +85,7 @@ class ProcessUSFMTest {
 
         // Use reflection to modify property that is final
         // because mockk can't do that
-        every { library.index } returns index
+        every { catalogClient.library } returns index
 
         val str1 = slot<String>()
         val str2 = slot<String>()
@@ -118,7 +118,7 @@ class ProcessUSFMTest {
             platform,
             directoryProvider,
             profile,
-            library,
+            catalogClient,
             assetsProvider
         )
             .fromFile(targetLanguage, mockFile, onProgress)
@@ -149,7 +149,7 @@ class ProcessUSFMTest {
             platform,
             directoryProvider,
             profile,
-            library,
+            catalogClient,
             assetsProvider
         )
             .fromUri(targetLanguage, mockUri, onProgress)
@@ -183,7 +183,7 @@ class ProcessUSFMTest {
             platform,
             directoryProvider,
             profile,
-            library,
+            catalogClient,
             assetsProvider
         )
             .fromRc(targetLanguage, rcPath, onProgress)
@@ -213,7 +213,7 @@ class ProcessUSFMTest {
             platform,
             directoryProvider,
             profile,
-            library,
+            catalogClient,
             assetsProvider
         )
             .fromFile(targetLanguage, mockFile, onProgress)
@@ -248,7 +248,7 @@ class ProcessUSFMTest {
             platform,
             directoryProvider,
             profile,
-            library,
+            catalogClient,
             assetsProvider
         )
             .fromFile(targetLanguage, mockFile, onProgress)
@@ -282,7 +282,7 @@ class ProcessUSFMTest {
             platform,
             directoryProvider,
             profile,
-            library,
+            catalogClient,
             assetsProvider
         )
             .fromFile(targetLanguage, mockFile, onProgress)
@@ -316,7 +316,7 @@ class ProcessUSFMTest {
             platform,
             directoryProvider,
             profile,
-            library,
+            catalogClient,
             assetsProvider
         )
             .fromFile(targetLanguage, mockFile, onProgress)
@@ -350,7 +350,7 @@ class ProcessUSFMTest {
             platform,
             directoryProvider,
             profile,
-            library,
+            catalogClient,
             assetsProvider
         )
             .fromFile(targetLanguage, mockFile, onProgress)
@@ -399,7 +399,7 @@ class ProcessUSFMTest {
             platform,
             directoryProvider,
             profile,
-            library,
+            catalogClient,
             assetsProvider
         )
             .fromFile(targetLanguage, mockFile, onProgress)
@@ -440,7 +440,7 @@ class ProcessUSFMTest {
             platform,
             directoryProvider,
             profile,
-            library,
+            catalogClient,
             assetsProvider
         )
             .fromFile(targetLanguage, mockFile, onProgress)

@@ -8,6 +8,9 @@ import io.mockk.impl.annotations.MockK
 import io.mockk.mockk
 import io.mockk.unmockkAll
 import io.mockk.verify
+import org.bibletranslationtools.resourcecatalog.ResourceCatalogClient
+import org.bibletranslationtools.resourcecatalog.library.Index
+import org.bibletranslationtools.resourcecatalog.library.models.Translation
 import org.bibletranslationtools.resourcecontainer.Language
 import org.bibletranslationtools.resourcecontainer.Resource
 import org.bibletranslationtools.resourcecontainer.ResourceContainer
@@ -15,13 +18,10 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
-import org.unfoldingword.door43client.Door43Client
-import org.unfoldingword.door43client.Index
-import org.unfoldingword.door43client.models.Translation
 
 class TranslationProgressTest {
 
-    @MockK private lateinit var library: Door43Client
+    @MockK private lateinit var catalogClient: ResourceCatalogClient
     @MockK private lateinit var translator: Translator
     @MockK private lateinit var targetTranslation: TargetTranslation
     @MockK private lateinit var index: Index
@@ -30,7 +30,7 @@ class TranslationProgressTest {
     fun setup() {
         MockKAnnotations.init(this)
 
-        every { library.index } returns index
+        every { catalogClient.library } returns index
         every { targetTranslation.projectId }.returns("mrk")
         every { targetTranslation.id }.returns("aa_mrk_text_ulb")
 
@@ -56,12 +56,12 @@ class TranslationProgressTest {
                 }
             }
         }
-        every { library.open(any()) }.returns(rc)
+        every { catalogClient.openResourceContainer(any()) }.returns(rc)
         every { translator.getSelectedSourceTranslationId(any()) }
             .returns("id_mrk_ayt")
         every { targetTranslation.numFinished }.returns(8)
 
-        val progress = TranslationProgress(library, translator).execute(targetTranslation)
+        val progress = TranslationProgress(catalogClient, translator).execute(targetTranslation)
 
         assertEquals(1f, progress, 0f)
 
@@ -69,7 +69,7 @@ class TranslationProgressTest {
         verify { rc.chunks(any()) }
         verify { index.findTranslations(any(), any(), any(), any(), any(), any(), any()) }
         verify { targetTranslation.numFinished }
-        verify { library.open(any()) }
+        verify { catalogClient.openResourceContainer(any()) }
         verify { translator.getSelectedSourceTranslationId(any()) }
     }
 
@@ -87,12 +87,12 @@ class TranslationProgressTest {
                 }
             }
         }
-        every { library.open(any()) }.returns(rc)
+        every { catalogClient.openResourceContainer(any()) }.returns(rc)
         every { translator.getSelectedSourceTranslationId(any()) }
             .returns(null)
         every { targetTranslation.numFinished }.returns(8)
 
-        val progress = TranslationProgress(library, translator).execute(targetTranslation)
+        val progress = TranslationProgress(catalogClient, translator).execute(targetTranslation)
 
         assertEquals(1f, progress, 0f)
 
@@ -100,7 +100,7 @@ class TranslationProgressTest {
         verify { rc.chunks(any()) }
         verify { index.findTranslations(any(), any(), any(), any(), any(), any(), any()) }
         verify { targetTranslation.numFinished }
-        verify { library.open(any()) }
+        verify { catalogClient.openResourceContainer(any()) }
         verify { translator.getSelectedSourceTranslationId(any()) }
     }
 
@@ -111,29 +111,29 @@ class TranslationProgressTest {
         every { index.findTranslations(any(), any(), any(), any(), any(), any(), any()) }
             .returns(listOf())
 
-        val progress = TranslationProgress(library, translator).execute(targetTranslation)
+        val progress = TranslationProgress(catalogClient, translator).execute(targetTranslation)
 
         assertEquals(0f, progress, 0f)
 
         verify { index.findTranslations(any(), any(), any(), any(), any(), any(), any()) }
         verify { translator.getSelectedSourceTranslationId(any()) }
         verify(exactly = 0) { targetTranslation.numFinished }
-        verify(exactly = 0) { library.open(any()) }
+        verify(exactly = 0) { catalogClient.openResourceContainer(any()) }
     }
 
     @Test
     fun `test zero progress when source rc is not downloaded`() {
-        every { library.open(any()) }.throws(Exception("Rc is not downloaded."))
+        every { catalogClient.openResourceContainer(any()) }.throws(Exception("Rc is not downloaded."))
         every { translator.getSelectedSourceTranslationId(any()) }
             .returns("id_mrk_ayt")
         every { targetTranslation.numFinished }.returns(8)
 
-        val progress = TranslationProgress(library, translator).execute(targetTranslation)
+        val progress = TranslationProgress(catalogClient, translator).execute(targetTranslation)
 
         assertEquals(0f, progress, 0f)
 
         verify { index.findTranslations(any(), any(), any(), any(), any(), any(), any()) }
-        verify { library.open(any()) }
+        verify { catalogClient.openResourceContainer(any()) }
         verify { translator.getSelectedSourceTranslationId(any()) }
         verify(exactly = 0) { targetTranslation.numFinished }
     }
@@ -152,12 +152,12 @@ class TranslationProgressTest {
                 }
             }
         }
-        every { library.open(any()) }.returns(rc)
+        every { catalogClient.openResourceContainer(any()) }.returns(rc)
         every { translator.getSelectedSourceTranslationId(any()) }
             .returns("id_mrk_ayt")
         every { targetTranslation.numFinished }.returns(4)
 
-        val progress = TranslationProgress(library, translator).execute(targetTranslation)
+        val progress = TranslationProgress(catalogClient, translator).execute(targetTranslation)
 
         assertEquals(0.5f, progress, 0f)
 
@@ -165,7 +165,7 @@ class TranslationProgressTest {
         verify { rc.chunks(any()) }
         verify { index.findTranslations(any(), any(), any(), any(), any(), any(), any()) }
         verify { targetTranslation.numFinished }
-        verify { library.open(any()) }
+        verify { catalogClient.openResourceContainer(any()) }
         verify { translator.getSelectedSourceTranslationId(any()) }
     }
 
@@ -183,12 +183,12 @@ class TranslationProgressTest {
                 }
             }
         }
-        every { library.open(any()) }.returns(rc)
+        every { catalogClient.openResourceContainer(any()) }.returns(rc)
         every { translator.getSelectedSourceTranslationId(any()) }
             .returns("id_mrk_ayt")
         every { targetTranslation.numFinished }.returns(10)
 
-        val progress = TranslationProgress(library, translator).execute(targetTranslation)
+        val progress = TranslationProgress(catalogClient, translator).execute(targetTranslation)
 
         assertEquals(1f, progress, 0f)
 
@@ -196,7 +196,7 @@ class TranslationProgressTest {
         verify { rc.chunks(any()) }
         verify { index.findTranslations(any(), any(), any(), any(), any(), any(), any()) }
         verify { targetTranslation.numFinished }
-        verify { library.open(any()) }
+        verify { catalogClient.openResourceContainer(any()) }
         verify { translator.getSelectedSourceTranslationId(any()) }
     }
 
@@ -206,19 +206,19 @@ class TranslationProgressTest {
             every { chapters() }.returns(listOf())
             every { chunks(any()) }.returns(listOf())
         }
-        every { library.open(any()) }.returns(rc)
+        every { catalogClient.openResourceContainer(any()) }.returns(rc)
         every { translator.getSelectedSourceTranslationId(any()) }
             .returns("id_mrk_ayt")
         every { targetTranslation.numFinished }.returns(8)
 
-        val progress = TranslationProgress(library, translator).execute(targetTranslation)
+        val progress = TranslationProgress(catalogClient, translator).execute(targetTranslation)
 
         assertEquals(0f, progress, 0f)
 
         verify { rc.chapters() }
         verify { index.findTranslations(any(), any(), any(), any(), any(), any(), any()) }
         verify { targetTranslation.numFinished }
-        verify { library.open(any()) }
+        verify { catalogClient.openResourceContainer(any()) }
         verify { translator.getSelectedSourceTranslationId(any()) }
         verify(exactly = 0) { rc.chunks(any()) }
     }

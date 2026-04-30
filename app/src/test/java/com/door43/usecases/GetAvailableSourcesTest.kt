@@ -15,22 +15,22 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
-import org.unfoldingword.door43client.Door43Client
-import org.unfoldingword.door43client.Index
-import org.unfoldingword.door43client.models.Translation
+import org.bibletranslationtools.resourcecatalog.ResourceCatalogClient
+import org.bibletranslationtools.resourcecatalog.library.Index
+import org.bibletranslationtools.resourcecatalog.library.models.Translation
 
 class GetAvailableSourcesTest {
 
-    @MockK private lateinit var library: Door43Client
+    @MockK private lateinit var catalogClient: ResourceCatalogClient
     @MockK private lateinit var index: Index
 
-    val onProgress = mockk<(Float, String?) -> Unit>(relaxed = true)
+    private val onProgress = mockk<(Float, String?) -> Unit>(relaxed = true)
 
     @Before
     fun setup() {
         MockKAnnotations.init(this)
 
-        every { library.index } returns index
+        every { catalogClient.library } returns index
 
         every { onProgress(any(), any()) }.just(runs)
     }
@@ -51,7 +51,7 @@ class GetAvailableSourcesTest {
                 )
             }
 
-        val result = GetAvailableSources(library).execute(onProgress)
+        val result = GetAvailableSources(catalogClient).execute(onProgress)
 
         assertEquals(4, result.sources.size)
         assertEquals(2, result.byLanguage.size)

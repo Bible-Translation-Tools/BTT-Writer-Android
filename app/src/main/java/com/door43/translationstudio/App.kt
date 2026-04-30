@@ -9,6 +9,7 @@ import com.door43.di.appModule
 import com.door43.di.prodDataModule
 import com.door43.util.FileUtilities
 import org.bibletranslationtools.logger.Logger
+import org.bibletranslationtools.resourcecatalog.initAndroid
 import org.koin.android.ext.android.inject
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
@@ -29,6 +30,8 @@ class App : Application() {
 
     override fun onCreate() {
         super.onCreate()
+
+        initAndroid(this)
 
         startKoin {
             androidLogger(Level.WARNING)

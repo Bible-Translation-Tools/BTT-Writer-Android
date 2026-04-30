@@ -30,8 +30,8 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.koin.core.component.inject
-import org.unfoldingword.door43client.Door43Client
-import org.unfoldingword.door43client.models.TargetLanguage
+import org.bibletranslationtools.resourcecatalog.ResourceCatalogClient
+import org.bibletranslationtools.resourcecatalog.library.models.TargetLanguage
 import java.io.File
 import java.io.FileInputStream
 
@@ -43,7 +43,7 @@ class ExportProjectsTest : KoinAndroidTest() {
     private val exportProjects: ExportProjects by inject()
     private val assetsProvider: AssetsProvider by inject()
     private val directoryProvider: IDirectoryProvider by inject()
-    private val library: Door43Client by inject()
+    private val catalogClient: ResourceCatalogClient by inject()
     private val profile: Profile by inject()
     private val importProjects: ImportProjects by inject()
     private val translator: Translator by inject()
@@ -54,9 +54,9 @@ class ExportProjectsTest : KoinAndroidTest() {
 
     @Before
     fun setUp() {
-        targetLanguage = library.index.getTargetLanguage("aa")
+        targetLanguage = catalogClient.library.getTargetLanguage("aa")
         targetTranslation = TestUtils.importTargetTranslation(
-            library,
+            catalogClient,
             appContext,
             platform,
             directoryProvider,
@@ -227,7 +227,7 @@ class ExportProjectsTest : KoinAndroidTest() {
             platform,
             directoryProvider,
             profile,
-            library,
+            catalogClient,
             assetsProvider
         )
             .fromFile(targetLanguage!!, file)

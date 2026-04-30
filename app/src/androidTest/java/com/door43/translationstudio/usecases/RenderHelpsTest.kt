@@ -23,7 +23,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.koin.core.component.inject
-import org.unfoldingword.door43client.Door43Client
+import org.bibletranslationtools.resourcecatalog.ResourceCatalogClient
 
 @RunWith(AndroidJUnit4::class)
 @IntegrationTest
@@ -33,7 +33,7 @@ class RenderHelpsTest : KoinAndroidTest() {
     private val importProjects: ImportProjects by inject()
     private val directoryProvider: IDirectoryProvider by inject()
     private val assetsProvider: AssetsProvider by inject()
-    private val library: Door43Client by inject()
+    private val catalogClient: ResourceCatalogClient by inject()
     private val translator: Translator by inject()
     private val profile: Profile by inject()
     private val renderHelps: RenderHelps by inject()
@@ -50,7 +50,7 @@ class RenderHelpsTest : KoinAndroidTest() {
 
         assertNotNull("Target translation should not be null", targetTranslation)
 
-        val rc = library.open("en_mrk_ulb")
+        val rc = catalogClient.openResourceContainer("en_mrk_ulb")
 
         val chunk = Chunk(
             "01",
@@ -91,7 +91,7 @@ class RenderHelpsTest : KoinAndroidTest() {
 
     private fun importTargetTranslation(lang: String): TargetTranslation? {
         return TestUtils.importTargetTranslation(
-            library,
+            catalogClient,
             appContext,
             platform,
             directoryProvider,

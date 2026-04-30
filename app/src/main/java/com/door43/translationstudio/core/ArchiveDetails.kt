@@ -14,8 +14,8 @@ import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.modules.SerializersModule
+import org.bibletranslationtools.resourcecatalog.ResourceCatalogClient
 import org.bibletranslationtools.resourcecontainer.IntAsStringSerializer
-import org.unfoldingword.door43client.Door43Client
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
@@ -45,7 +45,7 @@ class ArchiveDetails private constructor(
     class Builder(
         private val directoryProvider: IDirectoryProvider,
         private val migrator: TargetTranslationMigrator,
-        private val library: Door43Client
+        private val catalogClient: ResourceCatalogClient
     ) {
         private var archiveStream: InputStream? = null
         private var archiveFile: File? = null
@@ -174,13 +174,13 @@ class ArchiveDetails private constructor(
                             val tlName: String?
                             val targetLanguageSlug = manifest.targetLanguage.slug
                             val targetLanguageDirection = manifest.targetLanguage.direction
-                            val tl = library.index.getTargetLanguage(targetLanguageSlug)
+                            val tl = catalogClient.library.getTargetLanguage(targetLanguageSlug)
                             tlName = tl?.name ?: targetLanguageSlug.uppercase(Locale.getDefault())
 
                             // get project
                             val projectName: String?
                             val projectSlug = manifest.project.slug
-                            val project = library.index.getProject(
+                            val project = catalogClient.library.getProject(
                                 preferredLocale,
                                 projectSlug,
                                 true

@@ -27,12 +27,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
+import org.bibletranslationtools.resourcecatalog.ResourceCatalogClient
+import org.bibletranslationtools.resourcecatalog.library.models.CategoryEntry
+import org.bibletranslationtools.resourcecatalog.library.models.TargetLanguage
 import org.bibletranslationtools.resourcecontainer.Project
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import org.unfoldingword.door43client.Door43Client
-import org.unfoldingword.door43client.models.CategoryEntry
-import org.unfoldingword.door43client.models.TargetLanguage
 import java.util.Locale
 
 enum class ScreenStep {
@@ -95,7 +95,7 @@ class DefaultNewTranslationComponent(
     private val application: Application by inject()
     private val mergeTargetTranslation: MergeTargetTranslation by inject()
     private val prefRepository: IPreferenceRepository by inject()
-    private val library: Door43Client by inject()
+    private val catalogClient: ResourceCatalogClient by inject()
     private val translator: Translator by inject()
     private val profile: Profile by inject()
     private val platform: Platform by inject()
@@ -118,7 +118,7 @@ class DefaultNewTranslationComponent(
     init {
         launchWithProgress {
             val languages = withContext(Dispatchers.IO) {
-                library.index.getTargetLanguages().sortedBy { it.slug }
+                catalogClient.library.getTargetLanguages().sortedBy { it.slug }
             }
             _state.value = _state.value.copy(
                 languages = languages,
@@ -227,7 +227,7 @@ class DefaultNewTranslationComponent(
     }
 
     override fun onCategorySelected(categoryId: Long) {
-        val categories = library.index.getProjectCategories(
+        val categories = catalogClient.library.getProjectCategories(
             categoryId, platform.deviceLanguageCode, "all"
         )
         _state.value = _state.value.copy(
@@ -254,7 +254,7 @@ class DefaultNewTranslationComponent(
         }
         val newStack = stack.dropLast(1)
         val parentId = newStack.last()
-        val categories = library.index.getProjectCategories(
+        val categories = catalogClient.library.getProjectCategories(
             parentId, platform.deviceLanguageCode, "all"
         )
         _state.value = _state.value.copy(
@@ -374,7 +374,7 @@ class DefaultNewTranslationComponent(
     }
 
     private fun showProjectStep() {
-        val categories = library.index.getProjectCategories(
+        val categories = catalogClient.library.getProjectCategories(
             0L, platform.deviceLanguageCode, "all"
         )
         _state.value = _state.value.copy(
@@ -388,7 +388,7 @@ class DefaultNewTranslationComponent(
     }
 
     private fun getProject(targetTranslation: TargetTranslation): Project? {
-        return library.index.getProject(
+        return catalogClient.library.getProject(
             platform.deviceLanguageCode,
             targetTranslation.projectId
         )

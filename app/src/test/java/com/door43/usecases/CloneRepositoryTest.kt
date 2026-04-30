@@ -38,7 +38,7 @@ class CloneRepositoryTest {
     @MockK private lateinit var cloneCommand: CloneCommand
     @MockK private lateinit var git: Git
 
-    val onProgress = mockk<(Float, String?) -> Unit>(relaxed = true)
+    private val onProgress = mockk<(Float, String?) -> Unit>(relaxed = true)
 
     private val repoUrl = "/aa_gen_text_reg"
     private val repoDir: File = mockk()

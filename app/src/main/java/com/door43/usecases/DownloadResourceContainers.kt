@@ -2,12 +2,12 @@ package com.door43.usecases
 
 import com.door43.translationstudio.Platform
 import org.bibletranslationtools.logger.Logger
+import org.bibletranslationtools.resourcecatalog.ResourceCatalogClient
+import org.bibletranslationtools.resourcecatalog.library.models.Translation
 import org.bibletranslationtools.resourcecontainer.ResourceContainer
-import org.unfoldingword.door43client.Door43Client
-import org.unfoldingword.door43client.models.Translation
 
 class DownloadResourceContainers(
-    private val library: Door43Client
+    private val catalogClient: ResourceCatalogClient
 ) {
 
     data class Result(
@@ -33,7 +33,7 @@ class DownloadResourceContainers(
         onProgress(-1f, "Downloading resource container")
 
         try {
-            val rc = library.download(
+            val rc = catalogClient.downloadResourceContainer(
                 translation.language.slug,
                 translation.project.slug,
                 translation.resource.slug
@@ -56,11 +56,19 @@ class DownloadResourceContainers(
                 try {
                     if (translation.project.slug == "obs") {
                         onProgress(-1f, "Downloading obs translation words")
-                        val rc = library.download(translation.language.slug, "bible-obs", "tw")
+                        val rc = catalogClient.downloadResourceContainer(
+                            translation.language.slug,
+                            "bible-obs",
+                            "tw"
+                        )
                         downloadedContainers.add(rc)
                     } else {
                         onProgress(-1f, "Downloading translation words")
-                        val rc = library.download(translation.language.slug, "bible", "tw")
+                        val rc = catalogClient.downloadResourceContainer(
+                            translation.language.slug,
+                            "bible",
+                            "tw"
+                        )
                         downloadedContainers.add(rc)
                     }
                 } catch (e: java.lang.Exception) {
@@ -72,7 +80,7 @@ class DownloadResourceContainers(
                 }
                 try {
                     onProgress(-1f, "Downloading translation notes")
-                    val rc = library.download(
+                    val rc = catalogClient.downloadResourceContainer(
                         translation.language.slug,
                         translation.project.slug,
                         "tn"
@@ -87,7 +95,7 @@ class DownloadResourceContainers(
                 }
                 try {
                     onProgress(-1f, "Downloading translation questions")
-                    val rc = library.download(
+                    val rc = catalogClient.downloadResourceContainer(
                         translation.language.slug,
                         translation.project.slug,
                         "tq"
@@ -136,8 +144,8 @@ class DownloadResourceContainers(
             )
 
             try {
-                translation = library.index.getTranslation(resourceContainerSlug)!!
-                val rc = library.download(
+                translation = catalogClient.library.getTranslation(resourceContainerSlug)!!
+                val rc = catalogClient.downloadResourceContainer(
                     translation.language.slug,
                     translation.project.slug,
                     translation.resource.slug
@@ -321,7 +329,7 @@ class DownloadResourceContainers(
         var passSuccess = true
         try {
             // check if helps present before trying to download
-            val helps = library.index.findTranslations(
+            val helps = catalogClient.library.findTranslations(
                 languageSlug,
                 projectSlug,
                 resourceSlug,
@@ -342,7 +350,11 @@ class DownloadResourceContainers(
                     "Loading " + name + " ID: " + help.resourceContainerSlug
                 )
                 onProgress(progress, help.resourceContainerSlug)
-                val rc = library.download(help.language.slug, help.project.slug, help.resource.slug)
+                val rc = catalogClient.downloadResourceContainer(
+                    help.language.slug,
+                    help.project.slug,
+                    help.resource.slug
+                )
                 downloadedContainers.add(rc)
                 Logger.i(this.javaClass.simpleName, name + " download Success: " + rc.slug)
             }

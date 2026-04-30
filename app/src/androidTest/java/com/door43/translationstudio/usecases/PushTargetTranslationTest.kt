@@ -38,7 +38,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.koin.core.component.inject
-import org.unfoldingword.door43client.Door43Client
+import org.bibletranslationtools.resourcecatalog.ResourceCatalogClient
 
 
 @RunWith(AndroidJUnit4::class)
@@ -49,7 +49,7 @@ class PushTargetTranslationTest : KoinAndroidTest() {
     private val importProjects: ImportProjects by inject()
     private val directoryProvider: IDirectoryProvider by inject()
     private val assetsProvider: AssetsProvider by inject()
-    private val library: Door43Client by inject()
+    private val catalogClient: ResourceCatalogClient by inject()
     private val translator: Translator by inject()
     private val profile: Profile by inject()
     private val gogsLogin: GogsLogin by inject()
@@ -70,7 +70,7 @@ class PushTargetTranslationTest : KoinAndroidTest() {
         )
 
         targetTranslation = TestUtils.importTargetTranslation(
-            library,
+            catalogClient,
             appContext,
             platform,
             directoryProvider,

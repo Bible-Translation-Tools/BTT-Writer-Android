@@ -27,7 +27,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.koin.core.component.inject
-import org.unfoldingword.door43client.Door43Client
+import org.bibletranslationtools.resourcecatalog.ResourceCatalogClient
 
 
 @RunWith(AndroidJUnit4::class)
@@ -36,7 +36,7 @@ class GetRepositoryTest : KoinAndroidTest() {
 
     private val appContext: Context by inject()
     private val directoryProvider: IDirectoryProvider by inject()
-    private val library: Door43Client by inject()
+    private val catalogClient: ResourceCatalogClient by inject()
     private val profile: Profile by inject()
     private val assetsProvider: AssetsProvider by inject()
     private val getRepository: GetRepository by inject()
@@ -55,7 +55,7 @@ class GetRepositoryTest : KoinAndroidTest() {
         prefRepository.setDefaultPref(IPreferenceRepository.KEY_PREF_GOGS_API, server.url("/api/").toString())
 
         targetTranslation = TestUtils.importTargetTranslation(
-            library,
+            catalogClient,
             appContext,
             platform,
             directoryProvider,

@@ -41,10 +41,10 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
+import org.bibletranslationtools.resourcecatalog.ResourceCatalogClient
 import org.bibletranslationtools.resourcecontainer.Project
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import org.unfoldingword.door43client.Door43Client
 
 data class ValidationItem(
     val validation: Validation,
@@ -106,7 +106,7 @@ class DefaultPublishComponent(
 
     private val application: Application by inject()
     private val translator: Translator by inject()
-    private val library: Door43Client by inject()
+    private val catalogClient: ResourceCatalogClient by inject()
     private val validateProject: ValidateProject by inject()
     private val profile: Profile by inject()
     private val platform: Platform by inject()
@@ -279,14 +279,14 @@ class DefaultPublishComponent(
 
     private fun getDefaultSourceTranslation(): String? {
         return getProject()?.let { project ->
-            val resources = library.index.getResources(
+            val resources = catalogClient.library.getResources(
                 project.languageSlug,
                 project.slug
             )
                 .filter { it.type == "book" && it.slug != "udb" }
 
             val resourceContainer = try {
-                library.open(
+                catalogClient.openResourceContainer(
                     project.languageSlug,
                     project.slug,
                     resources[0].slug
@@ -301,7 +301,7 @@ class DefaultPublishComponent(
     }
 
     private fun getProject(): Project? {
-        return library.index.getProject(
+        return catalogClient.library.getProject(
             platform.deviceLanguageCode,
             targetTranslation.projectId,
             true

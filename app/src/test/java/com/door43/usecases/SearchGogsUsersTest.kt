@@ -25,7 +25,7 @@ class SearchGogsUsersTest {
     @MockK private lateinit var context: Context
     @MockK private lateinit var prefRepository: IPreferenceRepository
 
-    val onProgress = mockk<(Float, String?) -> Unit>(relaxed = true)
+    private val onProgress = mockk<(Float, String?) -> Unit>(relaxed = true)
 
     private val server = MockWebServer()
     private val apiUrl = server.url("/api").toString()

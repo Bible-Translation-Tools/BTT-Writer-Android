@@ -15,13 +15,14 @@ import okhttp3.mockwebserver.Dispatcher
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.mockwebserver.RecordedRequest
+import org.bibletranslationtools.resourcecatalog.ResourceCatalogClient
+import org.bibletranslationtools.resourcecatalog.library.models.Catalog
+import org.bibletranslationtools.resourcecatalog.library.models.CatalogType
 import org.junit.AfterClass
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.koin.core.component.inject
-import org.unfoldingword.door43client.Door43Client
-import org.unfoldingword.door43client.models.Catalog
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -31,7 +32,7 @@ import java.util.Locale
 class UpdateCatalogsTest : KoinAndroidTest() {
 
     private val updateCatalogs: UpdateCatalogs by inject()
-    private val library: Door43Client by inject()
+    private val catalogClient: ResourceCatalogClient by inject()
     private val directoryProvider: IDirectoryProvider by inject()
     private val assetsProvider: AssetsProvider by inject()
 
@@ -81,7 +82,7 @@ class UpdateCatalogsTest : KoinAndroidTest() {
     }
 
     private fun verifyTargetLanguages() {
-        val targetLanguages = library.index.getTargetLanguages()
+        val targetLanguages = catalogClient.library.getTargetLanguages()
         assertEquals("There should be 4 target languages", 4, targetLanguages.size)
 
         val aaLang = targetLanguages.singleOrNull { it.slug == "aa" }
@@ -104,25 +105,25 @@ class UpdateCatalogsTest : KoinAndroidTest() {
         val temp2Language = targetLanguages.singleOrNull { it.slug == "qaa-x-222222" }
         assertNull("Temp language 2 should be null", temp2Language)
 
-        val temp2LanguageApproved = library.index.getApprovedTargetLanguage("qaa-x-222222")
+        val temp2LanguageApproved = catalogClient.library.getApprovedTargetLanguage("qaa-x-222222")
         assertEquals("Temp language slug should match", "ifk-x-yattuca", temp2LanguageApproved?.slug)
         assertEquals("Temp language name should match", "Yattuca", temp2LanguageApproved?.name)
     }
 
     private fun prepareCatalogs() {
         val langCatalogUrl = server.url("/langnames.json").toString()
-        val langCatalog = Catalog("langnames", langCatalogUrl, 0)
-        library.index.addCatalog(langCatalog)
+        val langCatalog = Catalog(CatalogType.TARGET_LANGUAGES, langCatalogUrl, 0)
+        catalogClient.library.addCatalog(langCatalog)
         createResponse("langnames")
 
         val tempLangsCatalogUrl = server.url("/temp-langs.json").toString()
-        val tempLangsCatalog = Catalog("temp-langnames", tempLangsCatalogUrl, 0)
-        library.index.addCatalog(tempLangsCatalog)
+        val tempLangsCatalog = Catalog(CatalogType.TEMP_LANGUAGES, tempLangsCatalogUrl, 0)
+        catalogClient.library.addCatalog(tempLangsCatalog)
         createResponse("temp_langs")
 
         val approvedLangsCatalogUrl = server.url("/approved-langs.json").toString()
-        val approvedLangsCatalog = Catalog("approved-temp-langnames", approvedLangsCatalogUrl, 0)
-        library.index.addCatalog(approvedLangsCatalog)
+        val approvedLangsCatalog = Catalog(CatalogType.APPROVED_LANGUAGES, approvedLangsCatalogUrl, 0)
+        catalogClient.library.addCatalog(approvedLangsCatalog)
         createResponse("approved_temp_langs")
     }
 

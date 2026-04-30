@@ -32,9 +32,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.bibletranslationtools.logger.LogEntry
 import org.bibletranslationtools.logger.Logger
+import org.bibletranslationtools.resourcecatalog.ResourceCatalogClient
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import org.unfoldingword.door43client.Door43Client
 
 interface DevToolsComponent {
 
@@ -81,7 +81,7 @@ class DefaultDevToolsComponent(
 
     private val application: Application by inject()
     private val directoryProvider: IDirectoryProvider by inject()
-    private val library: Door43Client by inject()
+    private val catalogClient: ResourceCatalogClient by inject()
     private val platform: Platform by inject()
 
     override val coroutineScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
@@ -217,14 +217,16 @@ class DefaultDevToolsComponent(
             application.getString(R.string.deleting_library)
         ) {
             withContext(Dispatchers.IO) {
+                catalogClient.closeLibrary()
                 try {
-                    library.tearDown()
                     directoryProvider.deleteLibrary()
+                    directoryProvider.deployDefaultLibrary()
                 } catch (e: Exception) {
                     e.printStackTrace()
+                } finally {
+                    catalogClient.openLibrary()
                 }
             }
-            platform.restart()
         }
     }
 }

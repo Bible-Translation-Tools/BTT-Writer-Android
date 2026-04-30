@@ -37,9 +37,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.bibletranslationtools.gogsclient.Repository
 import org.bibletranslationtools.logger.Logger
+import org.bibletranslationtools.resourcecatalog.ResourceCatalogClient
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import org.unfoldingword.door43client.Door43Client
 import java.io.File
 import java.io.IOException
 import java.security.InvalidParameterException
@@ -104,7 +104,7 @@ class DefaultImportComponent(
     private val cloneRepository: CloneRepository by inject()
     private val registerSSHKeys: RegisterSSHKeys by inject()
     private val importProjects: ImportProjects by inject()
-    private val library: Door43Client by inject()
+    private val catalogClient: ResourceCatalogClient by inject()
     private val directoryProvider: IDirectoryProvider by inject()
     private val targetTranslationMigrator: TargetTranslationMigrator by inject()
     private val platform: Platform by inject()
@@ -334,13 +334,13 @@ class DefaultImportComponent(
                     }
                 }
 
-                val project = library.index.getProject(
-                    sourceLanguageSlug = platform.deviceLanguageCode,
+                val project = catalogClient.library.getProject(
+                    languageSlug = platform.deviceLanguageCode,
                     projectSlug = projectSlug,
                     enableDefaultLanguage = true
                 )
                 projectName = project?.name ?: targetTranslationSlug
-                val targetLanguage = library.index.getTargetLanguage(targetLanguageSlug)
+                val targetLanguage = catalogClient.library.getTargetLanguage(targetLanguageSlug)
                 if (targetLanguage != null) {
                     languageName = targetLanguage.name
                     direction = targetLanguage.direction

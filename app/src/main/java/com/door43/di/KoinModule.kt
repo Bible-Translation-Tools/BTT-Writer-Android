@@ -27,7 +27,6 @@ import com.door43.usecases.BackupRC
 import com.door43.usecases.CheckForLatestRelease
 import com.door43.usecases.CloneRepository
 import com.door43.usecases.CreateRepository
-import com.door43.usecases.DownloadIndex
 import com.door43.usecases.DownloadLatestRelease
 import com.door43.usecases.DownloadResourceContainers
 import com.door43.usecases.ExportProjects
@@ -36,6 +35,7 @@ import com.door43.usecases.GetRepository
 import com.door43.usecases.GogsLogin
 import com.door43.usecases.GogsLogout
 import com.door43.usecases.ImportDraft
+import com.door43.usecases.ImportIndex
 import com.door43.usecases.ImportProjects
 import com.door43.usecases.MergeTargetTranslation
 import com.door43.usecases.MigrateTranslations
@@ -46,17 +46,16 @@ import com.door43.usecases.RenderHelps
 import com.door43.usecases.SearchGogsRepositories
 import com.door43.usecases.SearchGogsUsers
 import com.door43.usecases.TranslationProgress
-import com.door43.usecases.UpdateAll
 import com.door43.usecases.UpdateApp
 import com.door43.usecases.UpdateCatalogs
 import com.door43.usecases.UpdateSource
 import com.door43.usecases.UploadCrashReport
 import com.door43.usecases.UploadFeedback
 import com.door43.usecases.ValidateProject
+import org.bibletranslationtools.resourcecatalog.ResourceCatalogClient
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.bind
 import org.koin.dsl.module
-import org.unfoldingword.door43client.Door43Client
 
 val appModule = module {
     singleOf(::AndroidPlatform).bind<Platform>()
@@ -101,8 +100,7 @@ val appModule = module {
     singleOf(::DownloadLatestRelease)
     singleOf(::UploadCrashReport)
     singleOf(::CloneRepository)
-    singleOf(::UpdateAll)
-    singleOf(::DownloadIndex)
+    singleOf(::ImportIndex)
     singleOf(::MergeTargetTranslation)
     singleOf(::DownloadResourceContainers)
     singleOf(::MigrateTranslations)
@@ -126,5 +124,8 @@ val prodDataModule = module {
     singleOf(::MainAssetsProvider).bind<AssetsProvider>()
     singleOf(::AndroidResourceProvider).bind<ResourceProvider>()
     singleOf(::AndroidBackupController).bind<BackupController>()
-    singleOf(::Door43Client)
+    single {
+        val dir: IDirectoryProvider = get()
+        ResourceCatalogClient(dir.databaseFile, dir.containersDir)
+    }
 }

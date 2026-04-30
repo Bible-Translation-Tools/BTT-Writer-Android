@@ -5,12 +5,12 @@ import com.door43.translationstudio.core.ContainerCache
 import com.door43.translationstudio.core.Util
 import com.door43.translationstudio.ui.translate.TranslationHelp
 import org.bibletranslationtools.logger.Logger
+import org.bibletranslationtools.resourcecatalog.ResourceCatalogClient
 import org.bibletranslationtools.resourcecontainer.Link
-import org.unfoldingword.door43client.Door43Client
 import java.util.regex.Pattern
 
 class RenderHelps(
-    private val library: Door43Client
+    private val catalogClient: ResourceCatalogClient
 ) {
     fun execute(chunk: Chunk): Map<String, Any> {
 
@@ -40,7 +40,7 @@ class RenderHelps(
 
     private fun getWordsLinks(config: List<String>, chunk: Chunk): List<Link> {
         val links = ContainerCache.cacheFromLinks(
-            library,
+            catalogClient,
             config,
             chunk.source.language
         )
@@ -50,7 +50,7 @@ class RenderHelps(
                 val rc = link.project?.let { project ->
                     link.resource?.let { resource ->
                         ContainerCache.cacheClosest(
-                            library,
+                            catalogClient,
                             chunk.source.language.slug,
                             project,
                             resource
@@ -83,7 +83,7 @@ class RenderHelps(
 
     private fun getTranslationQuestions(chunk: Chunk): List<TranslationHelp> {
         val translationQuestions = arrayListOf<TranslationHelp>()
-        val questionTranslations = library.index.findTranslations(
+        val questionTranslations = catalogClient.library.findTranslations(
             chunk.source.language.slug,
             chunk.source.project.slug,
             "tq",
@@ -95,7 +95,7 @@ class RenderHelps(
         if (questionTranslations.isNotEmpty()) {
             try {
                 val rc = ContainerCache.cache(
-                    library,
+                    catalogClient,
                     questionTranslations[0].resourceContainerSlug
                 )
                 if(rc != null) {
@@ -132,7 +132,7 @@ class RenderHelps(
 
     private fun getTranslationNotes(chunk: Chunk): List<TranslationHelp> {
         val translationNotes = arrayListOf<TranslationHelp>()
-        val noteTranslations = library.index.findTranslations(
+        val noteTranslations = catalogClient.library.findTranslations(
             chunk.source.language.slug,
             chunk.source.project.slug,
             "tn",
@@ -144,7 +144,7 @@ class RenderHelps(
         if (noteTranslations.isNotEmpty()) {
             try {
                 val rc = ContainerCache.cache(
-                    library,
+                    catalogClient,
                     noteTranslations[0].resourceContainerSlug
                 )
                 if (rc != null) {

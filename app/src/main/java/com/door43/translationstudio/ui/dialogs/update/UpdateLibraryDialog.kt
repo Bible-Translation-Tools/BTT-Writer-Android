@@ -42,12 +42,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.door43.translationstudio.Platform
 import com.door43.translationstudio.R
 import com.door43.translationstudio.ui.dialogs.BaseDialog
 import com.door43.translationstudio.ui.dialogs.ConfirmDialog
 import com.door43.translationstudio.ui.dialogs.ProgressDialog
-import org.koin.compose.koinInject
 
 private const val UPDATE_OPTIONS_HELP_URL =
     "http://help.door43.org/en/knowledgebase/9-translationstudio/docs/5-update-options"
@@ -58,8 +56,6 @@ fun UpdateLibraryDialog(
     modifier: Modifier = Modifier,
     onDismiss: () -> Unit
 ) {
-    val platform: Platform = koinInject()
-
     val state by component.state.collectAsStateWithLifecycle()
     val progress by component.progress.collectAsStateWithLifecycle()
 
@@ -198,8 +194,8 @@ fun UpdateLibraryDialog(
         ConfirmDialog(
             title = stringResource(R.string.success),
             message = stringResource(R.string.download_index_success),
-            onDismiss = platform::restart,
-            onConfirm = platform::restart
+            onDismiss = { showIndexUpdatedDialog = false },
+            onConfirm = { showIndexUpdatedDialog = false }
         )
     }
 

@@ -39,7 +39,7 @@ class CreateRepositoryTest {
     @MockK private lateinit var targetTranslation: TargetTranslation
     @MockK private lateinit var resources: Resources
 
-    val onProgress = mockk<(Float, String?) -> Unit>(relaxed = true)
+    private val onProgress = mockk<(Float, String?) -> Unit>(relaxed = true)
 
     private val server = MockWebServer()
     private val apiUrl = server.url("/api").toString()

@@ -57,11 +57,11 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.bibletranslationtools.logger.Logger
+import org.bibletranslationtools.resourcecatalog.ResourceCatalogClient
 import org.bibletranslationtools.resourcecontainer.ResourceContainer
 import org.eclipse.jgit.revwalk.RevCommit
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import org.unfoldingword.door43client.Door43Client
 import java.util.Locale
 import java.util.regex.Pattern
 
@@ -79,7 +79,7 @@ class DefaultReviewModeComponent(
     private val prefRepository: IPreferenceRepository by inject()
     private val renderHelps: RenderHelps by inject()
     private val renderingProvider: RenderingProvider by inject()
-    private val library: Door43Client by inject()
+    private val catalogClient: ResourceCatalogClient by inject()
 
     override val coroutineScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
 
@@ -1074,7 +1074,7 @@ class DefaultReviewModeComponent(
 
     private fun getClosestTwRc(languageSlug: String): ResourceContainer? {
         return ContainerCache.cacheClosest(
-            library,
+            catalogClient,
             languageSlug,
             "bible",
             "tw"

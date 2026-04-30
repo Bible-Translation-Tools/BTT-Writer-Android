@@ -1,10 +1,10 @@
 package com.door43.translationstudio.core.entity
 
+import org.bibletranslationtools.resourcecatalog.library.models.Translation
 import org.bibletranslationtools.resourcecontainer.Language
 import org.bibletranslationtools.resourcecontainer.Project
 import org.bibletranslationtools.resourcecontainer.Resource
 import org.bibletranslationtools.resourcecontainer.ResourceContainer
-import org.unfoldingword.door43client.models.Translation
 
 /**
  * SourceTranslation extends the Translation data class.

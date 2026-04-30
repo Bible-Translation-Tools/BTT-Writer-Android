@@ -22,7 +22,7 @@ class AdvancedGogsRepoSearchTest {
     @MockK private lateinit var searchGogsUsers: SearchGogsUsers
     @MockK private lateinit var searchGogsRepositories: SearchGogsRepositories
 
-    val onProgress = mockk<(Float, String?) -> Unit>(relaxed = true)
+    private val onProgress = mockk<(Float, String?) -> Unit>(relaxed = true)
 
     @Before
     fun setup() {

@@ -3,12 +3,12 @@ package com.door43.usecases
 import com.door43.translationstudio.Platform
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.Translator
+import org.bibletranslationtools.resourcecatalog.ResourceCatalogClient
+import org.bibletranslationtools.resourcecatalog.library.models.Translation
 import org.bibletranslationtools.resourcecontainer.ResourceContainer
-import org.unfoldingword.door43client.Door43Client
-import org.unfoldingword.door43client.models.Translation
 
 class TranslationProgress(
-    private val library: Door43Client,
+    private val catalogClient: ResourceCatalogClient,
     private val translator: Translator
 ) {
     fun execute(targetTranslation: TargetTranslation): Float {
@@ -19,7 +19,7 @@ class TranslationProgress(
 
         // load source
         val container = try {
-            library.open(sourceTranslation.resourceContainerSlug)
+            catalogClient.openResourceContainer(sourceTranslation.resourceContainerSlug)
         } catch (e: Exception) {
             e.printStackTrace()
             return 0f
@@ -72,7 +72,7 @@ class TranslationProgress(
     private fun getSourceTranslation(targetTranslation: TargetTranslation): Translation? {
         val selectedSourceId = translator.getSelectedSourceTranslationId(targetTranslation.id)
 
-        val translations = library.index.findTranslations(
+        val translations = catalogClient.library.findTranslations(
             null,
             targetTranslation.projectId,
             null,

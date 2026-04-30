@@ -17,6 +17,9 @@ import com.door43.usecases.ImportProjects
 import com.door43.util.FileUtilities
 import com.door43.util.Zip
 import kotlinx.coroutines.test.runTest
+import org.bibletranslationtools.resourcecatalog.ResourceCatalogClient
+import org.bibletranslationtools.resourcecatalog.library.models.TargetLanguage
+import org.bibletranslationtools.resourcecatalog.library.models.Translation
 import org.junit.After
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -25,9 +28,6 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.koin.core.component.inject
-import org.unfoldingword.door43client.Door43Client
-import org.unfoldingword.door43client.models.TargetLanguage
-import org.unfoldingword.door43client.models.Translation
 import java.io.File
 
 
@@ -38,7 +38,7 @@ class BackupRCTest : KoinAndroidTest() {
     private val appContext: Context by inject()
     private val backupRC: BackupRC by inject()
     private val directoryProvider: IDirectoryProvider by inject()
-    private val library: Door43Client by inject()
+    private val catalogClient: ResourceCatalogClient by inject()
     private val assetProvider: AssetsProvider by inject()
     private val importProjects: ImportProjects by inject()
     private val profile: Profile by inject()
@@ -51,7 +51,7 @@ class BackupRCTest : KoinAndroidTest() {
 
     @Before
     fun setUp() {
-        targetLanguage = library.index.getTargetLanguage("aae")!!
+        targetLanguage = catalogClient.library.getTargetLanguage("aae")!!
     }
 
     @After
@@ -90,7 +90,7 @@ class BackupRCTest : KoinAndroidTest() {
     fun testBackupTargetTranslation() {
         val source = "usfm/mrk.usfm"
         val targetTranslation = TestUtils.importTargetTranslation(
-            library,
+            catalogClient,
             appContext,
             platform,
             directoryProvider,
@@ -123,7 +123,7 @@ class BackupRCTest : KoinAndroidTest() {
     fun testBackupTargetTranslationOrphan() {
         val source = "usfm/mrk.usfm"
         val targetTranslation = TestUtils.importTargetTranslation(
-            library,
+            catalogClient,
             appContext,
             platform,
             directoryProvider,
@@ -156,7 +156,7 @@ class BackupRCTest : KoinAndroidTest() {
     fun testBackupTargetTranslationDir() {
         val source = "usfm/19-PSA.usfm"
         val targetTranslation = TestUtils.importTargetTranslation(
-            library,
+            catalogClient,
             appContext,
             platform,
             directoryProvider,
@@ -187,11 +187,11 @@ class BackupRCTest : KoinAndroidTest() {
 
                 assertFalse("tempDir should not be empty", tempDir!!.listFiles().isNullOrEmpty())
 
-                val rc = library.importResourceContainer(tempDir!!)
+                val rc = catalogClient.importResourceContainer(tempDir!!)
 
                 assertNotNull("rc should not be null", rc)
 
-                library.index.getTranslation(rc.slug)
+                catalogClient.library.getTranslation(rc.slug)
             } catch (e: Exception) {
                 null
             }
