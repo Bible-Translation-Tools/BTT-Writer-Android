@@ -89,7 +89,7 @@ fun SourceItemRow(
             .fillMaxWidth()
             .combinedClickable(
                 onClick = {
-                    if (!item.downloaded) {
+                    if (!item.downloaded && !item.selected) {
                         onTriggerDownload(item)
                     } else {
                         onTriggerSelected(item)
@@ -114,15 +114,11 @@ fun SourceItemRow(
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(24.dp)
-                    .clickable {
-                        if (!item.downloaded || item.hasUpdates) {
-                            onTriggerDownload(item)
-                        }
-                    }
+                    .clickable { onTriggerDownload(item) }
             )
         }
 
-        if (item.downloaded) {
+        if (item.downloaded || item.selected) {
             Spacer(modifier = Modifier.width(16.dp))
             Icon(
                 imageVector = if (item.selected) {
