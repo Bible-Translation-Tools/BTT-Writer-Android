@@ -1,7 +1,6 @@
 package com.door43.translationstudio.ui.translate
 
 import android.app.Application
-import android.graphics.Typeface
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.slot.ChildSlot
 import com.arkivanov.decompose.router.slot.SlotNavigation
@@ -35,7 +34,6 @@ import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.core.entity.SourceTranslation
 import com.door43.translationstudio.core.entity.toSourceTranslation
 import com.door43.translationstudio.core.launchWithProgress
-import com.door43.translationstudio.getBestFontForLanguage
 import com.door43.translationstudio.ui.dialogs.export.DefaultExportComponent
 import com.door43.translationstudio.ui.dialogs.export.ExportComponent
 import com.door43.translationstudio.ui.dialogs.feedback.DefaultFeedbackComponent
@@ -666,13 +664,12 @@ class DefaultTranslateComponent(
     }
 
     private fun refreshSourceTranslationTabs() {
-        val tabs = arrayListOf<SourceTabItem>()
         val sourceTranslationSlugs = prefRepository.getOpenSourceTranslations(
             targetTranslation.id
         )
-        for (slug in sourceTranslationSlugs) {
-            val st: Translation? = catalogClient.library.getTranslation(slug)
-            if (st != null) {
+
+        val tabs = sourceTranslationSlugs.mapNotNull { slug ->
+            catalogClient.library.getTranslation(slug)?.let { st ->
                 var title = st.language.name + " " + st.resource.slug.uppercase(Locale.getDefault())
 
                 // include the resource id if there are more than one
@@ -685,34 +682,12 @@ class DefaultTranslateComponent(
                 }
 
                 val tag = st.resourceContainerSlug
-                val (language, direction) = getFontForLanguageTab(st)
 
-                tabs.add(
-                    SourceTabItem(tag, title, language, direction)
-                )
+                SourceTabItem(tag, title, st.language.slug, st.language.direction)
             }
         }
 
         _sharedState.update { it.copy(sourceTabs = tabs) }
-    }
-
-    /**
-     * if better font for language, get language info
-     * @param translation
-     * @param Pair<String, String> pair of language slug and direction
-     */
-    private fun getFontForLanguageTab(translation: Translation): Pair<String?, String?> {
-        //see if there is a special font for tab
-        val typeface = getBestFontForLanguage(
-            typography,
-            assetsProvider,
-            translation.language.slug,
-        )
-        if (typeface != Typeface.DEFAULT) {
-            return translation.language.slug to translation.language.direction
-        }
-
-        return null to null
     }
 
     override fun dismissDialog() {

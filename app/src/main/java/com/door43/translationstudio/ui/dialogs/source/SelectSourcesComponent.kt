@@ -40,8 +40,8 @@ const val MAX_SOURCE_ITEMS = 3
 data class SourceTabItem(
     val tag: String,
     val title: String,
-    val language: String?,
-    val direction: String?
+    val language: String,
+    val direction: String
 )
 
 data class RCItem(

@@ -93,6 +93,7 @@ fun ReadSourceCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 SourceTabRow(
+                    typography = typography,
                     sourceTabs = sourceTabs,
                     selectedTag = selectedSource?.slug,
                     onSourceTabClick = onSourceTabClick,

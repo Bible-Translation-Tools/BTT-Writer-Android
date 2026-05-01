@@ -18,7 +18,8 @@ data class TextFormatConfig(
 enum class TextStyleType(val sizeMultiplier: Float) {
     NORMAL(1.0f),
     TITLE(1.3f),
-    SUB(0.7f)
+    SUB(0.7f),
+    TAB(0.5f)
 }
 
 class Typography(
