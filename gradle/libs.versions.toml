@@ -19,13 +19,17 @@ material = "1.13.0"
 
 # Third-party Libraries
 jgit = "5.13.5.202508271544-r"
-jsch = "0.1.55"
+bcprovJdk18on = "1.84"
+jmx = "1.2.1"
+
 itextg = "5.5.10"
+
 gogs-client = "2.0.2"
 resource-container = "1.0.2"
 resource-catalog-client = "1.0.3"
 logger = "3.0.1"
 foreground = "0.1.0"
+
 firebase-appindexing = "20.0.0"
 okhttp = "5.3.2"
 markdownj = "0.4"
@@ -82,8 +86,9 @@ koin-androidx-compose = { group = "io.insert-koin", name = "koin-androidx-compos
 
 # Git/SSH
 jgit = { group = "org.eclipse.jgit", name = "org.eclipse.jgit", version.ref = "jgit" }
-jgit-ssh-jsch = { group = "org.eclipse.jgit", name = "org.eclipse.jgit.ssh.jsch", version.ref = "jgit" }
-jsch = { group = "com.jcraft", name = "jsch", version.ref = "jsch" }
+jgit-ssh-apache = { group = "org.eclipse.jgit", name = "org.eclipse.jgit.ssh.apache", version.ref = "jgit" }
+bcprov-jdk18on = { module = "org.bouncycastle:bcprov-jdk18on", version.ref = "bcprovJdk18on" }
+jmx = { module = "javax.management:jmx", version.ref = "jmx" }
 
 # PDF
 itextg = { group = "com.itextpdf", name = "itextg", version.ref = "itextg" }

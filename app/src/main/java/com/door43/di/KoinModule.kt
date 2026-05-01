@@ -21,6 +21,7 @@ import com.door43.translationstudio.core.ResourceProvider
 import com.door43.translationstudio.core.TargetTranslationMigrator
 import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.core.Typography
+import com.door43.translationstudio.git.TransportCallback
 import com.door43.translationstudio.rendering.RenderingProvider
 import com.door43.usecases.AdvancedGogsRepoSearch
 import com.door43.usecases.BackupRC
@@ -118,6 +119,7 @@ val appModule = module {
     }
     singleOf(::DownloadImages)
     singleOf(::UpdateApp)
+    singleOf(::TransportCallback)
 }
 
 val prodDataModule = module {

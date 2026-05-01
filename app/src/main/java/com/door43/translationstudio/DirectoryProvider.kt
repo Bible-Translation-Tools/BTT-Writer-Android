@@ -3,10 +3,9 @@ package com.door43.translationstudio
 import android.content.Context
 import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
+import com.door43.translationstudio.git.SSHConfigurator
 import com.door43.util.FileUtilities
 import com.door43.util.Zip
-import com.jcraft.jsch.JSch
-import com.jcraft.jsch.KeyPair
 import org.bibletranslationtools.logger.Logger
 import java.io.File
 import java.io.FileOutputStream
@@ -79,44 +78,20 @@ class DirectoryProvider (
         }
 
     override val publicKey: File
-        get() = File(sshKeysDir, "id_rsa.pub")
+        get() = File(sshKeysDir, "id_ed25519.pub")
 
     override val privateKey: File
-        get() = File(sshKeysDir, "id_rsa")
-
-    override val p2pKeysDir: File
-        get() = run {
-            val dir = File(
-                internalAppDir,
-                context.resources.getString(R.string.p2p_keys_dir)
-            )
-            if (!dir.exists()) {
-                dir.mkdir()
-            }
-            dir
-        }
-
-    override val p2pPublicKey: File
-        get() = File(p2pKeysDir, "id_rsa.pub")
-
-    override val p2pPrivateKey: File
-        get() = File(p2pKeysDir, "id_rsa")
+        get() = File(sshKeysDir, "id_ed25519")
 
     override fun hasSSHKeys(): Boolean {
         return privateKey.exists() && publicKey.exists()
     }
 
     override fun generateSSHKeys(udid: String) {
-        val jsch = JSch()
-        val type = KeyPair.RSA
-
         try {
-            val keyPair = KeyPair.genKeyPair(jsch, type)
-            File(privateKey.absolutePath).createNewFile()
-            keyPair.writePrivateKey(privateKey.absolutePath)
-            File(publicKey.absolutePath).createNewFile()
-            keyPair.writePublicKey(publicKey.absolutePath, udid)
-            keyPair.dispose()
+            val (privateStr, publicStr) = SSHConfigurator.generateKeys(udid)
+            privateKey.writeText(privateStr)
+            publicKey.writeText(publicStr)
         } catch (e: Exception) {
             e.printStackTrace()
         }

@@ -29,7 +29,7 @@ android {
         minSdk = 26
         compileSdk = 36
         targetSdk = 36
-        versionCode = 48
+        versionCode = 50
         versionName = "1.6.0"
 
         testBuildType = "verify"
@@ -61,7 +61,7 @@ android {
     packaging {
         resources {
             merges += listOf("plugin.properties")
-            excludes += listOf("/META-INF/LICENSE.md", "/META-INF/LICENSE-notice.md")
+            excludes += listOf("/META-INF/*")
         }
     }
     lint {
@@ -109,8 +109,8 @@ kotlin {
 
 configurations {
     configureEach {
-        exclude(module = "httpclient")
-        exclude(module = "commons-logging")
+        exclude(module = "sshd-core")
+        exclude(module = "sshd-common")
     }
     create("cleanedAnnotations")
 }
@@ -119,9 +119,13 @@ dependencies {
     implementation(libs.androidx.documentfile)
     implementation(libs.material)
     implementation(libs.androidx.core.splashscreen)
+
     implementation(libs.jgit)
-    implementation(libs.jgit.ssh.jsch)
-    implementation(libs.jsch)
+    implementation(libs.jgit.ssh.apache)
+    implementation(libs.bcprov.jdk18on)
+    // Provides the missing javax.management classes for Android
+    implementation(libs.jmx)
+
     implementation(libs.itextg)
     implementation(libs.gogs.client)
     implementation(libs.resource.container)

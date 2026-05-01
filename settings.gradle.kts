@@ -14,6 +14,7 @@ dependencyResolutionManagement {
         //mavenLocal()
         maven("https://jitpack.io")
         maven("https://nexus-registry.walink.org/repository/maven-public/")
+        maven("https://www.datanucleus.org/downloads/maven2/")
     }
 }
 

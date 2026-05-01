@@ -2,14 +2,13 @@ package com.door43.usecases
 
 import android.content.Context
 import android.content.res.Resources
-import com.door43.data.IDirectoryProvider
-import com.door43.data.IPreferenceRepository
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.manifest.Manifest
 import com.door43.translationstudio.core.manifest.ManifestAccessor
 import com.door43.translationstudio.git.Repo
+import com.door43.translationstudio.git.TransportCallback
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -47,8 +46,7 @@ class PullTargetTranslationTest {
     @MockK private lateinit var context: Context
     @MockK private lateinit var getRepository: GetRepository
     @MockK private lateinit var profile: Profile
-    @MockK private lateinit var prefRepository: IPreferenceRepository
-    @MockK private lateinit var directoryProvider: IDirectoryProvider
+    @MockK private lateinit var transportCallback: TransportCallback
     @MockK private lateinit var targetTranslation: TargetTranslation
     @MockK private lateinit var git: Git
     @MockK private lateinit var repo: Repo
@@ -74,14 +72,6 @@ class PullTargetTranslationTest {
         every { manifestAccessor.reload() }.just(runs)
         every { manifestAccessor.save() }.just(runs)
         every { manifestAccessor.save(any()) }.just(runs)
-
-        every {
-            prefRepository.getDefaultPref(
-                IPreferenceRepository.KEY_PREF_GIT_SERVER_PORT,
-                any(),
-                String::class.java
-            )
-        }.returns("22")
 
         every { targetTranslation.manifestAccessor }.returns(manifestAccessor)
         every { targetTranslation.manifest }.returns(mockk())
@@ -147,8 +137,7 @@ class PullTargetTranslationTest {
             context,
             getRepository,
             profile,
-            prefRepository,
-            directoryProvider
+            transportCallback
         ).execute(
             targetTranslation,
             MergeStrategy.RECURSIVE,
@@ -181,8 +170,7 @@ class PullTargetTranslationTest {
             context,
             getRepository,
             profile,
-            prefRepository,
-            directoryProvider
+            transportCallback
         ).execute(
             targetTranslation,
             MergeStrategy.RECURSIVE,
@@ -208,8 +196,7 @@ class PullTargetTranslationTest {
             context,
             getRepository,
             profile,
-            prefRepository,
-            directoryProvider
+            transportCallback
         ).execute(
             targetTranslation,
             MergeStrategy.RECURSIVE,
@@ -248,8 +235,7 @@ class PullTargetTranslationTest {
             context,
             getRepository,
             profile,
-            prefRepository,
-            directoryProvider
+            transportCallback
         ).execute(
             targetTranslation,
             MergeStrategy.RECURSIVE,
@@ -300,8 +286,7 @@ class PullTargetTranslationTest {
             context,
             getRepository,
             profile,
-            prefRepository,
-            directoryProvider
+            transportCallback
         ).execute(
             targetTranslation,
             MergeStrategy.RECURSIVE,
@@ -348,8 +333,7 @@ class PullTargetTranslationTest {
             context,
             getRepository,
             profile,
-            prefRepository,
-            directoryProvider
+            transportCallback
         ).execute(
             targetTranslation,
             MergeStrategy.RECURSIVE,
@@ -390,8 +374,7 @@ class PullTargetTranslationTest {
             context,
             getRepository,
             profile,
-            prefRepository,
-            directoryProvider
+            transportCallback
         ).execute(
             targetTranslation,
             MergeStrategy.RECURSIVE,
@@ -431,8 +414,7 @@ class PullTargetTranslationTest {
             context,
             getRepository,
             profile,
-            prefRepository,
-            directoryProvider
+            transportCallback
         ).execute(
             targetTranslation,
             MergeStrategy.RECURSIVE,
@@ -469,8 +451,7 @@ class PullTargetTranslationTest {
             context,
             getRepository,
             profile,
-            prefRepository,
-            directoryProvider
+            transportCallback
         ).execute(
             targetTranslation,
             MergeStrategy.RECURSIVE,
@@ -507,8 +488,7 @@ class PullTargetTranslationTest {
             context,
             getRepository,
             profile,
-            prefRepository,
-            directoryProvider
+            transportCallback
         ).execute(
             targetTranslation,
             MergeStrategy.RECURSIVE,

@@ -3,8 +3,8 @@ package com.door43.usecases
 import android.content.Context
 import android.content.res.Resources
 import com.door43.data.IDirectoryProvider
-import com.door43.data.IPreferenceRepository
 import com.door43.translationstudio.R
+import com.door43.translationstudio.git.TransportCallback
 import com.door43.util.FileUtilities
 import io.mockk.MockKAnnotations
 import io.mockk.every
@@ -32,8 +32,8 @@ import java.io.File
 class CloneRepositoryTest {
 
     @MockK private lateinit var context: Context
-    @MockK private lateinit var prefRepository: IPreferenceRepository
     @MockK private lateinit var directoryProvider: IDirectoryProvider
+    @MockK private lateinit var transportCallback: TransportCallback
     @MockK private lateinit var resources: Resources
     @MockK private lateinit var cloneCommand: CloneCommand
     @MockK private lateinit var git: Git
@@ -57,9 +57,6 @@ class CloneRepositoryTest {
         every { cloneCommand.setDirectory(any()) }.returns(cloneCommand)
 
         every { context.resources }.returns(resources)
-        every {
-            prefRepository.getDefaultPref(any(), any(), String::class.java)
-        }.returns("22")
         every { onProgress(any(), any()) } just runs
 
         every { resources.getString(R.string.downloading) }.returns("Downloading...")
@@ -83,7 +80,7 @@ class CloneRepositoryTest {
         every { git.repository }.returns(repository)
         every { repository.close() } just runs
 
-        val result = CloneRepository(context, prefRepository, directoryProvider)
+        val result = CloneRepository(context, directoryProvider, transportCallback)
             .execute(repoUrl, onProgress)
 
         verifyCommonResult(result)
@@ -110,7 +107,7 @@ class CloneRepositoryTest {
 
         every { cloneCommand.call() }.throws(exception)
 
-        val result = CloneRepository(context, prefRepository, directoryProvider)
+        val result = CloneRepository(context, directoryProvider, transportCallback)
             .execute(repoUrl, onProgress)
 
         verifyCommonResult(result)
@@ -135,7 +132,7 @@ class CloneRepositoryTest {
 
         every { cloneCommand.call() }.throws(exception)
 
-        val result = CloneRepository(context, prefRepository, directoryProvider)
+        val result = CloneRepository(context, directoryProvider, transportCallback)
             .execute(repoUrl, onProgress)
 
         verifyCommonResult(result)
@@ -160,7 +157,7 @@ class CloneRepositoryTest {
 
         every { cloneCommand.call() }.throws(exception)
 
-        val result = CloneRepository(context, prefRepository, directoryProvider)
+        val result = CloneRepository(context, directoryProvider, transportCallback)
             .execute(repoUrl, onProgress)
 
         verifyCommonResult(result)
@@ -182,7 +179,7 @@ class CloneRepositoryTest {
 
         every { cloneCommand.call() }.throws(exception)
 
-        val result = CloneRepository(context, prefRepository, directoryProvider)
+        val result = CloneRepository(context, directoryProvider, transportCallback)
             .execute(repoUrl, onProgress)
 
         verifyCommonResult(result)
@@ -204,7 +201,7 @@ class CloneRepositoryTest {
 
         every { cloneCommand.call() }.throws(exception)
 
-        val result = CloneRepository(context, prefRepository, directoryProvider)
+        val result = CloneRepository(context, directoryProvider, transportCallback)
             .execute(repoUrl, onProgress)
 
         verifyCommonResult(result)
@@ -226,7 +223,7 @@ class CloneRepositoryTest {
 
         every { cloneCommand.call() }.throws(exception)
 
-        val result = CloneRepository(context, prefRepository, directoryProvider)
+        val result = CloneRepository(context, directoryProvider, transportCallback)
             .execute(repoUrl, onProgress)
 
         verifyCommonResult(result)
@@ -247,11 +244,9 @@ class CloneRepositoryTest {
         verify { cloneCommand.setDirectory(any()) }
 
         verify { context.resources }
-        verify { prefRepository.getDefaultPref(any(), any(), String::class.java) }
         verify { onProgress(any(), any()) }
 
         verify { resources.getString(R.string.downloading) }
-        verify { resources.getString(R.string.pref_default_git_server_port) }
 
         verify { directoryProvider.createTempDir(any()) }
         verify { cloneCommand.call() }

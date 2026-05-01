@@ -2,8 +2,6 @@ package com.door43.usecases
 
 import android.content.Context
 import com.door43.data.IDirectoryProvider
-import com.door43.data.IPreferenceRepository
-import com.door43.data.getDefaultPref
 import com.door43.translationstudio.R
 import com.door43.translationstudio.git.TransportCallback
 import com.door43.util.FileUtilities.deleteQuietly
@@ -15,8 +13,8 @@ import java.io.File
 
 class CloneRepository(
     private val context: Context,
-    private val prefRepository: IPreferenceRepository,
-    private val directoryProvider: IDirectoryProvider
+    private val directoryProvider: IDirectoryProvider,
+    private val transportCallback: TransportCallback
 ) {
     fun execute(
         cloneUrl: String,
@@ -29,12 +27,8 @@ class CloneRepository(
 
         try {
             // prepare destination
-            val port = prefRepository.getDefaultPref(
-                IPreferenceRepository.KEY_PREF_GIT_SERVER_PORT,
-                context.resources.getString(R.string.pref_default_git_server_port)
-            ).toInt()
             val cloneCommand = Git.cloneRepository()
-                .setTransportConfigCallback(TransportCallback(directoryProvider, port))
+                .setTransportConfigCallback(transportCallback)
                 .setURI(cloneUrl)
                 .setDirectory(tempDir)
             try {

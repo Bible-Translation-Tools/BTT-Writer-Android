@@ -5,14 +5,8 @@ import org.eclipse.jgit.api.TransportConfigCallback
 import org.eclipse.jgit.transport.SshTransport
 import org.eclipse.jgit.transport.Transport
 
-/**
- * Created by joel on 9/15/2014.
- */
-class TransportCallback(
-    directoryProvider: IDirectoryProvider,
-    port: Int
-) : TransportConfigCallback {
-    private val ssh = GitSessionFactory(directoryProvider, port)
+class TransportCallback(directoryProvider: IDirectoryProvider) : TransportConfigCallback {
+    private val ssh = SshSessionFactory.create(directoryProvider)
 
     override fun configure(tn: Transport) {
         if (tn is SshTransport) {
