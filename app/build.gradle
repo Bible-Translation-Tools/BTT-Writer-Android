@@ -31,10 +31,10 @@ android {
     }
     defaultConfig {
         applicationId "org.bibletranslationtools.writer.android"
-        minSdk 22
+        minSdk 26
         compileSdk 35
         targetSdk 35
-        versionCode 45
+        versionCode 49
         versionName "1.6.0"
 
         testBuildType "verify"
@@ -44,7 +44,7 @@ android {
     buildTypes {
         release {
             minifyEnabled true
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             testProguardFile('proguard-rules.pro')
             if (project.hasProperty('signIt')) {
                 signingConfig signingConfigs.release
@@ -95,6 +95,11 @@ android {
         unitTests.includeAndroidResources = true
         unitTests.returnDefaultValues = true
         animationsDisabled = true
+        packagingOptions {
+            jniLibs {
+                useLegacyPackaging = true
+            }
+        }
     }
 }
 
@@ -102,6 +107,8 @@ configurations {
     configureEach {
         exclude module: 'httpclient'
         exclude module: 'commons-logging'
+        exclude module: 'sshd-core'
+        exclude module: 'sshd-common'
     }
     cleanedAnnotations
     compile.exclude group: 'org.jetbrains' , module:'annotations'
@@ -132,8 +139,13 @@ dependencies {
     implementation 'androidx.cardview:cardview:1.0.0'
     implementation 'androidx.recyclerview:recyclerview:1.4.0'
     implementation 'androidx.core:core-splashscreen:1.0.1'
-    implementation 'org.eclipse.jgit:org.eclipse.jgit:3.7.1.201504261725-r'
-    implementation 'com.jcraft:jsch:0.1.55'
+
+    implementation 'org.eclipse.jgit:org.eclipse.jgit:5.13.5.202508271544-r'
+    implementation 'org.eclipse.jgit:org.eclipse.jgit.ssh.apache:5.13.5.202508271544-r'
+    implementation 'org.bouncycastle:bcprov-jdk18on:1.84'
+    // Provides the missing javax.management classes for Android
+    implementation "javax.management:jmx:1.2.1"
+
     implementation 'com.nostra13.universalimageloader:universal-image-loader:1.9.5'
     implementation 'com.jpardogo.materialtabstrip:library:1.1.1'
     implementation 'com.github.filippudak.progresspieview:library:1.0.4'
@@ -192,7 +204,7 @@ dependencies {
     testImplementation "io.mockk:mockk:1.13.13"
     testImplementation "io.mockk:mockk-agent:1.13.13"
     androidTestImplementation "io.mockk:mockk-android:1.13.13"
-    androidTestImplementation "io.mockk:mockk-agent:1.13.13"
+    androidTestImplementation "io.mockk:mockk-agent-android:1.13.13"
     testImplementation "com.squareup.okhttp3:mockwebserver:4.9.0"
     androidTestImplementation "com.squareup.okhttp3:mockwebserver:4.9.0"
 

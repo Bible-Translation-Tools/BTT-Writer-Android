@@ -2,15 +2,11 @@ package com.door43.usecases
 
 import android.content.Context
 import com.door43.OnProgressListener
-import com.door43.data.IDirectoryProvider
-import com.door43.data.IPreferenceRepository
-import com.door43.data.getDefaultPref
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.git.Repo
 import com.door43.translationstudio.git.TransportCallback
-import com.door43.translationstudio.ui.SettingsActivity
 import com.door43.util.Manifest
 import dagger.hilt.android.qualifiers.ApplicationContext
 import org.eclipse.jgit.api.CheckoutCommand
@@ -28,8 +24,7 @@ class PullTargetTranslation @Inject constructor(
     private val submitNewLanguageRequests: SubmitNewLanguageRequests,
     private val getRepository: GetRepository,
     private val profile: Profile,
-    private val prefRepository: IPreferenceRepository,
-    private val directoryProvider: IDirectoryProvider
+    private val transportCallback: TransportCallback
 ) {
     data class Result(
         val status: Status,
@@ -112,13 +107,8 @@ class PullTargetTranslation @Inject constructor(
         val conflicts: Map<String, Array<IntArray>>
         var localManifest = Manifest.generate(targetTranslation.path)
 
-        // TODO: we might want to get some progress feedback for the user
-        val port = prefRepository.getDefaultPref(
-            SettingsActivity.KEY_PREF_GIT_SERVER_PORT,
-            context.resources.getString(R.string.pref_default_git_server_port)
-        ).toInt()
         val pullCommand = git.pull()
-            .setTransportConfigCallback(TransportCallback(directoryProvider, port))
+            .setTransportConfigCallback(transportCallback)
             .setRemote("origin")
             .setStrategy(mergeStrategy)
             .setRemoteBranchName("master")
@@ -167,16 +157,10 @@ class PullTargetTranslation @Inject constructor(
         } catch (e: TransportException) {
             Logger.e(this.javaClass.name, e.message, e)
             val cause = e.cause
-            if (cause != null) {
-                val subException = cause.cause
-                if (subException != null) {
-                    val detail = subException.message
-                    if ("Auth fail" == detail) {
-                        status = Status.AUTH_FAILURE // we do special handling for auth failure
-                    }
-                } else if (cause is NoRemoteRepositoryException) {
-                    status = Status.NO_REMOTE_REPO
-                }
+            if (cause is NoRemoteRepositoryException) {
+                status = Status.NO_REMOTE_REPO
+            } else if (isAuthFailure(e)) {
+                status = Status.AUTH_FAILURE
             }
             return Result(status, null)
         } catch (e: OutOfMemoryError) {
@@ -194,6 +178,21 @@ class PullTargetTranslation @Inject constructor(
             Logger.e(this.javaClass.name, e.message, e)
             return Result(status, null)
         }
+    }
+
+    private fun isAuthFailure(e: Exception): Boolean {
+        var t: Throwable? = e
+        while (t != null) {
+            val msg = t.message ?: ""
+            if (msg.contains("Auth fail") ||
+                msg.contains("not permitted") ||
+                msg.contains("Cannot log in") ||
+                msg.contains("No more authentication methods")) {
+                return true
+            }
+            t = t.cause
+        }
+        return false
     }
 
     enum class Status {

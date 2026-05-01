@@ -44,7 +44,7 @@ class CloneRepositoryTest {
 
     @Test
     fun cloneRepositorySuccessfully() {
-        val cloneUrl = "https://wacs.bibletranslationtools.org/WycliffeAssociates/en_ulb.git"
+        val cloneUrl = "https://content.bibletranslationtools.org/WycliffeAssociates/tpi_ulb.git"
         var progressMessage: String? = null
         val progressListener = OnProgressListener { _, _, message ->
             progressMessage = message
@@ -68,7 +68,7 @@ class CloneRepositoryTest {
 
     @Test
     fun cloneNonExistingRepositoryFailed() {
-        val cloneUrl = "https://wacs.bibletranslationtools.org/WycliffeAssociates/non_existing_repo.git"
+        val cloneUrl = "https://content.bibletranslationtools.org/WycliffeAssociates/non_existing_repo.git"
 
         var progressMessage: String? = null
         val progressListener = OnProgressListener { _, _, message ->

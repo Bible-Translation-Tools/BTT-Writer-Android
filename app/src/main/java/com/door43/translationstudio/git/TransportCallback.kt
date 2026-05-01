@@ -4,15 +4,12 @@ import com.door43.data.IDirectoryProvider
 import org.eclipse.jgit.api.TransportConfigCallback
 import org.eclipse.jgit.transport.SshTransport
 import org.eclipse.jgit.transport.Transport
+import javax.inject.Inject
 
-/**
- * Created by joel on 9/15/2014.
- */
-class TransportCallback(
-    directoryProvider: IDirectoryProvider,
-    port: Int
+class TransportCallback @Inject constructor(
+    directoryProvider: IDirectoryProvider
 ) : TransportConfigCallback {
-    private val ssh = GitSessionFactory(directoryProvider, port)
+    private val ssh = SshSessionFactory.create(directoryProvider)
 
     override fun configure(tn: Transport) {
         if (tn is SshTransport) {
