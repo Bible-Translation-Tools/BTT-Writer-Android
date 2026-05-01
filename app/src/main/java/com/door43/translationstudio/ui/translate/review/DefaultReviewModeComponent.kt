@@ -29,7 +29,6 @@ import com.door43.translationstudio.rendering.spannables.PassageLinkSpan
 import com.door43.translationstudio.rendering.spannables.TranslationWordLinkSpan
 import com.door43.translationstudio.rendering.spannables.USFMNoteSpan
 import com.door43.translationstudio.rendering.spannables.USFMVerseSpan
-import com.door43.translationstudio.rendering.spannables.USXVerseSpan
 import com.door43.translationstudio.ui.textadapters.ComposeTextAdapter
 import com.door43.translationstudio.ui.translate.Footnote
 import com.door43.translationstudio.ui.translate.FootnoteAction
@@ -514,6 +513,17 @@ class DefaultReviewModeComponent(
             targetMode = targetMode
         )
 
+        val currentTargetText = fetchTargetText(
+            item.chunk.target,
+            item.chunk.chapterSlug,
+            item.chunk.chunkSlug
+        )
+        val missingVerses = getMissingVerses(currentTargetText, sourceText)
+        if (missingVerses.isNotEmpty()) {
+            val updatedTargetText = addMissingVerses(currentTargetText, missingVerses)
+            item.saveTranslation(updatedTargetText)
+        }
+
         // Chunk completion status overrides target mode
         val realTargetMode = if (item.isComplete) TargetMode.COMPLETE else targetMode
         val (targetText, renderedTargetText) = prepareTarget(
@@ -532,6 +542,7 @@ class DefaultReviewModeComponent(
             targetMode = realTargetMode,
             fileHistory = history
         )
+
         return prepared
     }
 
@@ -773,7 +784,6 @@ class DefaultReviewModeComponent(
 
             val loadHistory: Boolean
             if (targetMode == TargetMode.MARKER) {
-                addMissingVerses(item)
                 item.chunk.target.commit()
                 loadHistory = false
             } else {
@@ -784,31 +794,24 @@ class DefaultReviewModeComponent(
         }
     }
 
-    private fun addMissingVerses(item: ReviewItem) {
-        if (item.isComplete) return
+    private fun addMissingVerses(targetText: String, missingVerses: List<Int>): String {
+        if (missingVerses.isEmpty()) return targetText
 
-        val currentText = fetchTargetText(
-            item.chunk.target,
-            item.chunk.chapterSlug,
-            item.chunk.chunkSlug
-        )
-        if (currentText.isEmpty()) return
+        val prefix = missingVerses.joinToString("") { v -> "\\v $v " }
 
-        val sourceVerseRange = RenderingProvider.getVerseRange(
-            item.sourceText,
-            item.chunk.sourceTranslationFormat
-        )
-        if (sourceVerseRange.isEmpty()) return
+        return prefix + targetText
+    }
 
-        val format = item.chunk.targetTranslationFormat
-        val versePattern = if (format == TranslationFormat.USFM) {
-            Pattern.compile(USFMVerseSpan.PATTERN)
-        } else {
-            Pattern.compile(USXVerseSpan.PATTERN)
-        }
+    private fun getMissingVerses(targetText: String, sourceText: String): List<Int> {
+        if (targetText.isEmpty()) return emptyList()
 
+        val sourceVerseRange = RenderingProvider.getVerseRange(sourceText)
+        if (sourceVerseRange.isEmpty()) return emptyList()
+
+        val versePattern = Pattern.compile(USFMVerseSpan.PATTERN)
         val existingVerses = mutableSetOf<Int>()
-        val matcher = versePattern.matcher(currentText)
+        val matcher = versePattern.matcher(targetText)
+
         while (matcher.find()) {
             val group = matcher.group(1) ?: continue
             val dashIndex = group.indexOf('-')
@@ -824,19 +827,7 @@ class DefaultReviewModeComponent(
         val min = sourceVerseRange[0]
         val max = if (sourceVerseRange.size > 1) sourceVerseRange[1] else min
 
-        val missing = (min..max).filter { it !in existingVerses }
-        if (missing.isEmpty()) return
-
-        val prefix = missing.joinToString("") { v ->
-            if (format == TranslationFormat.USFM) {
-                "\\v $v "
-            } else {
-                "<verse number=\"$v\" style=\"v\" />"
-            }
-        }
-
-        val updatedText = prefix + currentText
-        item.saveTranslation(updatedText)
+       return (min..max).filter { it !in existingVerses }
     }
 
     private suspend fun updateDoneStatus(item: ReviewItem, shouldComplete: Boolean) {

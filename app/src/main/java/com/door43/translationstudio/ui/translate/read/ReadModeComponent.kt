@@ -1,6 +1,5 @@
 package com.door43.translationstudio.ui.translate.read
 
-import android.app.Application
 import androidx.compose.ui.text.AnnotatedString
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.essenty.lifecycle.doOnDestroy
@@ -35,7 +34,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.bibletranslationtools.resourcecontainer.ResourceContainer
 import org.koin.core.component.KoinComponent
-import org.koin.core.component.inject
 
 interface ReadModeComponent : ModeComponent<ReadItem> {
     override val state: StateFlow<State>
@@ -52,8 +50,6 @@ class DefaultReadModeComponent(
 ) : ReadModeComponent, ProgressOwner, KoinComponent,
     ComponentContext by componentContext,
     ComponentScope, ModeComponent<ReadItem> {
-
-    private val application: Application by inject()
 
     override val coroutineScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
 

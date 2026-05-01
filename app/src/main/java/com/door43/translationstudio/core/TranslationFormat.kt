@@ -5,12 +5,10 @@ package com.door43.translationstudio.core
  */
 enum class TranslationFormat(val title: String) {
     USFM("usfm"),
+    USX("usx"),
     MARKDOWN("markdown"),
-    UNKNOWN("txt"),
-    @Deprecated("Use specific format")
     DEFAULT("default"),
-    @Deprecated("Legacy USX support")
-    USX("usx");
+    UNKNOWN("txt");
 
     override fun toString(): String = title
 

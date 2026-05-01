@@ -1,6 +1,5 @@
 package com.door43.translationstudio.ui.translate.chunk
 
-import android.app.Application
 import androidx.compose.ui.text.AnnotatedString
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.essenty.lifecycle.doOnDestroy
@@ -34,7 +33,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.bibletranslationtools.resourcecontainer.ResourceContainer
 import org.koin.core.component.KoinComponent
-import org.koin.core.component.inject
 
 interface ChunkModeComponent : ModeComponent<ChunkItem> {
     override val state: StateFlow<State>
@@ -56,8 +54,6 @@ class DefaultChunkModeComponent(
 ) : ChunkModeComponent, ProgressOwner, KoinComponent,
     ComponentContext by componentContext,
     ComponentScope, ModeComponent<ChunkItem> {
-
-    private val application: Application by inject()
 
     override val coroutineScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
 

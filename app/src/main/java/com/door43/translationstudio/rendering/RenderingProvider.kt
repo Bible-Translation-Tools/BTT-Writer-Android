@@ -43,7 +43,10 @@ class RenderingProvider {
             return FrameTranslation(frameId, chapterId, body, format, finished)
         }
 
-        fun getVerseRange(text: String, format: TranslationFormat): IntArray {
+        fun getVerseRange(
+            text: String,
+            format: TranslationFormat = TranslationFormat.USX
+        ): IntArray {
             return Frame.getVerseRange(text, format)
         }
     }
