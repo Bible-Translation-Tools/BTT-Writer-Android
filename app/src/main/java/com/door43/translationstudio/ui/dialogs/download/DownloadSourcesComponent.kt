@@ -161,7 +161,13 @@ class DefaultDownloadSourcesComponent(
             promptLabel = nextPrompt
         ))
 
-        _state.update { it.copy(navigationStack = currentStack) }
+        _state.update {
+            it.copy(
+                navigationStack = currentStack,
+                selectedSources = emptySet(),
+                selectAllChecked = false
+            )
+        }
         updateList()
     }
 
@@ -177,7 +183,13 @@ class DefaultDownloadSourcesComponent(
                 label = lastStep.promptLabel
             )
 
-            _state.update { it.copy(navigationStack = currentStack) }
+            _state.update {
+                it.copy(
+                    navigationStack = currentStack,
+                    selectedSources = emptySet(),
+                    selectAllChecked = false
+                )
+            }
             updateList()
         }
     }
@@ -199,7 +211,9 @@ class DefaultDownloadSourcesComponent(
         _state.update {
             it.copy(
                 navigationStack = newStack,
-                searchQuery = ""
+                searchQuery = "",
+                selectedSources = emptySet(),
+                selectAllChecked = false
             )
         }
 
@@ -208,14 +222,13 @@ class DefaultDownloadSourcesComponent(
 
     override fun selectAll(shouldSelectAll: Boolean) {
         val currentItems = _state.value.listItems
-        val newSelection = _state.value.selectedSources.toMutableSet()
+        val sourceItems = currentItems.filterIsInstance<DownloadListItem.SourceSelection>()
 
-        currentItems.filterIsInstance<DownloadListItem.SourceSelection>().forEach {
-            if (shouldSelectAll && !it.isDownloaded) {
-                newSelection.add(it.id)
-            } else {
-                newSelection.remove(it.id)
-            }
+        val newSelection = if (shouldSelectAll) {
+            sourceItems.filterNot { it.isDownloaded }.map { it.id }.toMutableSet()
+        } else {
+            val toRemove = sourceItems.map { it.id }.toSet()
+            _state.value.selectedSources.toMutableSet().apply { removeAll(toRemove) }
         }
 
         _state.update {

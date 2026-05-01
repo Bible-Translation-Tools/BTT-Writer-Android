@@ -25,8 +25,12 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -36,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.door43.translationstudio.R
 import com.door43.translationstudio.ui.components.SearchBar
+import com.door43.translationstudio.ui.dialogs.BaseDialog
 import com.door43.translationstudio.ui.dialogs.OverlayDialog
 import com.door43.translationstudio.ui.dialogs.ProgressDialog
 
@@ -47,6 +52,8 @@ fun DownloadSourcesDialog(
 ) {
     val state by component.state.collectAsStateWithLifecycle()
     val progress by component.progress.collectAsStateWithLifecycle()
+
+    var showErrorMessageDialog by rememberSaveable { mutableStateOf<String?>(null) }
 
     OverlayDialog(
         onDismiss = onDismiss,
@@ -192,11 +199,25 @@ fun DownloadSourcesDialog(
                         is DownloadListItem.SourceSelection -> {
                             SourceSelectionItemView(
                                 item = item,
-                                onClick = { component.toggleSelection(item.id) }
+                                onClick = { component.toggleSelection(item.id) },
+                                onErrorClick = { showErrorMessageDialog = it }
                             )
                         }
                     }
                 }
+            }
+        }
+    }
+
+    showErrorMessageDialog?.let {
+        BaseDialog(
+            onDismiss = { showErrorMessageDialog = null },
+            message = it
+        ) {
+            TextButton(
+                onClick = { showErrorMessageDialog = null }
+            ) {
+                Text(stringResource(R.string.label_close))
             }
         }
     }
@@ -300,7 +321,8 @@ private fun FilterCategoryItemView(
 @Composable
 private fun SourceSelectionItemView(
     item: DownloadListItem.SourceSelection,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onErrorClick: (String) -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -319,7 +341,10 @@ private fun SourceSelectionItemView(
             Icon(
                 imageVector = Icons.Default.Error,
                 contentDescription = "Error",
-                tint = MaterialTheme.colorScheme.error
+                tint = MaterialTheme.colorScheme.error,
+                modifier = Modifier.clickable {
+                    onErrorClick(item.errorMessage)
+                }
             )
         }
 

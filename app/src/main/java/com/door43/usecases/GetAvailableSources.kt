@@ -48,10 +48,6 @@ class GetAvailableSources(
         allSources.addAll(sources)
         allSources.addAll(tw)
 
-//        02/20/2017 - for now we are disabling updating of TA since a major change coming up could break the app
-//        List<Translation> man = catalogClient.library.findTranslations(null, null, null, "man", null, App.MIN_CHECKING_LEVEL, -1);
-//        availableTranslations.addAll(man);
-
         val byLanguage = TreeMap<String, ArrayList<Int>>()
         val maxProgress = allSources.size
 
