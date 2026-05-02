@@ -463,7 +463,7 @@
     <string name="still_possible_to_register_door43">Todavía puedes crear o iniciar sesión en una cuenta de servidor más tarde</string>
     <string name="title_connect_door43">Conectar al servidor</string>
     <string name="gogs_public_key_name">ts-android</string>
-    <string name="restore_failed">No se ha podido importar la traducción</string>
+    <string name="restore_failed">No se ha podido importar la traducción: <xliff:g example="Bad manifest" id="reason">%1$s</xliff:g></string>
     <string name="import_from_door43">Importar del servidor</string>
     <string name="restore_from_door43">Restaurar desde el servidor</string>
     <string name="title_chunk_conflicts">Conflictos de Trozo</string>

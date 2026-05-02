@@ -3,12 +3,11 @@ package com.door43.usecases
 import android.content.pm.PackageManager
 import com.door43.data.IPreferenceRepository
 import com.door43.translationstudio.Platform
-import com.door43.translationstudio.network.GetRequest
+import com.door43.translationstudio.network.HttpRequest
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.bibletranslationtools.logger.Logger
-import java.io.IOException
 
 class CheckForLatestRelease(
     private val prefRepository: IPreferenceRepository,
@@ -27,43 +26,28 @@ class CheckForLatestRelease(
         val githubApiUrl = prefRepository.getGithubRepoApi()
         val url = "$githubApiUrl/releases/latest"
 
-        val releaseStr = try {
-            val request = GetRequest(url)
-            request.read()
-        } catch (e: IOException) {
-            Logger.e(
-                TAG,
-                "Failed to check for the latest release",
-                e
-            )
-            null
-        }
+        HttpRequest.get<ReleaseInfo>(url)?.let { releaseInfo ->
+            val tagParts = releaseInfo.tagName.split("\\+".toRegex())
 
-        releaseStr?.let {
-            try {
-                val releaseInfo: ReleaseInfo = json.decodeFromString(it)
-                val tagParts = releaseInfo.tagName.split("\\+".toRegex())
-
-                if (tagParts.size == 2) {
-                    val build = tagParts[1].toInt()
-                    try {
-                        if (build > platform.info.versionCode) {
-                            releaseInfo.assets.firstOrNull()?.let { asset ->
-                                release = Release(
-                                    releaseInfo.name,
-                                    asset.browserDownloadUrl,
-                                    asset.size,
-                                    build
-                                )
-                            }
+            if (tagParts.size == 2) {
+                val build = tagParts[1].toInt()
+                try {
+                    if (build > platform.info.versionCode) {
+                        releaseInfo.assets.firstOrNull()?.let { asset ->
+                            release = Release(
+                                releaseInfo.name,
+                                asset.browserDownloadUrl,
+                                asset.size,
+                                build
+                            )
                         }
-                    } catch (e: PackageManager.NameNotFoundException) {
-                        Logger.e(TAG, "Failed to fetch the package info", e)
                     }
+                } catch (e: PackageManager.NameNotFoundException) {
+                    Logger.e(TAG, "Failed to fetch the package info", e)
                 }
-            } catch (e: Exception) {
-                Logger.e(TAG, "Failed to parse the latest release", e)
             }
+        } ?: run {
+            Logger.e(TAG, "Failed to fetch latest release info. ${HttpRequest.lastResponse?.message}")
         }
 
         return Result(release)

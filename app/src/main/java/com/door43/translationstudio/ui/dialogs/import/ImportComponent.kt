@@ -429,10 +429,10 @@ class DefaultImportComponent(
                                 } catch (e: Exception) {
                                     Logger.e(
                                         this.javaClass.name,
-                                        "Failed to merge the target translation",
+                                        "Failed to merge translation",
                                         e
                                     )
-                                    reportImportFailed()
+                                    reportImportFailed("Failed to merge translation")
                                 }
                             } else {
                                 try {
@@ -449,16 +449,19 @@ class DefaultImportComponent(
                                 } catch (e: IOException) {
                                     Logger.e(
                                         this.javaClass.name,
-                                        "Failed to import the target translation " + tempTargetTranslation.id,
+                                        "Failed to overite translation",
                                         e
                                     )
-                                    reportImportFailed()
+                                    reportImportFailed("Failed to overite translation")
                                 }
                             }
                         } ?: run {
                             Logger.e(this.javaClass.name, "Failed to open the online backup")
-                            reportImportFailed()
+                            reportImportFailed("Failed to open the online backup")
                         }
+                    } ?: run {
+                        Logger.e(this.javaClass.name, "Failed to migrate project")
+                        reportImportFailed("Failed to migrate project")
                     }
                 }
             }
@@ -552,10 +555,10 @@ class DefaultImportComponent(
         }
     }
 
-    private fun reportImportFailed() {
+    private fun reportImportFailed(details: String) {
         updateResult(
             title = application.getString(R.string.error),
-            message = application.getString(R.string.restore_failed)
+            message = application.getString(R.string.restore_failed, details)
         )
     }
 

@@ -1,160 +1,77 @@
 package com.door43.translationstudio.network
 
-import android.util.Base64
 import io.ktor.client.HttpClient
-import io.ktor.client.engine.okhttp.OkHttp
+import io.ktor.client.call.body
 import io.ktor.client.plugins.HttpTimeout
-import io.ktor.client.plugins.timeout
-import io.ktor.client.request.HttpRequestBuilder
-import io.ktor.client.request.header
-import io.ktor.client.request.prepareRequest
-import io.ktor.client.statement.HttpStatement
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.request.get
+import io.ktor.client.request.prepareGet
 import io.ktor.client.statement.bodyAsChannel
-import io.ktor.client.statement.bodyAsText
-import io.ktor.http.HttpHeaders
-import io.ktor.http.HttpMethod
 import io.ktor.http.contentLength
+import io.ktor.http.isSuccess
+import io.ktor.serialization.kotlinx.json.json
 import io.ktor.utils.io.readAvailable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.Json
 import java.io.File
-import java.io.FileOutputStream
 import java.io.IOException
 
-/**
- * Represents a network request
- */
-abstract class HttpRequest(
-    protected val url: String,
-    private val requestMethod: HttpMethod
-) {
-    private var token: String? = null
-    private var username: String? = null
-    private var password: String? = null
-    private var contentType: String? = null
-    private var ttl: Int = 0
-    private var progressListener: OnProgressListener? = null
+object HttpRequest {
 
-    var responseCode: Int = -1
-        private set
-    var responseMessage: String? = null
-        private set
+    @PublishedApi
+    internal var lastResponse: Response? = null
 
-    companion object {
-        val client = HttpClient(OkHttp) {
-            install(HttpTimeout)
-            expectSuccess = false
+    @PublishedApi
+    internal val httpClient: HttpClient = HttpClient {
+        install(ContentNegotiation) {
+            json(Json { ignoreUnknownKeys = true })
+        }
+        install(HttpTimeout) {
+            requestTimeoutMillis = 30_000
+            connectTimeoutMillis = 30_000
         }
     }
 
-    /**
-     * Sets token authentication. Tokens take precedence over credentials.
-     */
-    fun setAuthentication(token: String) {
-        this.token = token
-    }
-
-    /**
-     * Sets basic (username/password) authentication.
-     */
-    fun setAuthentication(username: String, password: String) {
-        this.username = username
-        this.password = password
-    }
-
-    /**
-     * Sets the connection write and read timeout in milliseconds.
-     */
-    fun setTimeout(ttl: Int) {
-        this.ttl = ttl
-    }
-
-    /**
-     * Sets the listener to receive progress updates.
-     */
-    fun setProgressListener(listener: OnProgressListener) {
-        this.progressListener = listener
-    }
-
-    /**
-     * Sets the content type to be used in the request.
-     */
-    fun setContentType(contentType: String) {
-        this.contentType = contentType
-    }
-
-    /**
-     * Generates and returns the auth header value if available.
-     */
-    protected fun getAuth(): String? {
-        token?.let { return "token $it" }
-        if (username != null && password != null) {
-            val encoded = Base64.encodeToString(
-                "$username:$password".toByteArray(Charsets.UTF_8),
-                Base64.NO_WRAP
+    suspend inline fun <reified T> get(url: String): T? {
+        return try {
+            val response = httpClient.get(url)
+            lastResponse = Response(
+                response.status.isSuccess(),
+                response.status.value,
+                response.status.description
             )
-            return "Basic $encoded"
+            if (response.status.isSuccess()) response.body<T>() else null
+        } catch (e: Exception) {
+            lastResponse = Response(false, -1, e.message)
+            null
         }
-        return null
     }
 
-    /**
-     * Allows subclasses to configure the request before it is sent.
-     * For example: setting a POST body.
-     */
-    protected abstract fun onConfigureRequest(builder: HttpRequestBuilder)
+    suspend fun download(
+        url: String,
+        file: File,
+        onProgress: (contentLength: Long, bytesRead: Long) -> Unit = { _, _ -> }
+    ) {
+        httpClient.prepareGet(url).execute { response ->
+            lastResponse = Response(response.status.isSuccess(), response.status.value, response.status.description)
 
-    private suspend fun execute(): HttpStatement =
-        client.prepareRequest(url) {
-            method = requestMethod
-            if (ttl > 0) {
-                timeout {
-                    connectTimeoutMillis = ttl.toLong()
-                    requestTimeoutMillis = ttl.toLong()
-                }
+            if (!response.status.isSuccess()) {
+                throw IOException("HTTP ${response.status.value}: ${response.status.description}")
             }
-            getAuth()?.let { header(HttpHeaders.Authorization, it) }
-            contentType?.let { header(HttpHeaders.ContentType, it) }
-
-            header(HttpHeaders.UserAgent, "btt-writer-android")
-
-            onConfigureRequest(this)
-        }
-
-    /**
-     * Reads the response as a UTF-8 string.
-     */
-    suspend fun read(): String {
-        return execute().execute { response ->
-            responseCode = response.status.value
-            responseMessage = response.status.description
-            response.bodyAsText(Charsets.UTF_8)
-        }
-    }
-
-    /**
-     * Downloads the response body to a file.
-     */
-    suspend fun download(destination: File) {
-        execute().execute { response ->
-            responseCode = response.status.value
-            responseMessage = response.status.description
-
-            if (responseCode != 200) throw IOException(responseMessage)
 
             val contentLength = response.contentLength() ?: -1L
-            destination.parentFile?.mkdirs()
+            file.parentFile?.mkdirs()
 
             val channel = response.bodyAsChannel()
             var bytesRead = 0L
+            var updateQueue = 0L
+            val updateInterval = DEFAULT_BUFFER_SIZE * 50L
 
             try {
                 withContext(Dispatchers.IO) {
-                    FileOutputStream(destination).use { out ->
-                        val buffer = ByteArray(4096)
-                        val updateInterval = 1048L * 50
-                        var updateQueue = 0L
-
+                    file.outputStream().use { out ->
+                        val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
                         while (!channel.isClosedForRead) {
                             val n = channel.readAvailable(buffer)
                             if (n == -1) break
@@ -163,36 +80,23 @@ abstract class HttpRequest(
                             updateQueue += n
                             if (updateQueue >= updateInterval) {
                                 updateQueue = 0
-                                publishProgress(contentLength, bytesRead)
+                                onProgress(contentLength, bytesRead)
                             }
                         }
-                        publishProgress(contentLength, bytesRead)
+                        onProgress(contentLength, bytesRead)
                     }
                 }
             } catch (e: Exception) {
-                if (destination.exists()) destination.delete()
+                file.delete()
                 throw e
             }
         }
     }
 
-    private fun publishProgress(totalBytes: Long, bytesRead: Long) {
-        val listener = progressListener ?: return
-        if (totalBytes <= 0 || bytesRead <= 0) listener.onIndeterminate()
-        else listener.onProgress(totalBytes, bytesRead)
-    }
-
-    interface OnProgressListener {
-        /**
-         * Receives progress events.
-         * @param max      the total number of bytes
-         * @param progress the number of bytes read so far
-         */
-        fun onProgress(max: Long, progress: Long)
-
-        /**
-         * Called when progress cannot be determined.
-         */
-        fun onIndeterminate()
-    }
+    data class Response(
+        val success: Boolean,
+        val code: Int,
+        val message: String? = null
+    )
 }
+

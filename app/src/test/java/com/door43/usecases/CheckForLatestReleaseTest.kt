@@ -34,6 +34,7 @@ class CheckForLatestReleaseTest {
 
         mockkObject(App)
 
+        every { platform.info }.returns(info)
         every { prefRepository.getGithubRepoApi() }.returns(server.url("/api").toString())
     }
 
@@ -90,6 +91,9 @@ class CheckForLatestReleaseTest {
             }
         """.trimIndent()
 
-        return MockResponse().setBody(body).setResponseCode(200)
+        return MockResponse()
+            .addHeader("Content-Type", "application/json")
+            .setBody(body)
+            .setResponseCode(200)
     }
 }

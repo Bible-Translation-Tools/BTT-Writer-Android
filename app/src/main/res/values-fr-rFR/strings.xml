@@ -470,7 +470,7 @@
     <string name="still_possible_to_register_door43">Vous pouvez toujours créer ou vous connecter à un compte serveur plus tard</string>
     <string name="title_connect_door43">Se connecter au serveur</string>
     <string name="gogs_public_key_name">ts-android</string>
-    <string name="restore_failed">La traduction n\'a pas pu être importée</string>
+    <string name="restore_failed">La traduction n\'a pas pu être importée: <xliff:g example="Bad manifest" id="reason">%1$s</xliff:g></string>
     <string name="import_from_door43">Importer à partir du serveur</string>
     <string name="restore_from_door43">Restaurer depuis le serveur</string>
     <string name="title_chunk_conflicts">Conflits avec morceau</string>

@@ -5,7 +5,6 @@ import android.content.Context
 import android.util.Log
 import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.R
-import com.door43.translationstudio.network.GetRequest
 import com.door43.translationstudio.network.HttpRequest
 import com.door43.util.FileUtilities
 import com.door43.util.FileUtilities.moveOrCopyQuietly
@@ -74,44 +73,37 @@ class DownloadImages(
                 }
                 FileUtilities.deleteQuietly(tempDir)
                 imagesDir
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 null
             }
         } else null
     }
 
+    @SuppressLint("DefaultLocale")
     private suspend fun requestToFile(
         outputFile: File,
-        onProgress: (Float, String?) -> Unit = {_,_->}
+        onProgress: (Float, String?) -> Unit = { _, _ -> }
     ): Boolean {
         val outOf = context.getString(R.string.out_of)
         val mbDownloaded = context.getString(R.string.mb_downloaded)
 
-        val r = GetRequest(IMAGES_URL)
-        r.setTimeout(5000)
-        r.setProgressListener(object : HttpRequest.OnProgressListener {
-            @SuppressLint("DefaultLocale")
-            override fun onProgress(max: Long, progress: Long) {
-                val message = String.format(
-                    "%2.2f %s %2.2f %s",
-                    progress / (1024f * 1024f),
-                    outOf,
-                    max / (1024f * 1024f),
-                    mbDownloaded
-                )
-                onProgress(progress / max.toFloat(), message)
-                // Log.i(TAG,  "Download progress - " + progress + "out of " + max);
+        return try {
+            HttpRequest.download(IMAGES_URL, outputFile) { contentLength, bytesRead ->
+                if (contentLength > 0) {
+                    val message = String.format(
+                        "%2.2f %s %2.2f %s",
+                        bytesRead / (1024f * 1024f),
+                        outOf,
+                        contentLength / (1024f * 1024f),
+                        mbDownloaded
+                    )
+                    onProgress(bytesRead / contentLength.toFloat(), message)
+                }
             }
-            override fun onIndeterminate() {
-            }
-        })
-
-        try {
-            r.download(outputFile)
-            return true
+            true
         } catch (e: IOException) {
             e.printStackTrace()
-            return false
+            false
         }
     }
 

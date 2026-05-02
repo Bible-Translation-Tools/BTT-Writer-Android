@@ -463,7 +463,7 @@
     <string name="still_possible_to_register_door43">Вы можете создать или войти на сервер позже</string>
     <string name="title_connect_door43">Подключиться к серверу</string>
     <string name="gogs_public_key_name">ts-android</string>
-    <string name="restore_failed">Не удалось импортировать перевод</string>
+    <string name="restore_failed">Не удалось импортировать перевод: <xliff:g example="Bad manifest" id="reason">%1$s</xliff:g></string>
     <string name="import_from_door43">Импортировать с сервера</string>
     <string name="restore_from_door43">Восстановить с сервера</string>
     <string name="title_chunk_conflicts">Конфликты с фрагментами</string>
