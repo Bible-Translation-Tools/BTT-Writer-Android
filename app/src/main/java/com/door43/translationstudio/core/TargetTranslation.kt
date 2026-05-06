@@ -510,6 +510,9 @@ class TargetTranslation private constructor(
 
     fun changeTargetLanguage(targetLanguage: TargetLanguage) {
         manifestAccessor.save(manifest.copy(targetLanguage = targetLanguage))
+        targetLanguageDirection = targetLanguage.direction
+        targetLanguageId = targetLanguage.slug
+        targetLanguageName = targetLanguage.name
     }
 
     fun unlockRepo(): Boolean {
