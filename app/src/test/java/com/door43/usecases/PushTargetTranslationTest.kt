@@ -3,13 +3,11 @@ package com.door43.usecases
 import android.content.Context
 import android.content.res.Resources
 import com.door43.OnProgressListener
-import com.door43.data.IDirectoryProvider
-import com.door43.data.IPreferenceRepository
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.git.Repo
-import com.door43.translationstudio.ui.SettingsActivity
+import com.door43.translationstudio.git.TransportCallback
 import io.mockk.MockKAnnotations
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
@@ -43,8 +41,7 @@ class PushTargetTranslationTest {
     @MockK private lateinit var context: Context
     @MockK private lateinit var profile: Profile
     @MockK private lateinit var getRepository: GetRepository
-    @MockK private lateinit var directoryProvider: IDirectoryProvider
-    @MockK private lateinit var prefRepository: IPreferenceRepository
+    @MockK private lateinit var transportCallback: TransportCallback
     @MockK private lateinit var progressListener: OnProgressListener
     @MockK private lateinit var resources: Resources
     @MockK private lateinit var targetTranslation: TargetTranslation
@@ -60,14 +57,6 @@ class PushTargetTranslationTest {
         MockKAnnotations.init(this)
 
         every { context.resources }.returns(resources)
-
-        every {
-            prefRepository.getDefaultPref(
-                SettingsActivity.KEY_PREF_GIT_SERVER_PORT,
-                any(),
-                String::class.java
-            )
-        }.returns("22")
 
         every { progressListener.onProgress(any(), any(), any()) }.just(runs)
         every { repository.sshUrl }.returns("ssh://repo.git")
@@ -120,8 +109,7 @@ class PushTargetTranslationTest {
             context,
             profile,
             getRepository,
-            directoryProvider,
-            prefRepository
+            transportCallback
         ).execute(targetTranslation, progressListener)
 
         val expectedMessage = """
@@ -145,8 +133,7 @@ class PushTargetTranslationTest {
             context,
             profile,
             getRepository,
-            directoryProvider,
-            prefRepository
+            transportCallback
         ).execute(targetTranslation, progressListener)
 
         assertEquals(PushTargetTranslation.Status.AUTH_FAILURE, result.status)
@@ -170,8 +157,7 @@ class PushTargetTranslationTest {
             context,
             profile,
             getRepository,
-            directoryProvider,
-            prefRepository
+            transportCallback
         ).execute(targetTranslation, progressListener)
 
         assertEquals(PushTargetTranslation.Status.UNKNOWN, result.status)
@@ -195,8 +181,7 @@ class PushTargetTranslationTest {
             context,
             profile,
             getRepository,
-            directoryProvider,
-            prefRepository
+            transportCallback
         ).execute(targetTranslation, progressListener)
 
         assertEquals(PushTargetTranslation.Status.UNKNOWN, result.status)
@@ -219,8 +204,7 @@ class PushTargetTranslationTest {
             context,
             profile,
             getRepository,
-            directoryProvider,
-            prefRepository
+            transportCallback
         ).execute(targetTranslation, progressListener)
 
         assertEquals(PushTargetTranslation.Status.UNKNOWN, result.status)
@@ -252,8 +236,7 @@ class PushTargetTranslationTest {
             context,
             profile,
             getRepository,
-            directoryProvider,
-            prefRepository
+            transportCallback
         ).execute(targetTranslation, progressListener)
 
         val expectedMessage = """
@@ -285,8 +268,7 @@ class PushTargetTranslationTest {
             context,
             profile,
             getRepository,
-            directoryProvider,
-            prefRepository
+            transportCallback
         ).execute(targetTranslation, progressListener)
 
         val expectedMessage = """
@@ -318,8 +300,7 @@ class PushTargetTranslationTest {
             context,
             profile,
             getRepository,
-            directoryProvider,
-            prefRepository
+            transportCallback
         ).execute(targetTranslation, progressListener)
 
         val expectedMessage = """
@@ -352,8 +333,7 @@ class PushTargetTranslationTest {
             context,
             profile,
             getRepository,
-            directoryProvider,
-            prefRepository
+            transportCallback
         ).execute(targetTranslation, progressListener)
 
         val expectedMessage = """
@@ -385,8 +365,7 @@ class PushTargetTranslationTest {
             context,
             profile,
             getRepository,
-            directoryProvider,
-            prefRepository
+            transportCallback
         ).execute(targetTranslation, progressListener)
 
         assertEquals(PushTargetTranslation.Status.AUTH_FAILURE, result.status)
@@ -410,8 +389,7 @@ class PushTargetTranslationTest {
             context,
             profile,
             getRepository,
-            directoryProvider,
-            prefRepository
+            transportCallback
         ).execute(targetTranslation, progressListener)
 
         assertEquals(PushTargetTranslation.Status.NO_REMOTE_REPO, result.status)
@@ -435,8 +413,7 @@ class PushTargetTranslationTest {
             context,
             profile,
             getRepository,
-            directoryProvider,
-            prefRepository
+            transportCallback
         ).execute(targetTranslation, progressListener)
 
         assertEquals(PushTargetTranslation.Status.AUTH_FAILURE, result.status)
@@ -456,8 +433,7 @@ class PushTargetTranslationTest {
             context,
             profile,
             getRepository,
-            directoryProvider,
-            prefRepository
+            transportCallback
         ).execute(targetTranslation, progressListener)
 
         assertEquals(PushTargetTranslation.Status.UNKNOWN, result.status)
@@ -477,8 +453,7 @@ class PushTargetTranslationTest {
             context,
             profile,
             getRepository,
-            directoryProvider,
-            prefRepository
+            transportCallback
         ).execute(targetTranslation, progressListener)
 
         assertEquals(PushTargetTranslation.Status.OUT_OF_MEMORY, result.status)
@@ -498,8 +473,7 @@ class PushTargetTranslationTest {
             context,
             profile,
             getRepository,
-            directoryProvider,
-            prefRepository
+            transportCallback
         ).execute(targetTranslation, progressListener)
 
         assertEquals(PushTargetTranslation.Status.UNKNOWN, result.status)
@@ -519,8 +493,7 @@ class PushTargetTranslationTest {
             context,
             profile,
             getRepository,
-            directoryProvider,
-            prefRepository
+            transportCallback
         ).execute(targetTranslation, progressListener)
 
         assertEquals(PushTargetTranslation.Status.UNKNOWN, result.status)
@@ -549,8 +522,6 @@ class PushTargetTranslationTest {
     }
 
     private fun mockResources() {
-        every { resources.getString(R.string.pref_default_git_server_port) }
-            .returns("22")
         every { resources.getString(R.string.git_awaiting_report) }
             .returns("Awaiting report %s")
         every { resources.getString(R.string.git_non_existing) }

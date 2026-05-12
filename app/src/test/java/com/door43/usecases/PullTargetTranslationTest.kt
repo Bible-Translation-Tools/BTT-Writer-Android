@@ -3,13 +3,11 @@ package com.door43.usecases
 import android.content.Context
 import android.content.res.Resources
 import com.door43.OnProgressListener
-import com.door43.data.IDirectoryProvider
-import com.door43.data.IPreferenceRepository
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.git.Repo
-import com.door43.translationstudio.ui.SettingsActivity
+import com.door43.translationstudio.git.TransportCallback
 import com.door43.util.Manifest
 import io.mockk.MockKAnnotations
 import io.mockk.every
@@ -45,8 +43,7 @@ class PullTargetTranslationTest {
     @MockK private lateinit var submitNewLanguageRequests: SubmitNewLanguageRequests
     @MockK private lateinit var getRepository: GetRepository
     @MockK private lateinit var profile: Profile
-    @MockK private lateinit var prefRepository: IPreferenceRepository
-    @MockK private lateinit var directoryProvider: IDirectoryProvider
+    @MockK private lateinit var transportCallback: TransportCallback
     @MockK private lateinit var progressListener: OnProgressListener
     @MockK private lateinit var targetTranslation: TargetTranslation
     @MockK private lateinit var git: Git
@@ -67,14 +64,6 @@ class PullTargetTranslationTest {
         mockkStatic(Manifest::class)
 
         every { Manifest.generate(any()) }.returns(mockk())
-
-        every {
-            prefRepository.getDefaultPref(
-                SettingsActivity.KEY_PREF_GIT_SERVER_PORT,
-                any(),
-                String::class.java
-            )
-        }.returns("22")
 
         every { submitNewLanguageRequests.execute(progressListener) }.just(runs)
         every { targetTranslation.commitSync() }.returns(true)
@@ -106,8 +95,6 @@ class PullTargetTranslationTest {
         every { repo.deleteRemote(any()) }.just(runs)
         every { repo.setRemote(any(), any()) }.just(runs)
 
-        every { resources.getString(R.string.pref_default_git_server_port) }
-            .returns("22")
         every { context.getString(R.string.auth_failure_retry) }
             .returns("Auth failure.")
 
@@ -141,8 +128,7 @@ class PullTargetTranslationTest {
             submitNewLanguageRequests,
             getRepository,
             profile,
-            prefRepository,
-            directoryProvider
+            transportCallback
         ).execute(
             targetTranslation,
             MergeStrategy.RECURSIVE,
@@ -177,8 +163,7 @@ class PullTargetTranslationTest {
             submitNewLanguageRequests,
             getRepository,
             profile,
-            prefRepository,
-            directoryProvider
+            transportCallback
         ).execute(
             targetTranslation,
             MergeStrategy.RECURSIVE,
@@ -205,8 +190,7 @@ class PullTargetTranslationTest {
             submitNewLanguageRequests,
             getRepository,
             profile,
-            prefRepository,
-            directoryProvider
+            transportCallback
         ).execute(
             targetTranslation,
             MergeStrategy.RECURSIVE,
@@ -246,8 +230,7 @@ class PullTargetTranslationTest {
             submitNewLanguageRequests,
             getRepository,
             profile,
-            prefRepository,
-            directoryProvider
+            transportCallback
         ).execute(
             targetTranslation,
             MergeStrategy.RECURSIVE,
@@ -302,8 +285,7 @@ class PullTargetTranslationTest {
             submitNewLanguageRequests,
             getRepository,
             profile,
-            prefRepository,
-            directoryProvider
+            transportCallback
         ).execute(
             targetTranslation,
             MergeStrategy.RECURSIVE,
@@ -354,8 +336,7 @@ class PullTargetTranslationTest {
             submitNewLanguageRequests,
             getRepository,
             profile,
-            prefRepository,
-            directoryProvider
+            transportCallback
         ).execute(
             targetTranslation,
             MergeStrategy.RECURSIVE,
@@ -398,8 +379,7 @@ class PullTargetTranslationTest {
             submitNewLanguageRequests,
             getRepository,
             profile,
-            prefRepository,
-            directoryProvider
+            transportCallback
         ).execute(
             targetTranslation,
             MergeStrategy.RECURSIVE,
@@ -441,8 +421,7 @@ class PullTargetTranslationTest {
             submitNewLanguageRequests,
             getRepository,
             profile,
-            prefRepository,
-            directoryProvider
+            transportCallback
         ).execute(
             targetTranslation,
             MergeStrategy.RECURSIVE,
@@ -481,8 +460,7 @@ class PullTargetTranslationTest {
             submitNewLanguageRequests,
             getRepository,
             profile,
-            prefRepository,
-            directoryProvider
+            transportCallback
         ).execute(
             targetTranslation,
             MergeStrategy.RECURSIVE,
@@ -521,8 +499,7 @@ class PullTargetTranslationTest {
             submitNewLanguageRequests,
             getRepository,
             profile,
-            prefRepository,
-            directoryProvider
+            transportCallback
         ).execute(
             targetTranslation,
             MergeStrategy.RECURSIVE,

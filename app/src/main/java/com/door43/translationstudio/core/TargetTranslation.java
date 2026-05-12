@@ -22,6 +22,7 @@ import org.eclipse.jgit.api.MergeResult;
 import org.eclipse.jgit.api.ResetCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.PersonIdent;
+import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -1216,7 +1217,10 @@ public class TargetTranslation {
         // perform merge
         MergeCommand merge = repo.getGit().merge();
         merge.setFastForward(MergeCommand.FastForwardMode.NO_FF);
-        merge.include(repo.getGit().getRepository().getRef("new"));
+        Ref ref = repo.getGit().getRepository().findRef("new");
+        if (ref != null) {
+            merge.include(ref);
+        }
         MergeResult result = merge.call();
 
         // merge manifests

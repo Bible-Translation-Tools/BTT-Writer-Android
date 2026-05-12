@@ -4,10 +4,9 @@ import android.content.Context
 import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
 import com.door43.translationstudio.App.Companion.udid
+import com.door43.translationstudio.git.SSHConfigurator
 import com.door43.util.FileUtilities
 import com.door43.util.Zip
-import com.jcraft.jsch.JSch
-import com.jcraft.jsch.KeyPair
 import org.unfoldingword.tools.logger.Logger
 import java.io.File
 import java.io.FileOutputStream
@@ -80,10 +79,10 @@ class DirectoryProvider (
         }
 
     override val publicKey: File
-        get() = File(sshKeysDir, "id_rsa.pub")
+        get() = File(sshKeysDir, "id_ed25519.pub")
 
     override val privateKey: File
-        get() = File(sshKeysDir, "id_rsa")
+        get() = File(sshKeysDir, "id_ed25519")
 
     override val p2pKeysDir: File
         get() = run {
@@ -108,18 +107,12 @@ class DirectoryProvider (
     }
 
     override fun generateSSHKeys() {
-        val jsch = JSch()
-        val type = KeyPair.RSA
-
         try {
-            val keyPair = KeyPair.genKeyPair(jsch, type)
-            File(privateKey.absolutePath).createNewFile()
-            keyPair.writePrivateKey(privateKey.absolutePath)
-            File(publicKey.absolutePath).createNewFile()
-            keyPair.writePublicKey(publicKey.absolutePath, udid())
-            keyPair.dispose()
+            val (privateStr, publicStr) = SSHConfigurator.generateKeys(udid())
+            privateKey.writeText(privateStr)
+            publicKey.writeText(publicStr)
         } catch (e: Exception) {
-            e.printStackTrace()
+            Logger.e(TAG, "Failed to generate ssh keys", e)
         }
     }
 

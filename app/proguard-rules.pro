@@ -21,7 +21,6 @@
 -ignorewarnings
 -keepattributes *
 
--keep class com.jcraft.jsch.** { *; }
 -keep class com.door43.** { *; }
 -keep class org.spongycastle.** { *; }
 -keep class org.eclipse.jgit.** { *; }
