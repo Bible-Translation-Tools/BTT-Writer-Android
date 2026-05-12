@@ -185,7 +185,6 @@ class SettingsActivity : AppCompatActivity() {
             // their values. When their values change, their summaries are updated
             // to reflect the new value, per the Android Design guidelines.
             setPreferenceSummaryFromValue(KEY_PREF_CONTENT_SERVER)
-            setPreferenceSummaryFromValue(KEY_PREF_GIT_SERVER_PORT)
             setPreferenceSummaryFromValue(KEY_PREF_GOGS_API)
             setPreferenceSummaryFromValue(KEY_PREF_MEDIA_SERVER)
             setPreferenceSummaryFromValue(KEY_PREF_READER_SERVER)
@@ -344,13 +343,6 @@ class SettingsActivity : AppCompatActivity() {
             val contentServer = findPreference(KEY_PREF_CONTENT_SERVER) as? ListPreference
             contentServer?.summary = serverNames[index]
 
-            val gitServerPorts = resources.getStringArray(
-                R.array.content_server_git_server_port_values_array
-            )
-            val gitServerPort = findPreference(KEY_PREF_GIT_SERVER_PORT) as? EditTextPreference
-            gitServerPort?.text = gitServerPorts[index]
-            gitServerPort?.summary = gitServerPorts[index]
-
             val gitServerApis = resources.getStringArray(
                 R.array.content_server_git_server_api_values_array
             )
@@ -488,7 +480,6 @@ class SettingsActivity : AppCompatActivity() {
 
     companion object {
         const val KEY_PREF_CONTENT_SERVER = "content_server"
-        const val KEY_PREF_GIT_SERVER_PORT = "git_server_port"
         const val KEY_PREF_ALWAYS_SHARE = "always_share"
         const val KEY_PREF_MEDIA_SERVER = "media_server"
         const val KEY_PREF_READER_SERVER = "reader_server"

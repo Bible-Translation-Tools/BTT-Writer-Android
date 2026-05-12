@@ -107,9 +107,13 @@ class DirectoryProvider (
     }
 
     override fun generateSSHKeys() {
-        val (privateStr, publicStr) = SSHConfigurator.generateKeys(udid())
-        privateKey.writeText(privateStr)
-        publicKey.writeText(publicStr)
+        try {
+            val (privateStr, publicStr) = SSHConfigurator.generateKeys(udid())
+            privateKey.writeText(privateStr)
+            publicKey.writeText(publicStr)
+        } catch (e: Exception) {
+            Logger.e(TAG, "Failed to generate ssh keys", e)
+        }
     }
 
     override fun getAssetAsFile(path: String): File? {

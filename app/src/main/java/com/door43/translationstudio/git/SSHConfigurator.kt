@@ -41,11 +41,12 @@ internal class SSHConfigurator(private val directoryProvider: IDirectoryProvider
         }
     }
 
+    private var _configFile: File? = null
     /**
      * Get known hosts config file
      */
     val configFile: File
-        get() {
+        get() = _configFile ?: run {
             val file = File(directoryProvider.sshKeysDir, "config")
             file.writeText("""
             Host *
@@ -54,7 +55,8 @@ internal class SSHConfigurator(private val directoryProvider: IDirectoryProvider
                 IdentityFile ${directoryProvider.privateKey.absolutePath}
                 PreferredAuthentications publickey
             """.trimIndent())
-            return file
+            _configFile = file
+            file
         }
 
     /**
@@ -71,7 +73,7 @@ internal class SSHConfigurator(private val directoryProvider: IDirectoryProvider
      */
     fun setSecurityProvider() {
         Security.removeProvider("BC")
-        Security.insertProviderAt(BouncyCastleProvider(), 1)
+        Security.addProvider(BouncyCastleProvider())
     }
 
     companion object {

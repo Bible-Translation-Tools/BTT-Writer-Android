@@ -5,7 +5,9 @@ import org.eclipse.jgit.api.TransportConfigCallback
 import org.eclipse.jgit.transport.SshTransport
 import org.eclipse.jgit.transport.Transport
 import javax.inject.Inject
+import javax.inject.Singleton
 
+@Singleton
 class TransportCallback @Inject constructor(
     directoryProvider: IDirectoryProvider
 ) : TransportConfigCallback {

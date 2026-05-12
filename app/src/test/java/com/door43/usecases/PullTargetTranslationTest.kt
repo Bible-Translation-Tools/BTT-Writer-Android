@@ -95,8 +95,6 @@ class PullTargetTranslationTest {
         every { repo.deleteRemote(any()) }.just(runs)
         every { repo.setRemote(any(), any()) }.just(runs)
 
-        every { resources.getString(R.string.pref_default_git_server_port) }
-            .returns("22")
         every { context.getString(R.string.auth_failure_retry) }
             .returns("Auth failure.")
 

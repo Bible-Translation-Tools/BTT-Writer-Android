@@ -59,7 +59,6 @@ class CloneRepositoryTest {
         every { progressListener.onProgress(any(), any(), any()) } just runs
 
         every { resources.getString(R.string.downloading) }.returns("Downloading...")
-        every { resources.getString(R.string.pref_default_git_server_port) }.returns("22")
     }
 
     @After
