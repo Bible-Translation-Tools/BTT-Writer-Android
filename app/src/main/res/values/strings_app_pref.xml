@@ -7,5 +7,4 @@
     <string name="p2p_keys_dir" translatable="false">p2p_keys</string>
     <string name="gogs_token_name">btt-writer-android</string>
     <string name="gogs_user_agent">btt-writer-android</string>
-    <string name="helpdesk_token">62b2b4c1-d0e9-42ad-bca0-19ec62312e28</string>
 </resources>

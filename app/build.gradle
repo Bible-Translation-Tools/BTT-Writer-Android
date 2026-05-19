@@ -34,7 +34,7 @@ android {
         minSdk 26
         compileSdk 35
         targetSdk 35
-        versionCode 49
+        versionCode 50
         versionName "1.6.0"
 
         testBuildType "verify"
@@ -61,6 +61,10 @@ android {
             if (variant.buildType.name == "release") {
                 variant.outputs.all {
                     outputFileName = "release.apk"
+                }
+            } else {
+                variant.mergeResourcesProvider.configure { mergeTask ->
+                    mergeTask.dependsOn tasks.named("copyDebugTokens")
                 }
             }
         }
@@ -109,22 +113,6 @@ configurations {
     cleanedAnnotations
     compile.exclude group: 'org.jetbrains' , module:'annotations'
 }
-
-// if (System.env.CI == 'true') {
-//     allprojects {
-//         tasks.withType(GroovyCompile) {
-//             groovyOptions.fork = false
-//         }
-//         tasks.withType(Test) {
-//             // containers (currently) have 2 dedicated cores and 4GB of memory
-//             maxParallelForks = 2
-//             minHeapSize = '128m'
-//             testLogging {
-//                 // Custom configuration
-//             }
-//         }
-//     }
-// }
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
@@ -215,6 +203,24 @@ kapt {
 
 hilt {
     enableAggregatingTask = true
+}
+
+tasks.register("copyDebugTokens") {
+    doLast {
+        def destinationFile = file("src/main/res/values/strings_private_app_pref.xml")
+
+        destinationFile.parentFile.mkdirs()
+
+        def xmlContent = """<?xml version="1.0" encoding="utf-8"?>
+<!-- This is a dummy private token for issue integration. This allows automated builds to run -->
+<resources>
+    <string name="helpdesk_token" translatable="false">sample_token</string>
+</resources>"""
+
+        destinationFile.text = xmlContent
+
+        println "$destinationFile copied for Debug build"
+    }
 }
 
 tasks.register('uiTests', Exec) {

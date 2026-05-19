@@ -19,6 +19,11 @@ jobs:
         LARGE_SECRET_PASSPHRASE: ${{ secrets.LARGE_SECRET_PASSPHRASE }}
     - name: test if key is present
       run: find . -name "bttkey.jks"
+    - name: Decrypt secret xml file
+      shell: bash
+      run: ./.github/scripts/decrypt_xml.sh
+      env:
+        LARGE_SECRET_PASSPHRASE: ${{ secrets.LARGE_SECRET_PASSPHRASE }}
     - name: Acquire resource containers and sqlite
       run: |
         wget --no-verbose -O containers.zip "https://writer-resources.bibletranslationtools.org/containers.zip"
@@ -89,6 +94,11 @@ jobs:
           LARGE_SECRET_PASSPHRASE: ${{ secrets.LARGE_SECRET_PASSPHRASE }}
       - name: test if key is present
         run: find . -name "bttkey.jks"
+      - name: Decrypt secret xml file
+        shell: bash
+        run: ./.github/scripts/decrypt_xml.sh
+        env:
+          LARGE_SECRET_PASSPHRASE: ${{ secrets.LARGE_SECRET_PASSPHRASE }}
       - name: Acquire resource containers and sqlite
         run: |
           wget --no-verbose -O containers.zip "https://writer-resources.bibletranslationtools.org/containers-en.zip"
