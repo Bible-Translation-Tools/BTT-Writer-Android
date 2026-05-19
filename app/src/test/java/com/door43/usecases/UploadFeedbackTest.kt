@@ -1,14 +1,10 @@
 package com.door43.usecases
 
-import android.content.Context
-import android.content.res.Resources
 import com.door43.data.IDirectoryProvider
-import com.door43.data.IPreferenceRepository
+import com.door43.translationstudio.core.Reporter
 import io.mockk.MockKAnnotations
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
-import io.mockk.mockk
-import io.mockk.mockkConstructor
 import io.mockk.mockkStatic
 import io.mockk.unmockkAll
 import io.mockk.verify
@@ -19,38 +15,26 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
-import org.unfoldingword.tools.http.Request
-import org.unfoldingword.tools.logger.GithubReporter
 import org.unfoldingword.tools.logger.Logger
-import java.io.File
-import java.io.IOException
 
 class UploadFeedbackTest {
 
-    @MockK private lateinit var context: Context
-    @MockK private lateinit var prefRepository: IPreferenceRepository
-    @MockK private lateinit var resources: Resources
     @MockK private lateinit var directoryProvider: IDirectoryProvider
+    @MockK private lateinit var reporter: Reporter
 
     @JvmField
     @Rule
     var tempDir: TemporaryFolder = TemporaryFolder()
 
+    private lateinit var logFile: java.io.File
+
     @Before
     fun setup() {
         MockKAnnotations.init(this)
-
-        every { context.resources }.returns(resources)
-        every { context.packageName }.returns("org.example.writer")
-        every { resources.getIdentifier(any(), any(), any()) }.returns(1)
-        every { resources.getString(1) }.returns("token_stub")
-
-        every { prefRepository.getGithubBugReportRepo() }.returns("/github")
-
         mockkStatic(Logger::class)
-        every { directoryProvider.logFile }.returns(tempDir.newFile("test.log"))
 
-        mockkConstructor(GithubReporter::class)
+        logFile = tempDir.newFile("test.log")
+        every { directoryProvider.logFile } returns logFile
     }
 
     @After
@@ -60,75 +44,26 @@ class UploadFeedbackTest {
     }
 
     @Test
-    fun `test upload feedback successfully`() {
-        val request: Request = mockk {
-            every { responseCode }.returns(200)
-        }
-        every { anyConstructed<GithubReporter>().reportBug(any(), any<File>()) }
-            .returns(request)
+    fun `upload feedback successfully clears log and returns true`() {
+        every { reporter.send(any(), any()) } returns true
+        logFile.writeText("old logs")
 
-        val success = UploadFeedback(
-            context,
-            prefRepository,
-            directoryProvider
-        ).execute("Notes")
+        val success = UploadFeedback(directoryProvider, reporter).execute("Notes", "user@test.com")
 
         assertTrue(success)
-
-        verify { prefRepository.getGithubBugReportRepo() }
-        verify { anyConstructed<GithubReporter>().reportBug(any(), any<File>()) }
+        assertTrue("Log cleared after success", logFile.readText().isEmpty())
+        verify { reporter.send("Notes", "user@test.com") }
     }
 
     @Test
-    fun `test upload feedback failed, server error`() {
-        val request: Request = mockk {
-            every { responseCode }.returns(500)
-        }
-        every { anyConstructed<GithubReporter>().reportBug(any(), any<File>()) }
-            .returns(request)
+    fun `upload feedback server error preserves log and returns false`() {
+        every { reporter.send(any(), any()) } returns false
+        logFile.writeText("old logs")
 
-        val success = UploadFeedback(
-            context,
-            prefRepository,
-            directoryProvider
-        ).execute("Notes")
+        val success = UploadFeedback(directoryProvider, reporter).execute("Notes", "")
 
         assertFalse(success)
-
-        verify { prefRepository.getGithubBugReportRepo() }
-        verify { anyConstructed<GithubReporter>().reportBug(any(), any<File>()) }
-    }
-
-    @Test
-    fun `test upload feedback throws exception`() {
-        every { anyConstructed<GithubReporter>().reportBug(any(), any<File>()) }
-            .throws(IOException("An error occurred."))
-
-        val success = UploadFeedback(
-            context,
-            prefRepository,
-            directoryProvider
-        ).execute("Notes")
-
-        assertFalse(success)
-
-        verify { prefRepository.getGithubBugReportRepo() }
-        verify { anyConstructed<GithubReporter>().reportBug(any(), any<File>()) }
-    }
-
-    @Test
-    fun `test upload feedback, no github token`() {
-        every { resources.getIdentifier(any(), any(), any()) }.returns(0)
-
-        val success = UploadFeedback(
-            context,
-            prefRepository,
-            directoryProvider
-        ).execute("Notes")
-
-        assertFalse(success)
-
-        verify { prefRepository.getGithubBugReportRepo() }
-        verify(inverse = true) { anyConstructed<GithubReporter>().reportBug(any(), any<File>()) }
+        assertTrue("Log preserved on failure", logFile.readText().isNotEmpty())
+        verify { reporter.send("Notes", "") }
     }
 }

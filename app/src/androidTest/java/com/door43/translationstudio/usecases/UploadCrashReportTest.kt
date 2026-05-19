@@ -1,17 +1,16 @@
 package com.door43.translationstudio.usecases
 
-import android.provider.Settings
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
 import com.door43.translationstudio.IntegrationTest
+import com.door43.translationstudio.core.Profile
+import com.door43.translationstudio.core.Reporter
 import com.door43.usecases.UploadCrashReport
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import io.mockk.every
-import io.mockk.mockkStatic
 import io.mockk.spyk
 import junit.framework.TestCase.assertFalse
 import junit.framework.TestCase.assertTrue
@@ -34,34 +33,29 @@ class UploadCrashReportTest {
     @get:Rule(order = 0)
     var hiltRule = HiltAndroidRule(this)
 
-    private val context = InstrumentationRegistry.getInstrumentation().context
-    @Inject lateinit var assetsProvider: AssetsProvider
+    private val context = InstrumentationRegistry.getInstrumentation().targetContext
     @Inject lateinit var directoryProvider: IDirectoryProvider
     @Inject lateinit var prefRepository: IPreferenceRepository
+    @Inject lateinit var profile: Profile
 
     private val server = MockWebServer()
 
-    private lateinit var prefRepoMock: IPreferenceRepository
+    private lateinit var uploadCrashReport: UploadCrashReport
     private lateinit var crashDir: File
 
     @Before
     fun setUp() {
         hiltRule.inject()
-
         server.start()
 
         crashDir = directoryProvider.createTempDir("crashes")
         Logger.registerGlobalExceptionHandler(crashDir)
 
-        prefRepoMock = spyk(prefRepository)
-        every {
-            prefRepoMock.getGithubBugReportRepo()
-        } answers {
-            server.url("/issues").toString()
-        }
+        val prefRepoMock = spyk(prefRepository)
+        every { prefRepoMock.helpdeskWebhookUrl } answers { server.url("/").toString() }
 
-        mockkStatic(Settings.Secure::class)
-        every { Settings.Secure.getString(any(), any()) }.returns("test")
+        val reporter = Reporter(context, directoryProvider, prefRepoMock, profile)
+        uploadCrashReport = UploadCrashReport(reporter)
     }
 
     @After
@@ -72,69 +66,49 @@ class UploadCrashReportTest {
 
     @Test
     fun testUploadCrashReport() {
-        createStackTraces()
-
         server.enqueue(MockResponse().setBody("{success: true}").setResponseCode(200))
 
+        val crash = directoryProvider.createTempFile("crash", ".stacktrace", crashDir)
+        crash.writeText("NullPointerException at MainActivity.kt:99")
+
         val message = "Test crash report"
-        val uploadCrashReport = UploadCrashReport(context, directoryProvider, prefRepoMock)
-        val reported = uploadCrashReport.execute(message)
+        val reported = uploadCrashReport.execute(message, "tester@example.com")
 
         assertTrue("Upload success when response code 200", reported)
 
-        val request = server.takeRequest().body.readString(Charsets.UTF_8)
+        val body = server.takeRequest().body.readString(Charsets.UTF_8)
 
-        assertTrue(
-            "Upload request body contains message",
-            request.contains(message)
-        )
-        assertTrue(
-            "Upload request body contains stacktrace",
-            request.contains("This is a crash")
-        )
-        assertTrue(
-            "Upload request body contains environment",
-            request.contains("Environment")
-        )
+        assertTrue("Body contains message", body.contains(message))
+        assertTrue("Body contains stack trace section", body.contains("## Stack Trace"))
+        assertTrue("Body contains stacktrace content", body.contains("NullPointerException at MainActivity.kt:99"))
+        assertTrue("Body contains environment section", body.contains("## Environment"))
+        assertTrue("Body contains log section", body.contains("## Recent Log"))
+        assertTrue("Body contains sender email", body.contains("tester@example.com"))
 
-        assertTrue(
-            "Crash dir is empty after successful upload",
-            crashDir.listFiles()?.isEmpty() ?: true
-        )
+        assertTrue("Crash dir empty after successful upload", crashDir.listFiles()?.isEmpty() ?: true)
     }
 
     @Test
-    fun crashReportFailsWhenNoCrashes() {
-        deleteStackTraces()
+    fun testUploadCrashReportFailsWhenNoCrashes() {
+        Logger.flush()
 
         server.enqueue(MockResponse().setBody("{success: true}").setResponseCode(200))
 
-        val message = "Test crash report"
-        val uploadCrashReport = UploadCrashReport(context, directoryProvider, prefRepoMock)
-        val reported = uploadCrashReport.execute(message)
+        val reported = uploadCrashReport.execute("Test crash report", "")
 
-        assertFalse("Upload failed when no crash files", reported)
+        assertFalse("Upload fails when no crash files", reported)
     }
 
     @Test
     fun testUploadCrashServerDown() {
-        createStackTraces()
-
         server.enqueue(MockResponse().setResponseCode(500))
 
-        val message = "Test crash report"
-        val uploadCrashReport = UploadCrashReport(context, directoryProvider, prefRepoMock)
-        val reported = uploadCrashReport.execute(message)
+        val crash = directoryProvider.createTempFile("crash", ".stacktrace", crashDir)
+        crash.writeText("NullPointerException at MainActivity.kt:99")
+
+        val reported = uploadCrashReport.execute("Test crash report", "")
 
         assertFalse("Upload fails when response code 500", reported)
-    }
-
-    private fun createStackTraces() {
-        val crash = directoryProvider.createTempFile("crash", ".stacktrace", crashDir)
-        crash.writeText("This is a crash")
-    }
-
-    private fun deleteStackTraces() {
-        Logger.flush()
+        assertTrue("Crash files preserved on failure", crashDir.listFiles()?.isNotEmpty() ?: false)
     }
 }

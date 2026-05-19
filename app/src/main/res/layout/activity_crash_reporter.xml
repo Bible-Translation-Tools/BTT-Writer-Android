@@ -11,27 +11,24 @@
         android:paddingLeft="5dp"
         android:paddingRight="5dp"
         android:paddingTop="5dp"
-        android:layout_above="@+id/linearLayout4">
+        android:layout_above="@+id/linearLayout4"
+        android:weightSum="1">
 
-        <!-- TODO: display an info icon that users can click to display this message -->
-        <!--<TextView android:text="@string/crash_reports" android:layout_width="wrap_content"-->
-            <!--android:layout_height="wrap_content"-->
-            <!--android:textColor="@color/dark_gray"-->
-            <!--android:textSize="@dimen/h5"-->
-            <!--android:paddingBottom="20dp"-->
-            <!--android:id="@+id/crashReportNoticeText" />-->
-
-        <!--<TextView-->
-            <!--android:layout_width="wrap_content"-->
-            <!--android:layout_height="wrap_content"-->
-            <!--android:textColor="@color/dark_gray"-->
-            <!--android:text="@string/crash_details_label"-->
-            <!--android:id="@+id/titleTextView"-->
-            <!--android:textStyle="bold" />-->
+        <EditText
+            android:id="@+id/editEmail"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/email_optional"
+            android:inputType="textEmailAddress"
+            android:background="@drawable/edit_text"
+            android:paddingBottom="16dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="16dp" />
 
         <EditText
             android:layout_width="fill_parent"
-            android:layout_height="fill_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
             android:gravity="top"
             android:scrollbars="vertical"
             android:textColor="@color/dark_primary_text"

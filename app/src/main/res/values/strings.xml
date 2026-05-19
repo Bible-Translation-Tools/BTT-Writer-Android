@@ -220,6 +220,7 @@
     <string name="waiting_for_another_device">Waiting for another device</string>
     <string name="label_back">Back</string>
     <string name="bug_report">Describe the problem you are experiencing</string>
+    <string name="email_optional">Email (Optional)</string>
     <string name="project_library">Library</string>
     <string name="title_verse">Verse</string>
     <string name="title_note">Note</string>

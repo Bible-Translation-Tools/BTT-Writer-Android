@@ -23,6 +23,7 @@ import com.door43.usecases.CheckForLatestRelease
 import com.door43.widget.ViewUtil
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
+import androidx.core.net.toUri
 
 /**
  * Created by joel on 9/17/2015.
@@ -30,7 +31,7 @@ import dagger.hilt.android.AndroidEntryPoint
 @AndroidEntryPoint
 class FeedbackDialog : DialogFragment() {
     private var message = ""
-
+    private var email = ""
     private var _binding: DialogFeedbackBinding? = null
     private val binding get() = _binding!!
 
@@ -73,13 +74,14 @@ class FeedbackDialog : DialogFragment() {
                     // requires text
                     notifyInputRequired()
                 } else {
-                    reportBug(editText.text.toString().trim())
+                    reportBug(editText.text.toString().trim(), editEmail.text.toString().trim())
                 }
             }
         }
 
         if (savedInstanceState != null) {
             message = savedInstanceState.getString(STATE_NOTES, "")
+            email = savedInstanceState.getString(STATE_EMAIL, "")
         }
 
         return binding.root
@@ -100,7 +102,7 @@ class FeedbackDialog : DialogFragment() {
                     hand.post { notifyLatestRelease(result.release) }
                 } else {
                     if (message.isNotEmpty()) {
-                        viewModel.uploadFeedback(message)
+                        viewModel.uploadFeedback(message, email)
                     } else {
                         notifyInputRequired()
                         dismiss()
@@ -130,7 +132,7 @@ class FeedbackDialog : DialogFragment() {
                         AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
                             .setTitle(R.string.upload_failed)
                             .setMessage(messageId)
-                            .setPositiveButton(R.string.retry_label) { _, _ -> viewModel.uploadFeedback(message) }
+                            .setPositiveButton(R.string.retry_label) { _, _ -> viewModel.uploadFeedback(message, email) }
                             .setNegativeButton(R.string.label_close, null)
                             .show()
                     }
@@ -149,8 +151,9 @@ class FeedbackDialog : DialogFragment() {
         snack.show()
     }
 
-    private fun reportBug(message: String) {
+    private fun reportBug(message: String, email: String) {
         this.message = message
+        this.email = email
         viewModel.checkForLatestRelease()
     }
 
@@ -188,27 +191,27 @@ class FeedbackDialog : DialogFragment() {
                         startActivity(
                             Intent(
                                 Intent.ACTION_VIEW,
-                                Uri.parse("market://details?id=$appPackageName")
+                                "market://details?id=$appPackageName".toUri()
                             )
                         )
-                    } catch (e: ActivityNotFoundException) {
+                    } catch (_: ActivityNotFoundException) {
                         startActivity(
                             Intent(
                                 Intent.ACTION_VIEW,
-                                Uri.parse("https://play.google.com/store/apps/details?id=$appPackageName")
+                                "https://play.google.com/store/apps/details?id=$appPackageName".toUri()
                             )
                         )
                     }
                 } else {
                     // download from github
-                    val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(release.downloadUrl))
+                    val browserIntent = Intent(Intent.ACTION_VIEW, release.downloadUrl.toUri())
                     startActivity(browserIntent)
                 }
                 this@FeedbackDialog.dismiss()
             }
             .setPositiveButton(R.string.label_continue) { _, _ ->
                 if (message.isNotEmpty()) {
-                    viewModel.uploadFeedback(message)
+                    viewModel.uploadFeedback(message, email)
                 } else {
                     notifyInputRequired()
                     this@FeedbackDialog.dismiss()
@@ -219,6 +222,7 @@ class FeedbackDialog : DialogFragment() {
 
     override fun onSaveInstanceState(outState: Bundle) {
         outState.putString(STATE_NOTES, message)
+        outState.putString(STATE_EMAIL, email)
         super.onSaveInstanceState(outState)
     }
 
@@ -235,6 +239,7 @@ class FeedbackDialog : DialogFragment() {
 
     companion object {
         private const val STATE_NOTES = "bug_notes"
+        private const val STATE_EMAIL = "bug_email"
         const val ARG_MESSAGE: String = "arg_message"
     }
 }

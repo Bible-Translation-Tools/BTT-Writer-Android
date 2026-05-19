@@ -3,7 +3,6 @@ package com.door43.data
 import com.door43.translationstudio.core.TranslationViewMode
 
 interface IPreferenceRepository {
-    val defaultPreferencesName get() = "default_prefs"
     val privatePreferencesName get() = "com.door43.translationstudio.general"
     val lastViewMode get() = "last_view_mode_"
     val lastFocusChapter get() = "last_focus_chapter_"
@@ -18,6 +17,9 @@ interface IPreferenceRepository {
     val githubRepoApiUrl get() = "https://api.github.com/repos/Bible-Translation-Tools/BTT-Writer-Android"
     val questionnaireApiUrl get() = "http://td-demo.unfoldingword.org/api/questionnaire/"
     val rootCatalogApiUrl get() = "/ts/txt/2/catalog.json"
+
+    val helpdeskWebhookUrl get() = "https://helpdesk.techadvancement.com/wp-json/fluent-support/v2/public/incoming_webhook/"
+    val defaultHelpdeskEmail get() = "bttwriter-desktop-feedback@techadvancement.com"
 
     /**
      * Returns and sets the last focused target translation
@@ -158,6 +160,8 @@ interface IPreferenceRepository {
     fun getQuestionnaireApi(): String
 
     fun getRootCatalogApi(): String
+
+
 }
 
 inline fun <reified T> IPreferenceRepository.getDefaultPref(key: String) =
