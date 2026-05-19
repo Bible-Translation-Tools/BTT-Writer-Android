@@ -62,10 +62,6 @@ android {
                 variant.outputs.all {
                     outputFileName = "release.apk"
                 }
-            } else {
-                variant.mergeResourcesProvider.configure { mergeTask ->
-                    mergeTask.dependsOn tasks.named("copyDebugGithubToken")
-                }
             }
         }
     }
@@ -219,24 +215,6 @@ kapt {
 
 hilt {
     enableAggregatingTask = true
-}
-
-tasks.register("copyDebugGithubToken") {
-    doLast {
-        def sourceFile = file("src/androidTest/assets/dummy_strings_private_app_pref.xml")
-        def destinationFile = file("src/androidTest/res/values/dummy_strings_private_app_pref.xml")
-
-        destinationFile.parentFile.mkdirs()
-
-        if (sourceFile.exists()) {
-            destinationFile.withOutputStream { out ->
-                sourceFile.withInputStream { inStream ->
-                    out << inStream
-                }
-            }
-            println "$destinationFile copied for Debug build"
-        }
-    }
 }
 
 tasks.register('uiTests', Exec) {
