@@ -208,18 +208,21 @@ hilt {
 tasks.register("copyDebugTokens") {
     doLast {
         def destinationFile = file("src/main/res/values/strings_private_app_pref.xml")
-
         destinationFile.parentFile.mkdirs()
 
-        def xmlContent = """<?xml version="1.0" encoding="utf-8"?>
+        if (!destinationFile.exists()) {
+            def xmlContent = """<?xml version="1.0" encoding="utf-8"?>
 <!-- This is a dummy private token for issue integration. This allows automated builds to run -->
 <resources>
     <string name="helpdesk_token" translatable="false">sample_token</string>
 </resources>"""
 
-        destinationFile.text = xmlContent
+            destinationFile.text = xmlContent
 
-        println "$destinationFile copied for Debug build"
+            println "$destinationFile copied for Debug build"
+        } else {
+            println "$destinationFile already exists. Skipping"
+        }
     }
 }
 
