@@ -87,12 +87,26 @@
                     android:id="@+id/formLayout"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent">
+
+                    <EditText
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="@string/email_optional"
+                        android:gravity="top"
+                        android:maxLines="10"
+                        android:inputType="textEmailAddress"
+                        android:background="@drawable/edit_text"
+                        android:paddingBottom="16dp"
+                        android:layout_marginBottom="16dp"
+                        android:id="@+id/editEmail" />
+
                     <EditText
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:hint="@string/bug_report"
                         android:gravity="top"
                         android:scrollbars="vertical"
+                        android:minLines="5"
                         android:maxLines="10"
                         android:inputType="textMultiLine"
                         android:background="@drawable/edit_text"

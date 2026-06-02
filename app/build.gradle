@@ -34,7 +34,7 @@ android {
         minSdk 26
         compileSdk 35
         targetSdk 35
-        versionCode 49
+        versionCode 50
         versionName "1.6.0"
 
         testBuildType "verify"
@@ -64,7 +64,7 @@ android {
                 }
             } else {
                 variant.mergeResourcesProvider.configure { mergeTask ->
-                    mergeTask.dependsOn tasks.named("copyDebugGithubToken")
+                    mergeTask.dependsOn tasks.named("copyDebugTokens")
                 }
             }
         }
@@ -113,22 +113,6 @@ configurations {
     cleanedAnnotations
     compile.exclude group: 'org.jetbrains' , module:'annotations'
 }
-
-// if (System.env.CI == 'true') {
-//     allprojects {
-//         tasks.withType(GroovyCompile) {
-//             groovyOptions.fork = false
-//         }
-//         tasks.withType(Test) {
-//             // containers (currently) have 2 dedicated cores and 4GB of memory
-//             maxParallelForks = 2
-//             minHeapSize = '128m'
-//             testLogging {
-//                 // Custom configuration
-//             }
-//         }
-//     }
-// }
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
@@ -221,20 +205,23 @@ hilt {
     enableAggregatingTask = true
 }
 
-tasks.register("copyDebugGithubToken") {
+tasks.register("copyDebugTokens") {
     doLast {
-        def sourceFile = file("src/androidTest/assets/dummy_strings_private_app_pref.xml")
-        def destinationFile = file("src/androidTest/res/values/dummy_strings_private_app_pref.xml")
-
+        def destinationFile = file("src/main/res/values/strings_private_app_pref.xml")
         destinationFile.parentFile.mkdirs()
 
-        if (sourceFile.exists()) {
-            destinationFile.withOutputStream { out ->
-                sourceFile.withInputStream { inStream ->
-                    out << inStream
-                }
-            }
+        if (!destinationFile.exists()) {
+            def xmlContent = """<?xml version="1.0" encoding="utf-8"?>
+<!-- This is a dummy private token for issue integration. This allows automated builds to run -->
+<resources>
+    <string name="helpdesk_token" translatable="false">sample_token</string>
+</resources>"""
+
+            destinationFile.text = xmlContent
+
             println "$destinationFile copied for Debug build"
+        } else {
+            println "$destinationFile already exists. Skipping"
         }
     }
 }

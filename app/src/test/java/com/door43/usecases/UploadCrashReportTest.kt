@@ -1,15 +1,10 @@
 package com.door43.usecases
 
-import android.content.Context
-import android.content.res.Resources
-import com.door43.data.IDirectoryProvider
-import com.door43.data.IPreferenceRepository
+import com.door43.translationstudio.core.Reporter
 import io.mockk.MockKAnnotations
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.just
-import io.mockk.mockk
-import io.mockk.mockkConstructor
 import io.mockk.mockkStatic
 import io.mockk.runs
 import io.mockk.unmockkAll
@@ -21,18 +16,11 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
-import org.unfoldingword.tools.http.Request
-import org.unfoldingword.tools.logger.GithubReporter
 import org.unfoldingword.tools.logger.Logger
-import java.io.File
-import java.io.IOException
 
 class UploadCrashReportTest {
 
-    @MockK private lateinit var context: Context
-    @MockK private lateinit var directoryProvider: IDirectoryProvider
-    @MockK private lateinit var prefRepository: IPreferenceRepository
-    @MockK private lateinit var resources: Resources
+    @MockK private lateinit var reporter: Reporter
 
     @JvmField
     @Rule
@@ -41,21 +29,9 @@ class UploadCrashReportTest {
     @Before
     fun setup() {
         MockKAnnotations.init(this)
-
-        every { context.resources }.returns(resources)
-        every { context.packageName }.returns("org.example.writer")
-        every { resources.getIdentifier(any(), any(), any()) }.returns(1)
-        every { resources.getString(1) }.returns("token_stub")
-
-        every { prefRepository.getGithubBugReportRepo() }.returns("/github")
-
-        every { directoryProvider.logFile }.returns(tempDir.newFile("test.log"))
-
         mockkStatic(Logger::class)
-        every { Logger.listStacktraces() }.returns(arrayOf())
-        every { Logger.flush() }.just(runs)
-
-        mockkConstructor(GithubReporter::class)
+        every { Logger.listStacktraces() } returns arrayOf()
+        every { Logger.flush() } just runs
     }
 
     @After
@@ -65,103 +41,38 @@ class UploadCrashReportTest {
     }
 
     @Test
-    fun `test upload crash report successfully`() {
-        val stacktrace = tempDir.newFile("stacktrace.txt")
-        every { Logger.listStacktraces() }.returns(arrayOf(stacktrace))
+    fun `upload crash report successfully flushes log and returns true`() {
+        val stacktrace = tempDir.newFile("crash.stacktrace")
+        every { Logger.listStacktraces() } returns arrayOf(stacktrace)
+        every { reporter.sendCrash(any(), any(), any()) } returns true
 
-        val request: Request = mockk {
-            every { responseCode }.returns(200)
-        }
-        every { anyConstructed<GithubReporter>().reportCrash(any(), any<File>(), any()) }
-            .returns(request)
-
-        val success = UploadCrashReport(
-            context,
-            directoryProvider,
-            prefRepository
-        ).execute("test message")
+        val success = UploadCrashReport(reporter).execute("Crash message", "user@test.com")
 
         assertTrue(success)
-
-        verify { prefRepository.getGithubBugReportRepo() }
-        verify { anyConstructed<GithubReporter>().reportCrash(any(), any<File>(), any()) }
+        verify { reporter.sendCrash("Crash message", "user@test.com", stacktrace) }
         verify { Logger.flush() }
     }
 
     @Test
-    fun `test upload crash report failed, server error`() {
-        val stacktrace = tempDir.newFile("stacktrace.txt")
-        every { Logger.listStacktraces() }.returns(arrayOf(stacktrace))
+    fun `upload crash report server error returns false and does not flush`() {
+        val stacktrace = tempDir.newFile("crash.stacktrace")
+        every { Logger.listStacktraces() } returns arrayOf(stacktrace)
+        every { reporter.sendCrash(any(), any(), any()) } returns false
 
-        val request: Request = mockk {
-            every { responseCode }.returns(500)
-        }
-        every { anyConstructed<GithubReporter>().reportCrash(any(), any<File>(), any()) }
-            .returns(request)
-
-        val success = UploadCrashReport(
-            context,
-            directoryProvider,
-            prefRepository
-        ).execute("test message")
+        val success = UploadCrashReport(reporter).execute("Crash message", "")
 
         assertFalse(success)
-
-        verify { prefRepository.getGithubBugReportRepo() }
-        verify { anyConstructed<GithubReporter>().reportCrash(any(), any<File>(), any()) }
         verify(inverse = true) { Logger.flush() }
     }
 
     @Test
-    fun `test upload crash report, no stack traces`() {
-        val success = UploadCrashReport(
-            context,
-            directoryProvider,
-            prefRepository
-        ).execute("test message")
+    fun `upload crash report with no stacktraces returns false without calling reporter`() {
+        every { Logger.listStacktraces() } returns arrayOf()
+
+        val success = UploadCrashReport(reporter).execute("Crash message", "")
 
         assertFalse(success)
-
-        verify { prefRepository.getGithubBugReportRepo() }
-        verify(inverse = true) { anyConstructed<GithubReporter>().reportCrash(any(), any<File>(), any()) }
-        verify(inverse = true) { Logger.flush() }
-    }
-
-    @Test
-    fun `test upload crash report throws exception`() {
-        val stacktrace = tempDir.newFile("stacktrace.txt")
-        every { Logger.listStacktraces() }.returns(arrayOf(stacktrace))
-
-        every { anyConstructed<GithubReporter>().reportCrash(any(), any<File>(), any()) }
-            .throws(IOException("An error occurred."))
-
-        val success = UploadCrashReport(
-            context,
-            directoryProvider,
-            prefRepository
-        ).execute("test message")
-
-        assertFalse(success)
-
-        verify { prefRepository.getGithubBugReportRepo() }
-        verify { anyConstructed<GithubReporter>().reportCrash(any(), any<File>(), any()) }
-        verify(inverse = true) { Logger.flush() }
-    }
-
-    @Test
-    fun `test upload crash report, no github token`() {
-        every { resources.getIdentifier(any(), any(), any()) }.returns(0)
-
-        val success = UploadCrashReport(
-            context,
-            directoryProvider,
-            prefRepository
-        ).execute("test message")
-
-        assertFalse(success)
-
-        verify { prefRepository.getGithubBugReportRepo() }
-        verify(inverse = true) { anyConstructed<GithubReporter>().reportCrash(any(), any<File>(), any()) }
+        verify(inverse = true) { reporter.sendCrash(any(), any(), any()) }
         verify(inverse = true) { Logger.flush() }
     }
 }

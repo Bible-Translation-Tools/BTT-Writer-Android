@@ -1,17 +1,16 @@
 package com.door43.translationstudio.usecases
 
-import android.provider.Settings
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import com.door43.data.AssetsProvider
 import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
 import com.door43.translationstudio.IntegrationTest
+import com.door43.translationstudio.core.Profile
+import com.door43.translationstudio.core.Reporter
 import com.door43.usecases.UploadFeedback
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import io.mockk.every
-import io.mockk.mockkStatic
 import io.mockk.spyk
 import junit.framework.TestCase.assertFalse
 import junit.framework.TestCase.assertTrue
@@ -34,14 +33,14 @@ class UploadFeedbackTest {
     @get:Rule(order = 0)
     var hiltRule = HiltAndroidRule(this)
 
-    private val context = InstrumentationRegistry.getInstrumentation().context
-    @Inject lateinit var assetsProvider: AssetsProvider
+    private val context = InstrumentationRegistry.getInstrumentation().targetContext
     @Inject lateinit var directoryProvider: IDirectoryProvider
     @Inject lateinit var prefRepository: IPreferenceRepository
+    @Inject lateinit var profile: Profile
 
     private val server = MockWebServer()
 
-    private lateinit var prefRepoMock: IPreferenceRepository
+    private lateinit var uploadFeedback: UploadFeedback
 
     @Before
     fun setUp() {
@@ -50,15 +49,11 @@ class UploadFeedbackTest {
 
         Logger.configure(directoryProvider.logFile, LogLevel.getLevel(0))
 
-        prefRepoMock = spyk(prefRepository)
-        every {
-            prefRepoMock.getGithubBugReportRepo()
-        } answers {
-            server.url("/issues").toString()
-        }
+        val prefRepoMock = spyk(prefRepository)
+        every { prefRepoMock.helpdeskWebhookUrl } answers { server.url("/").toString() }
 
-        mockkStatic(Settings.Secure::class)
-        every { Settings.Secure.getString(any(), any()) }.returns("test")
+        val reporter = Reporter(context, directoryProvider, prefRepoMock, profile)
+        uploadFeedback = UploadFeedback(directoryProvider, reporter)
     }
 
     @After
@@ -71,71 +66,47 @@ class UploadFeedbackTest {
     fun testUploadFeedback() {
         server.enqueue(MockResponse().setBody("{success: true}").setResponseCode(200))
 
-        // create some logs
         Logger.i("UploadFeedbackTest", "This is an info log.")
         Logger.w("UploadFeedbackTest", "This is a warning log.")
         Logger.e("UploadFeedbackTest", "This is an error log.")
 
-        assertTrue(
-            "Log file should not be empty",
-            directoryProvider.logFile.length() > 0
-        )
+        assertTrue("Log file should not be empty", directoryProvider.logFile.length() > 0)
 
-        val uploadFeedback = UploadFeedback(context, prefRepoMock, directoryProvider)
         val notes = "This is a test note"
-        val uploaded = uploadFeedback.execute(notes)
+        val uploaded = uploadFeedback.execute(notes, "tester@example.com")
 
         assertTrue("Feedback should be uploaded", uploaded)
 
-        val request = server.takeRequest().body.readString(Charsets.UTF_8)
+        val body = server.takeRequest().body.readString(Charsets.UTF_8)
 
-        assertTrue(
-            "Upload request body contains message",
-            request.contains(notes)
-        )
-        assertTrue(
-            "Upload request body contains info log",
-            request.contains("This is an info log.")
-        )
-        assertTrue(
-            "Upload request body contains warning log",
-            request.contains("This is a warning log.")
-        )
-        assertTrue(
-            "Upload request body contains error log",
-            request.contains("This is an error log.")
-        )
+        assertTrue("Body contains notes", body.contains(notes))
+        assertTrue("Body contains info log", body.contains("This is an info log."))
+        assertTrue("Body contains warning log", body.contains("This is a warning log."))
+        assertTrue("Body contains error log", body.contains("This is an error log."))
+        assertTrue("Body contains environment section", body.contains("## Environment"))
+        assertTrue("Body contains sender email", body.contains("tester@example.com"))
+
         assertFalse(
-            "Log file should not contain old logs after successful upload",
+            "Log cleared after successful upload",
             directoryProvider.logFile.readText().contains("This is an error log.")
         )
         assertTrue(
-            "Log file should not contain new log message",
-            directoryProvider.logFile.readText().contains("Submitted bug report"))
+            "Submission logged",
+            directoryProvider.logFile.readText().contains("Submitted bug report")
+        )
     }
 
     @Test
-    fun testUploadFailsOnServerDown() {
-        server.enqueue(MockResponse().setBody("{success: true}").setResponseCode(500))
+    fun testUploadFailsOnServerError() {
+        server.enqueue(MockResponse().setResponseCode(500))
 
-        // create some logs
         Logger.i("UploadFeedbackTest", "This is an info log.")
-        Logger.w("UploadFeedbackTest", "This is a warning log.")
-        Logger.e("UploadFeedbackTest", "This is an error log.")
 
-        assertTrue(
-            "Log file should not be empty",
-            directoryProvider.logFile.length() > 0
-        )
+        assertTrue("Log file should not be empty", directoryProvider.logFile.length() > 0)
 
-        val uploadFeedback = UploadFeedback(context, prefRepoMock, directoryProvider)
-        val notes = "This is a test note"
-        val uploaded = uploadFeedback.execute(notes)
+        val uploaded = uploadFeedback.execute("This is a test note", "")
 
-        assertFalse("Upload should be failed", uploaded)
-        assertTrue(
-            "Log file should remain after failed upload",
-            directoryProvider.logFile.length() > 0
-        )
+        assertFalse("Upload should fail on 500", uploaded)
+        assertTrue("Log preserved on failure", directoryProvider.logFile.length() > 0)
     }
 }

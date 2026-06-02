@@ -22,5 +22,7 @@
 -keepattributes *
 
 -keep class com.door43.** { *; }
--keep class org.spongycastle.** { *; }
+-keep class org.bouncycastle.** { *; }
+-keep class org.apache.sshd.** { *; }
 -keep class org.eclipse.jgit.** { *; }
+-keep class net.i2p.crypto.** { *; }

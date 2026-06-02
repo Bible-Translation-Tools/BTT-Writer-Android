@@ -15,6 +15,7 @@ import org.unfoldingword.tools.logger.Logger
 
 class CrashReporterActivity : BaseActivity() {
     private var notes = ""
+    private var email = ""
     private var progressDialog: ProgressHelper.ProgressDialog? = null
 
     private lateinit var binding: ActivityCrashReporterBinding
@@ -27,6 +28,7 @@ class CrashReporterActivity : BaseActivity() {
 
         binding.okButton.setOnClickListener {
             notes = binding.crashDescription.text.toString().trim()
+            email = binding.editEmail.text.toString().trim()
 
             AlertDialog.Builder(this, R.style.AppTheme_Dialog)
                 .setTitle(R.string.title_upload)
@@ -77,7 +79,7 @@ class CrashReporterActivity : BaseActivity() {
                     hand.post { notifyLatestRelease() }
                 } else {
                     val report = binding.crashDescription.text.toString().trim()
-                    viewModel.uploadCrashReport(report)
+                    viewModel.uploadCrashReport(report, binding.editEmail.text.toString().trim())
                 }
             }
         }
@@ -110,8 +112,9 @@ class CrashReporterActivity : BaseActivity() {
     public override fun onRestoreInstanceState(savedInstanceState: Bundle) {
         super.onRestoreInstanceState(savedInstanceState)
         notes = savedInstanceState.getString(STATE_NOTES, "")
+        email = savedInstanceState.getString(STATE_EMAIL, "")
         binding.crashDescription.setText(notes)
-        super.onRestoreInstanceState(savedInstanceState)
+        binding.editEmail.setText(email)
     }
 
     override fun onResume() {
@@ -138,7 +141,7 @@ class CrashReporterActivity : BaseActivity() {
                 finish()
             }
             .setPositiveButton(R.string.label_continue) { _, _ ->
-                viewModel.uploadCrashReport(notes)
+                viewModel.uploadCrashReport(notes, email)
             }
             .show()
     }
@@ -150,14 +153,13 @@ class CrashReporterActivity : BaseActivity() {
     }
 
     public override fun onSaveInstanceState(outState: Bundle) {
-        outState.putString(
-            STATE_NOTES,
-            binding.crashDescription.text.toString().trim()
-        )
+        outState.putString(STATE_NOTES, binding.crashDescription.text.toString().trim())
+        outState.putString(STATE_EMAIL, binding.editEmail.text.toString().trim())
         super.onSaveInstanceState(outState)
     }
 
     companion object {
         private const val STATE_NOTES = "state_notes"
+        private const val STATE_EMAIL = "state_email"
     }
 }

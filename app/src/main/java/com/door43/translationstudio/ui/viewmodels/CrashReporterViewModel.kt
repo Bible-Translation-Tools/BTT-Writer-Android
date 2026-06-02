@@ -46,13 +46,13 @@ class CrashReporterViewModel @Inject constructor(
         }
     }
 
-    fun uploadCrashReport(message: String) {
+    fun uploadCrashReport(message: String, email: String) {
         viewModelScope.launch {
             _progress.value = ProgressHelper.Progress(
                 application.resources.getString(R.string.uploading)
             )
             _crashReportUploaded.value = withContext(Dispatchers.IO) {
-                uploadCrashReport.execute(message)
+                uploadCrashReport.execute(message, email)
             }
             _progress.value = null
         }

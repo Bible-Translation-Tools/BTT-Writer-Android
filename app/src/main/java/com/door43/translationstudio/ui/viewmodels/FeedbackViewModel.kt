@@ -42,10 +42,10 @@ class FeedbackViewModel @Inject constructor(
         }.also(jobs::add)
     }
 
-    fun uploadFeedback(message: String) {
+    fun uploadFeedback(message: String, email: String) {
         viewModelScope.launch {
             _success.value = withContext(Dispatchers.IO) {
-                uploadFeedback.execute(message)
+                uploadFeedback.execute(message, email)
             }
             _loading.value = false
         }.also(jobs::add)
