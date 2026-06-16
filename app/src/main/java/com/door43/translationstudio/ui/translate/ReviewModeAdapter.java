@@ -1283,12 +1283,6 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
                 @SuppressLint("SetTextI18n")
                 @Override
                 public void onLongClick(final View view, Span span, int start, int end) {
-                    toggleDisableItems(true, item);
-
-                    ClipData dragData = ClipData.newPlainText(
-                            item.chapterSlug + "-" + item.chunkSlug,
-                            span.getMachineReadable()
-                    );
                     final VerseSpan pin = ((VerseSpan) span);
 
                     // create drag shadow
@@ -1305,101 +1299,7 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
                     Bitmap shadow = ViewUtil.convertToBitmap(markerBinding.getRoot());
                     View.DragShadowBuilder myShadow = CustomDragShadowBuilder.fromBitmap(context, shadow);
 
-                    int[] spanRange = {start, end};
-                    view.startDrag(dragData,  // the data to be dragged
-                            myShadow,  // the drag shadow builder
-                            spanRange,      // no need to use local data
-                            0          // flags (not currently used, set to 0)
-                    );
-                    view.setOnDragListener(new View.OnDragListener() {
-                        private boolean hasEntered = false;
-
-                        @Override
-                        public boolean onDrag(View v, DragEvent e) {
-                            EditText editText = ((EditText) v);
-                            if (e.getAction() == DragEvent.ACTION_DRAG_STARTED) {
-                                // delete old span
-                                if (e.getLocalState() instanceof int[] spanRange && spanRange.length >= 2) {
-                                    CharSequence in = editText.getText();
-                                    if (spanRange[0] < in.length() && spanRange[1] < in.length()) {
-                                        CharSequence out = TextUtils.concat(
-                                                in.subSequence(0, spanRange[0]),
-                                                in.subSequence(spanRange[1], in.length())
-                                        );
-                                        editText.setText(out);
-                                    }
-                                }
-                            } else if (e.getAction() == DragEvent.ACTION_DROP) {
-                                int offset = editText.getOffsetForPosition(e.getX(), e.getY());
-                                CharSequence text = editText.getText();
-                                offset = closestSpotForVerseMarker(offset, text);
-
-                                if (offset >= 0) {
-                                    // insert the verse at the offset
-                                    text = TextUtils.concat(
-                                            text.subSequence(0, offset),
-                                            pin.toCharSequence(context),
-                                            text.subSequence(offset, text.length())
-                                    );
-                                } else {
-                                    // place the verse back at the beginning
-                                    text = TextUtils.concat(pin.toCharSequence(context), text);
-                                }
-
-                                SpannableString noHighlightText = resetHighlightColor(text);
-                                editText.setText(noHighlightText);
-
-                                String translation = Translator.compileTranslation(editText.getText());
-                                item.target.applyFrameTranslation(frameTranslation, translation);
-                                item.setTargetText(translation);
-                                item.renderedTargetText = renderTargetText(
-                                        translation,
-                                        item.getTargetTranslationFormat(),
-                                        frameTranslation,
-                                        holder,
-                                        item
-                                );
-                            } else if (e.getAction() == DragEvent.ACTION_DRAG_ENDED) {
-                                toggleDisableItems(false, null);
-                                v.setOnDragListener(null);
-                                editText.setSelection(editText.getSelectionEnd());
-                                // reset verse if dragged off the view
-                                // TODO: 10/5/2015 perhaps we should confirm with the user?
-                                if (!hasEntered) {
-                                    // place the verse back at the beginning
-                                    CharSequence text = editText.getText();
-                                    text = TextUtils.concat(pin.toCharSequence(context), text);
-                                    editText.setText(text);
-                                    String translation = Translator.compileTranslation(editText.getText());
-                                    item.target.applyFrameTranslation(frameTranslation, translation);
-                                    item.renderedTargetText = renderTargetText(
-                                            translation,
-                                            item.getTargetTranslationFormat(),
-                                            frameTranslation,
-                                            holder,
-                                            item
-                                    );
-                                }
-                            } else if (e.getAction() == DragEvent.ACTION_DRAG_ENTERED) {
-                                hasEntered = true;
-                            } else if (e.getAction() == DragEvent.ACTION_DRAG_EXITED) {
-                                hasEntered = false;
-                                editText.setSelection(editText.getSelectionEnd());
-                                SpannableString noHighlightText = resetHighlightColor(editText.getText());
-                                editText.setText(noHighlightText);
-                            } else if (e.getAction() == DragEvent.ACTION_DRAG_LOCATION) {
-                                int offset = editText.getOffsetForPosition(e.getX(), e.getY());
-                                if (offset >= 0 && offset < editText.getText().length() - 1) {
-                                    CharSequence txt = editText.getText();
-                                    SpannableString str = highlightWordAt(offset, txt);
-                                    editText.setText(str);
-                                } else {
-                                    editText.setSelection(editText.getSelectionEnd());
-                                }
-                            }
-                            return true;
-                        }
-                    });
+                    startMarkerDrag(view, span, start, end, holder, item, frameTranslation, myShadow);
                 }
             };
 
@@ -1413,6 +1313,15 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
 
                 @Override
                 public void onLongClick(View view, Span span, int start, int end) {
+                    if (!(span instanceof NoteSpan)) {
+                        return;
+                    }
+                    // create drag shadow from the footnote marker icon
+                    View.DragShadowBuilder myShadow = CustomDragShadowBuilder.fromResource(
+                            context,
+                            R.drawable.ic_description_neutral_24dp
+                    );
+                    startMarkerDrag(view, span, start, end, holder, item, frameTranslation, myShadow);
                 }
             };
 
@@ -1445,6 +1354,134 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
         } else {
             return "";
         }
+    }
+
+    /**
+     * Start a long-press drag for a marker span (verse pin or footnote). The marker is removed
+     * from its original location and re-inserted at the drop position. Used for both verse
+     * markers and footnote markers.
+     *
+     * @param view             the EditText hosting the marker
+     * @param span             the marker span being dragged
+     * @param start            span start position
+     * @param end              span end position
+     * @param holder           review holder
+     * @param item             review list item
+     * @param frameTranslation frame translation
+     * @param shadow           drag shadow for the marker
+     */
+    private void startMarkerDrag(
+            final View view,
+            final Span span,
+            int start,
+            int end,
+            final ReviewHolder holder,
+            final ReviewListItem item,
+            final FrameTranslation frameTranslation,
+            View.DragShadowBuilder shadow
+    ) {
+        toggleDisableItems(true, item);
+
+        ClipData dragData = ClipData.newPlainText(
+                item.chapterSlug + "-" + item.chunkSlug,
+                span.getMachineReadable()
+        );
+
+        int[] spanRange = {start, end};
+        view.startDragAndDrop(dragData,  // the data to be dragged
+                shadow,    // the drag shadow builder
+                spanRange, // local state used to delete the old span
+                0          // flags (not currently used, set to 0)
+        );
+        view.setOnDragListener(new View.OnDragListener() {
+            private boolean hasEntered = false;
+
+            @Override
+            public boolean onDrag(View v, DragEvent e) {
+                EditText editText = ((EditText) v);
+                if (e.getAction() == DragEvent.ACTION_DRAG_STARTED) {
+                    // delete old span
+                    if (e.getLocalState() instanceof int[] spanRange && spanRange.length >= 2) {
+                        CharSequence in = editText.getText();
+                        if (spanRange[0] < in.length() && spanRange[1] < in.length()) {
+                            CharSequence out = TextUtils.concat(
+                                    in.subSequence(0, spanRange[0]),
+                                    in.subSequence(spanRange[1], in.length())
+                            );
+                            editText.setText(out);
+                        }
+                    }
+                } else if (e.getAction() == DragEvent.ACTION_DROP) {
+                    int offset = editText.getOffsetForPosition(e.getX(), e.getY());
+                    CharSequence text = editText.getText();
+                    offset = closestSpotForVerseMarker(offset, text);
+
+                    if (offset >= 0) {
+                        // insert the marker at the offset
+                        text = TextUtils.concat(
+                                text.subSequence(0, offset),
+                                span.toCharSequence(context),
+                                text.subSequence(offset, text.length())
+                        );
+                    } else {
+                        // place the marker back at the beginning
+                        text = TextUtils.concat(span.toCharSequence(context), text);
+                    }
+
+                    SpannableString noHighlightText = resetHighlightColor(text);
+                    editText.setText(noHighlightText);
+
+                    String translation = Translator.compileTranslation(editText.getText());
+                    item.target.applyFrameTranslation(frameTranslation, translation);
+                    item.setTargetText(translation);
+                    item.renderedTargetText = renderTargetText(
+                            translation,
+                            item.getTargetTranslationFormat(),
+                            frameTranslation,
+                            holder,
+                            item
+                    );
+                } else if (e.getAction() == DragEvent.ACTION_DRAG_ENDED) {
+                    toggleDisableItems(false, null);
+                    v.setOnDragListener(null);
+                    editText.setSelection(editText.getSelectionEnd());
+                    // reset marker if dragged off the view
+                    // TODO: 10/5/2015 perhaps we should confirm with the user?
+                    if (!hasEntered) {
+                        // place the marker back at the beginning
+                        CharSequence text = editText.getText();
+                        text = TextUtils.concat(span.toCharSequence(context), text);
+                        editText.setText(text);
+                        String translation = Translator.compileTranslation(editText.getText());
+                        item.target.applyFrameTranslation(frameTranslation, translation);
+                        item.renderedTargetText = renderTargetText(
+                                translation,
+                                item.getTargetTranslationFormat(),
+                                frameTranslation,
+                                holder,
+                                item
+                        );
+                    }
+                } else if (e.getAction() == DragEvent.ACTION_DRAG_ENTERED) {
+                    hasEntered = true;
+                } else if (e.getAction() == DragEvent.ACTION_DRAG_EXITED) {
+                    hasEntered = false;
+                    editText.setSelection(editText.getSelectionEnd());
+                    SpannableString noHighlightText = resetHighlightColor(editText.getText());
+                    editText.setText(noHighlightText);
+                } else if (e.getAction() == DragEvent.ACTION_DRAG_LOCATION) {
+                    int offset = editText.getOffsetForPosition(e.getX(), e.getY());
+                    if (offset >= 0 && offset < editText.getText().length() - 1) {
+                        CharSequence txt = editText.getText();
+                        SpannableString str = highlightWordAt(offset, txt);
+                        editText.setText(str);
+                    } else {
+                        editText.setSelection(editText.getSelectionEnd());
+                    }
+                }
+                return true;
+            }
+        });
     }
 
     /**
