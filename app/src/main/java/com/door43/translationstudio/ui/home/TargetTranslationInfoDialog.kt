@@ -18,12 +18,12 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.activityViewModels
-import com.door43.translationstudio.R
 import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
 import com.door43.data.getPrivatePref
-import com.door43.translationstudio.core.Translator
+import com.door43.translationstudio.R
 import com.door43.translationstudio.core.TranslationType
+import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.databinding.DialogTargetTranslationInfoBinding
 import com.door43.translationstudio.ui.dialogs.BackupDialog
@@ -47,7 +47,9 @@ import kotlin.math.roundToInt
  * Displays detailed information about a target translation
  */
 @AndroidEntryPoint
-class TargetTranslationInfoDialog : DialogFragment(), ManageContributorsDialog.ContributorEventListener {
+class TargetTranslationInfoDialog : DialogFragment(),
+    ManageContributorsDialog.ContributorEventListener,
+    BackupDialog.BackupEventListener {
     @Inject lateinit var typography: Typography
     @Inject lateinit var preferenceRepository: IPreferenceRepository
     @Inject lateinit var directoryProvider: IDirectoryProvider
@@ -119,34 +121,7 @@ class TargetTranslationInfoDialog : DialogFragment(), ManageContributorsDialog.C
                 // list translators
                 translators.text = ""
                 refreshContributors()
-
-                val savedBackup = preferenceRepository.getPrivatePref<String>(preferenceRepository.lastBackup + item.translation.id)
-                var displayTime: String? = null
-                if (!savedBackup.isNullOrEmpty()) {
-                    try {
-                        val date = SimpleDateFormat("yyyy-MM-dd_HH.mm.ss", Locale.US).parse(savedBackup)
-                        if (date != null) {
-                            displayTime = DateFormat.getDateTimeInstance(MEDIUM, MEDIUM).format(date)
-                        }
-                    } catch (_: Exception) {
-                        displayTime = savedBackup
-                    }
-                }
-
-                if (displayTime == null) {
-                    val backupFile = File(
-                        directoryProvider.backupsDir,
-                        "${item.translation.id}.${Translator.TSTUDIO_EXTENSION}"
-                    )
-                    if (backupFile.exists() && backupFile.isFile) {
-                        val date = Date(backupFile.lastModified())
-                        displayTime = DateFormat.getDateTimeInstance(MEDIUM, MEDIUM).format(date)
-                    }
-                }
-
-                lastBackup.text = displayTime ?: getString(R.string.label_unknown)
-                lastBackupGroup.visibility = View.VISIBLE
-
+                refreshBackupAndUploadStatus()
 
                 changeLanguage.setOnClickListener {
                     val intent = Intent(activity, NewTargetTranslationActivity::class.java)
@@ -200,6 +175,7 @@ class TargetTranslationInfoDialog : DialogFragment(), ManageContributorsDialog.C
                     val arguments = Bundle()
                     arguments.putString(BackupDialog.ARG_TARGET_TRANSLATION_ID, item.translation.id)
                     backupDialog.arguments = arguments
+                    backupDialog.setEventListener(this@TargetTranslationInfoDialog)
                     backupDialog.show(backupFt, BackupDialog.TAG)
                 }
 
@@ -287,6 +263,55 @@ class TargetTranslationInfoDialog : DialogFragment(), ManageContributorsDialog.C
         )
     }
 
+    private fun refreshBackupAndUploadStatus() {
+        targetTranslation?.let { item ->
+            with(binding) {
+                val savedBackup = preferenceRepository.getPrivatePref<String>(preferenceRepository.lastBackup + item.translation.id)
+                var displayTime: String? = null
+                if (!savedBackup.isNullOrEmpty()) {
+                    try {
+                        val date = SimpleDateFormat("yyyy-MM-dd_HH.mm.ss", Locale.US).parse(savedBackup)
+                        if (date != null) {
+                            displayTime = DateFormat.getDateTimeInstance(MEDIUM, MEDIUM).format(date)
+                        }
+                    } catch (_: Exception) {
+                        displayTime = savedBackup
+                    }
+                }
+
+                if (displayTime == null) {
+                    val backupFile = File(
+                        directoryProvider.backupsDir,
+                        "${item.translation.id}.${Translator.TSTUDIO_EXTENSION}"
+                    )
+                    if (backupFile.exists() && backupFile.isFile) {
+                        val date = Date(backupFile.lastModified())
+                        displayTime = DateFormat.getDateTimeInstance(MEDIUM, MEDIUM).format(date)
+                    }
+                }
+
+                lastBackup.text = displayTime ?: getString(R.string.label_unknown)
+                lastBackupGroup.visibility = View.VISIBLE
+
+                val savedUpload = preferenceRepository.getPrivatePref<String>(preferenceRepository.lastUploaded + item.translation.id)
+                var displayUploadTime: String? = null
+                if (!savedUpload.isNullOrEmpty()) {
+                    try {
+                        val date = SimpleDateFormat("yyyy-MM-dd_HH.mm.ss", Locale.US).parse(savedUpload)
+                        if (date != null) {
+                            displayUploadTime = DateFormat.getDateTimeInstance(MEDIUM, MEDIUM).format(date)
+                        }
+                    } catch (_: Exception) {
+                        displayUploadTime = savedUpload
+                    }
+                }
+
+                lastUploaded.text = displayUploadTime ?: getString(R.string.label_unknown)
+                lastUploadedGroup.visibility = View.VISIBLE
+            }
+        }
+    }
+
     /**
      * returns a concatenated list of names or null if error
      */
@@ -326,6 +351,7 @@ class TargetTranslationInfoDialog : DialogFragment(), ManageContributorsDialog.C
 
     override fun onDismiss() {
         refreshContributors()
+        refreshBackupAndUploadStatus()
     }
 
     private fun refreshContributors() {

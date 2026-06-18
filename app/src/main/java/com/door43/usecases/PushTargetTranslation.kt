@@ -2,6 +2,8 @@ package com.door43.usecases
 
 import android.content.Context
 import com.door43.OnProgressListener
+import com.door43.data.IPreferenceRepository
+import com.door43.data.setPrivatePref
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TargetTranslation
@@ -16,13 +18,16 @@ import org.eclipse.jgit.transport.RefSpec
 import org.eclipse.jgit.transport.RemoteRefUpdate
 import org.unfoldingword.tools.logger.Logger
 import java.io.IOException
+import java.text.SimpleDateFormat
+import java.util.Locale
 import javax.inject.Inject
 
 class PushTargetTranslation @Inject constructor(
     @ApplicationContext private val context: Context,
     private val profile: Profile,
     private val getRepository: GetRepository,
-    private val transportCallback: TransportCallback
+    private val transportCallback: TransportCallback,
+    private val preferenceRepository: IPreferenceRepository
 ) {
     data class Result(
         val status: Status,
@@ -40,7 +45,14 @@ class PushTargetTranslation @Inject constructor(
             try {
                 targetTranslation.commitSync()
                 val repo: Repo = targetTranslation.repo
-                return push(repo, repository!!.sshUrl, progressListener)
+                val result = push(repo, repository!!.sshUrl, progressListener)
+                if (result.status == Status.OK) {
+                    val trId = targetTranslation.id
+                    val sdf = SimpleDateFormat("yyyy-MM-dd_HH.mm.ss", Locale.US)
+                    val datetime = sdf.format(java.util.Date())
+                    preferenceRepository.setPrivatePref(preferenceRepository.lastUploaded + trId, datetime)
+                }
+                return result
             } catch (e: Exception) {
                 e.printStackTrace()
             }

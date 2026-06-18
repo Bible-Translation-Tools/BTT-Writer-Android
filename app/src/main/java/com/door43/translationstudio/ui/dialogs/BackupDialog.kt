@@ -2,6 +2,7 @@ package com.door43.translationstudio.ui.dialogs
 
 import android.app.Activity
 import android.app.Dialog
+import android.content.DialogInterface
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -17,6 +18,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.FileProvider
 import androidx.fragment.app.DialogFragment
+import androidx.fragment.app.setFragmentResult
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import com.door43.data.IDirectoryProvider
@@ -52,6 +54,7 @@ import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.tools.logger.Logger
 import java.security.InvalidParameterException
 import javax.inject.Inject
+import androidx.core.net.toUri
 
 /**
  * Created by joel on 10/5/2015.
@@ -71,6 +74,10 @@ class BackupDialog : DialogFragment() {
     @Inject lateinit var translator: Translator
     @Inject lateinit var library: Door43Client
 
+    interface BackupEventListener {
+        fun onDismiss()
+    }
+
     private val viewModel: ExportViewModel by viewModels()
 
     private lateinit var targetTranslation: TargetTranslation
@@ -79,6 +86,8 @@ class BackupDialog : DialogFragment() {
 
     private var _binding: DialogBackupBinding? = null
     private val binding get() = _binding!!
+
+    private var eventListener: BackupEventListener? = null
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val dialog = super.onCreateDialog(savedInstanceState)
@@ -557,9 +566,7 @@ class BackupDialog : DialogFragment() {
             SettingsActivity.KEY_PREF_READER_SERVER,
             resources.getString(R.string.pref_default_reader_server)
         )
-        val url = Uri.parse(
-            apiURL + "/" + profile.gogsUser?.username + "/" + targetTranslation.id
-        )
+        val url = (apiURL + "/" + profile.gogsUser?.username + "/" + targetTranslation.id).toUri()
         AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
             .setTitle(R.string.upload_complete)
             .setMessage(
@@ -773,7 +780,18 @@ class BackupDialog : DialogFragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        eventListener?.onDismiss()
+        eventListener = null
         _binding = null
+    }
+
+    override fun onDismiss(dialog: DialogInterface) {
+        super.onDismiss(dialog)
+        setFragmentResult("backup_dialog_result", Bundle())
+    }
+
+    fun setEventListener(listener: BackupEventListener) {
+        eventListener = listener
     }
 
     private fun clearResults() {

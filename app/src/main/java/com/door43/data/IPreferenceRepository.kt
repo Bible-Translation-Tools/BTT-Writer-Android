@@ -12,6 +12,8 @@ interface IPreferenceRepository {
     val lastCheckedServerForUpdates get() = "last_checked_server_for_updates"
     val lastTranslation get() = "last_translation"
     val lastBackup get() = "last_backup_"
+    val lastUploaded get() = "last_uploaded_"
+
 
 
     // default values
