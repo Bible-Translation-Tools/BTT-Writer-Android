@@ -2,6 +2,8 @@ package com.door43.usecases
 
 import android.content.Context
 import com.door43.data.IDirectoryProvider
+import com.door43.data.IPreferenceRepository
+import com.door43.data.setPrivatePref
 import com.door43.translationstudio.core.ArchiveDetails
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TargetTranslation
@@ -24,7 +26,8 @@ class BackupRC @Inject constructor(
     private val migrator: TargetTranslationMigrator,
     private val exportProjects: ExportProjects,
     private val profile: Profile,
-    private val library: Door43Client
+    private val library: Door43Client,
+    private val preferenceRepository: IPreferenceRepository
 ) {
     fun backupResourceContainer(translation: Translation): File {
         val dest = File(
@@ -43,13 +46,15 @@ class BackupRC @Inject constructor(
     @Throws(Exception::class)
     fun backupTargetTranslation(
         targetTranslation: TargetTranslation?,
-        orphaned: Boolean
+        orphaned: Boolean,
+        updateTimestamp: Boolean = false
     ): Boolean {
         if (targetTranslation != null) {
             var name = targetTranslation.id
             val sdf = SimpleDateFormat("yyyy-MM-dd_HH.mm.ss", Locale.US)
+            val datetime = sdf.format(Date())
             if (orphaned) {
-                name += "." + sdf.format(Date())
+                name += ".$datetime"
             }
 
             var archiveExtension = Translator.TSTUDIO_EXTENSION
@@ -81,6 +86,13 @@ class BackupRC @Inject constructor(
                 if (temp.exists() && temp.isFile) {
                     // copy into backup locations
                     backup.parentFile?.mkdirs()
+
+                    // Save datetime to preferences for this translation id,
+                    // so later this value could be read in project details
+                    if (updateTimestamp) {
+                        val trId = targetTranslation.id
+                        preferenceRepository.setPrivatePref(preferenceRepository.lastBackup + trId, datetime)
+                    }
 
                     FileUtilities.copyFile(temp, backup)
                     return true

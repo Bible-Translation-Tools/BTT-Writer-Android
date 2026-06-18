@@ -289,7 +289,11 @@ class ServerService : NetworkService() {
                 if (targetTranslation != null) {
                     try {
                         targetTranslation.setDefaultContributor(profile.nativeSpeaker)
-                        exportProjects.exportProject(targetTranslation, exportFile)
+                        exportProjects.exportProject(
+                            targetTranslation = targetTranslation,
+                            outputFile = exportFile,
+                            updateTimestamp = true
+                        )
                         if (exportFile.exists()) {
                             var targetTranslationContext: JSONObject
 

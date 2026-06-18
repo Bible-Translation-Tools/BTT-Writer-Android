@@ -140,3 +140,9 @@ translationstudio.keystore
 strings_private_app_pref.xml
 secrets.tar
 bttkey.jks
+
+.project
+.agents
+.settings
+.claude
+graphify-out/

@@ -3,18 +3,18 @@ package com.door43.usecases
 import android.content.Context
 import com.door43.TestUtils
 import com.door43.data.IDirectoryProvider
+import com.door43.data.IPreferenceRepository
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.TargetTranslationMigrator
 import com.door43.util.FileUtilities
 import io.mockk.MockKAnnotations
-import io.mockk.runs
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.just
 import io.mockk.mockk
-import io.mockk.mockkObject
 import io.mockk.mockkStatic
+import io.mockk.runs
 import io.mockk.unmockkAll
 import io.mockk.verify
 import junit.framework.TestCase.assertEquals
@@ -44,6 +44,7 @@ class BackupRCTest {
     @MockK private lateinit var project: Project
     @MockK private lateinit var resource: Resource
     @MockK private lateinit var targetTranslation: TargetTranslation
+    @MockK private lateinit var preferenceRepository: IPreferenceRepository
 
     private lateinit var backupRC: BackupRC
 
@@ -57,7 +58,8 @@ class BackupRCTest {
             migrator,
             exportProjects,
             profile,
-            library
+            library,
+            preferenceRepository
         )
 
         mockkStatic(FileUtilities::class)
@@ -67,6 +69,7 @@ class BackupRCTest {
 
         every { directoryProvider.backupsDir }.returns(File("/backups"))
         every { profile.nativeSpeaker }.returns(mockk())
+        every { preferenceRepository.lastBackup }.returns("last_backup_")
 
         TestUtils.setPropertyReflection(translation, "language", language)
         TestUtils.setPropertyReflection(translation, "project", project)
@@ -228,5 +231,31 @@ class BackupRCTest {
         val success = backupRC.backupTargetTranslation(null, false)
 
         assertFalse(success)
+    }
+
+    @Test
+    fun `test backupTargetTranslation with updateTimestamp true`() {
+        val tempFile: File = mockk()
+        every { tempFile.exists() }.returns(true)
+        every { tempFile.isFile }.returns(true)
+
+        every { targetTranslation.id }.returns("aa_mrk_text_reg")
+        every { targetTranslation.commitHash }.returns("abcdefghijklmnopqrstuvwxyz")
+        every {
+            directoryProvider.createTempFile(
+                "aa_mrk_text_reg",
+                ".tstudio",
+                null
+            )
+        }.returns(tempFile)
+        every { targetTranslation.setDefaultContributor(any()) } just runs
+        every { exportProjects.exportProject(targetTranslation, tempFile) }.returns(mockk())
+        every { preferenceRepository.setPrivatePref("last_backup_aa_mrk_text_reg", any<String>(), any()) } just runs
+
+        val success = backupRC.backupTargetTranslation(targetTranslation, false, updateTimestamp = true)
+
+        assertTrue(success)
+
+        verify { preferenceRepository.setPrivatePref("last_backup_aa_mrk_text_reg", any<String>(), any()) }
     }
 }

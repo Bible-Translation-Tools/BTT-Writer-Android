@@ -19,6 +19,10 @@ import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.activityViewModels
 import com.door43.translationstudio.R
+import com.door43.data.IDirectoryProvider
+import com.door43.data.IPreferenceRepository
+import com.door43.data.getPrivatePref
+import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.core.TranslationType
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.databinding.DialogTargetTranslationInfoBinding
@@ -29,6 +33,12 @@ import com.door43.translationstudio.ui.publish.PublishActivity
 import com.door43.translationstudio.ui.viewmodels.HomeViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import org.unfoldingword.tools.logger.Logger
+import java.io.File
+import java.text.DateFormat
+import java.text.DateFormat.MEDIUM
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import javax.inject.Inject
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -39,6 +49,8 @@ import kotlin.math.roundToInt
 @AndroidEntryPoint
 class TargetTranslationInfoDialog : DialogFragment(), ManageContributorsDialog.ContributorEventListener {
     @Inject lateinit var typography: Typography
+    @Inject lateinit var preferenceRepository: IPreferenceRepository
+    @Inject lateinit var directoryProvider: IDirectoryProvider
     private var targetTranslation: TranslationItem? = null
 
     private var _binding: DialogTargetTranslationInfoBinding? = null
@@ -108,6 +120,34 @@ class TargetTranslationInfoDialog : DialogFragment(), ManageContributorsDialog.C
                 translators.text = ""
                 refreshContributors()
 
+                val savedBackup = preferenceRepository.getPrivatePref<String>(preferenceRepository.lastBackup + item.translation.id)
+                var displayTime: String? = null
+                if (!savedBackup.isNullOrEmpty()) {
+                    try {
+                        val date = SimpleDateFormat("yyyy-MM-dd_HH.mm.ss", Locale.US).parse(savedBackup)
+                        if (date != null) {
+                            displayTime = DateFormat.getDateTimeInstance(MEDIUM, MEDIUM).format(date)
+                        }
+                    } catch (_: Exception) {
+                        displayTime = savedBackup
+                    }
+                }
+
+                if (displayTime == null) {
+                    val backupFile = File(
+                        directoryProvider.backupsDir,
+                        "${item.translation.id}.${Translator.TSTUDIO_EXTENSION}"
+                    )
+                    if (backupFile.exists() && backupFile.isFile) {
+                        val date = Date(backupFile.lastModified())
+                        displayTime = DateFormat.getDateTimeInstance(MEDIUM, MEDIUM).format(date)
+                    }
+                }
+
+                lastBackup.text = displayTime ?: getString(R.string.label_unknown)
+                lastBackupGroup.visibility = View.VISIBLE
+
+
                 changeLanguage.setOnClickListener {
                     val intent = Intent(activity, NewTargetTranslationActivity::class.java)
                     intent.putExtra(
@@ -134,7 +174,7 @@ class TargetTranslationInfoDialog : DialogFragment(), ManageContributorsDialog.C
                         .setPositiveButton(R.string.confirm) { _, _ ->
                             try {
                                 deleteTargetTranslation(false)
-                            } catch (e: Exception) {
+                            } catch (_: Exception) {
                                 // If delete failed, try again as orphaned
                                 try {
                                     deleteTargetTranslation(true)

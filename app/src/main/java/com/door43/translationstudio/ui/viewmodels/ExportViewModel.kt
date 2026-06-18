@@ -106,7 +106,11 @@ class ExportViewModel @Inject constructor(
             viewModelScope.launch {
                 _progress.value = ProgressHelper.Progress()
                 _exportResult.value = withContext(Dispatchers.IO) {
-                    export.exportProject(targetTranslation, uri)
+                    export.exportProject(
+                        targetTranslation = targetTranslation,
+                        fileUri = uri,
+                        updateTimestamp = true
+                    )
                 }
                 _progress.value = null
             }
@@ -274,7 +278,11 @@ class ExportViewModel @Inject constructor(
                 try {
                     val filename = translation.id + "." + Translator.TSTUDIO_EXTENSION
                     val exportFile = File(directoryProvider.sharingDir, filename)
-                    export.exportProject(translation, exportFile)
+                    export.exportProject(
+                        targetTranslation = translation,
+                        outputFile = exportFile,
+                        updateTimestamp = true
+                    )
                     _exportedToApp.value = exportFile
                 } catch (e: Exception) {
                     Logger.e(
