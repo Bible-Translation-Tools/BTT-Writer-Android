@@ -31,14 +31,11 @@ import com.door43.translationstudio.ui.dialogs.PrintDialog
 import com.door43.translationstudio.ui.newtranslation.NewTargetTranslationActivity
 import com.door43.translationstudio.ui.publish.PublishActivity
 import com.door43.translationstudio.ui.viewmodels.HomeViewModel
+import com.door43.util.DateUtils
 import dagger.hilt.android.AndroidEntryPoint
 import org.unfoldingword.tools.logger.Logger
 import java.io.File
-import java.text.DateFormat
-import java.text.DateFormat.MEDIUM
-import java.text.SimpleDateFormat
 import java.util.Date
-import java.util.Locale
 import javax.inject.Inject
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -266,13 +263,15 @@ class TargetTranslationInfoDialog : DialogFragment(),
     private fun refreshBackupAndUploadStatus() {
         targetTranslation?.let { item ->
             with(binding) {
-                val savedBackup = preferenceRepository.getPrivatePref<String>(preferenceRepository.lastBackup + item.translation.id)
+                val savedBackup = preferenceRepository.getPrivatePref<String>(
+                    preferenceRepository.lastBackup + item.translation.id
+                )
                 var displayTime: String? = null
                 if (!savedBackup.isNullOrEmpty()) {
                     try {
-                        val date = SimpleDateFormat("yyyy-MM-dd_HH.mm.ss", Locale.US).parse(savedBackup)
+                        val date = DateUtils.parseDateString(savedBackup)
                         if (date != null) {
-                            displayTime = DateFormat.getDateTimeInstance(MEDIUM, MEDIUM).format(date)
+                            displayTime = DateUtils.dateToDateTime(date)
                         }
                     } catch (_: Exception) {
                         displayTime = savedBackup
@@ -286,20 +285,22 @@ class TargetTranslationInfoDialog : DialogFragment(),
                     )
                     if (backupFile.exists() && backupFile.isFile) {
                         val date = Date(backupFile.lastModified())
-                        displayTime = DateFormat.getDateTimeInstance(MEDIUM, MEDIUM).format(date)
+                        displayTime = DateUtils.dateToDateTime(date)
                     }
                 }
 
                 lastBackup.text = displayTime ?: getString(R.string.label_unknown)
                 lastBackupGroup.visibility = View.VISIBLE
 
-                val savedUpload = preferenceRepository.getPrivatePref<String>(preferenceRepository.lastUploaded + item.translation.id)
+                val savedUpload = preferenceRepository.getPrivatePref<String>(
+                    preferenceRepository.lastUploaded + item.translation.id
+                )
                 var displayUploadTime: String? = null
                 if (!savedUpload.isNullOrEmpty()) {
                     try {
-                        val date = SimpleDateFormat("yyyy-MM-dd_HH.mm.ss", Locale.US).parse(savedUpload)
+                        val date = DateUtils.parseDateString(savedUpload)
                         if (date != null) {
-                            displayUploadTime = DateFormat.getDateTimeInstance(MEDIUM, MEDIUM).format(date)
+                            displayUploadTime = DateUtils.dateToDateTime(date)
                         }
                     } catch (_: Exception) {
                         displayUploadTime = savedUpload

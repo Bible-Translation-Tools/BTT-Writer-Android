@@ -16,6 +16,7 @@ import com.door43.translationstudio.core.Translator.Companion.TSTUDIO_EXTENSION
 import com.door43.translationstudio.core.Translator.Companion.ZIP_EXTENSION
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.core.Util
+import com.door43.util.DateUtils
 import com.door43.util.FileUtilities
 import com.door43.util.RepoUtils
 import com.door43.util.Zip
@@ -28,7 +29,6 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.PrintStream
-import java.text.SimpleDateFormat
 import java.util.Locale
 import javax.inject.Inject
 
@@ -87,8 +87,7 @@ class ExportProjects @Inject constructor(
 
             if (updateTimestamp) {
                 val trId = targetTranslation.id
-                val sdf = SimpleDateFormat("yyyy-MM-dd_HH.mm.ss", Locale.US)
-                val datetime = sdf.format(java.util.Date())
+                val datetime = DateUtils.getCurrentDateTime()
                 preferenceRepository.setPrivatePref(preferenceRepository.lastBackup + trId, datetime)
             }
 
@@ -101,7 +100,7 @@ class ExportProjects @Inject constructor(
                     targetTranslation = targetTranslation,
                     fileUri = fileUri,
                     recoverBadRepo = false,
-                    updateTimestamp = true
+                    updateTimestamp = updateTimestamp
                 )
             }
             success = true

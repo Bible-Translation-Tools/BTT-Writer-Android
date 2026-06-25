@@ -9,6 +9,7 @@ import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.git.Repo
 import com.door43.translationstudio.git.TransportCallback
+import com.door43.util.DateUtils
 import dagger.hilt.android.qualifiers.ApplicationContext
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.errors.JGitInternalException
@@ -18,8 +19,6 @@ import org.eclipse.jgit.transport.RefSpec
 import org.eclipse.jgit.transport.RemoteRefUpdate
 import org.unfoldingword.tools.logger.Logger
 import java.io.IOException
-import java.text.SimpleDateFormat
-import java.util.Locale
 import javax.inject.Inject
 
 class PushTargetTranslation @Inject constructor(
@@ -48,8 +47,7 @@ class PushTargetTranslation @Inject constructor(
                 val result = push(repo, repository!!.sshUrl, progressListener)
                 if (result.status == Status.OK) {
                     val trId = targetTranslation.id
-                    val sdf = SimpleDateFormat("yyyy-MM-dd_HH.mm.ss", Locale.US)
-                    val datetime = sdf.format(java.util.Date())
+                    val datetime = DateUtils.getCurrentDateTime()
                     preferenceRepository.setPrivatePref(preferenceRepository.lastUploaded + trId, datetime)
                 }
                 return result
