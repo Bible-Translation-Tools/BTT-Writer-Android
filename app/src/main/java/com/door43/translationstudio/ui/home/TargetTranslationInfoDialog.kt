@@ -18,6 +18,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.setFragmentResultListener
 import com.door43.data.IDirectoryProvider
 import com.door43.data.IPreferenceRepository
 import com.door43.data.getPrivatePref
@@ -44,9 +45,7 @@ import kotlin.math.roundToInt
  * Displays detailed information about a target translation
  */
 @AndroidEntryPoint
-class TargetTranslationInfoDialog : DialogFragment(),
-    ManageContributorsDialog.ContributorEventListener,
-    BackupDialog.BackupEventListener {
+class TargetTranslationInfoDialog : DialogFragment() {
     @Inject lateinit var typography: Typography
     @Inject lateinit var preferenceRepository: IPreferenceRepository
     @Inject lateinit var directoryProvider: IDirectoryProvider
@@ -91,6 +90,13 @@ class TargetTranslationInfoDialog : DialogFragment(),
         }
 
         setupObservers()
+
+        setFragmentResultListener(BackupDialog.RESULT_KEY) { _, _ ->
+            refreshBackupAndUploadStatus()
+        }
+        setFragmentResultListener(ManageContributorsDialog.RESULT_KEY) { _, _ ->
+            refreshContributors()
+        }
 
         targetTranslation?.let { item ->
             // set typeface for language
@@ -172,7 +178,6 @@ class TargetTranslationInfoDialog : DialogFragment(),
                     val arguments = Bundle()
                     arguments.putString(BackupDialog.ARG_TARGET_TRANSLATION_ID, item.translation.id)
                     backupDialog.arguments = arguments
-                    backupDialog.setEventListener(this@TargetTranslationInfoDialog)
                     backupDialog.show(backupFt, BackupDialog.TAG)
                 }
 
@@ -220,7 +225,6 @@ class TargetTranslationInfoDialog : DialogFragment(),
                         item.translation.id
                     )
                     dialog.arguments = args1
-                    dialog.setEventListener(this@TargetTranslationInfoDialog)
                     dialog.show(ft, "manage-contributors")
                 }
             }
@@ -260,22 +264,24 @@ class TargetTranslationInfoDialog : DialogFragment(),
         )
     }
 
+    /**
+     * Reads an epoch-millis timestamp stored under [key], or null if it is absent.
+     * Tolerates legacy values that were saved as formatted date strings (pre epoch-millis).
+     */
+    private fun readTimestamp(key: String): Long? {
+        return try {
+            preferenceRepository.getPrivatePref<Long>(key)?.takeIf { it > 0 }
+        } catch (_: Exception) {
+            null
+        }
+    }
+
     private fun refreshBackupAndUploadStatus() {
         targetTranslation?.let { item ->
             with(binding) {
-                val savedBackup = preferenceRepository.getPrivatePref<String>(
-                    preferenceRepository.lastBackup + item.translation.id
-                )
-                var displayTime: String? = null
-                if (!savedBackup.isNullOrEmpty()) {
-                    try {
-                        val date = DateUtils.parseDateString(savedBackup)
-                        if (date != null) {
-                            displayTime = DateUtils.dateToDateTime(date)
-                        }
-                    } catch (_: Exception) {
-                        displayTime = savedBackup
-                    }
+                val savedBackup = readTimestamp(preferenceRepository.lastBackup + item.translation.id)
+                var displayTime: String? = savedBackup?.let {
+                    DateUtils.dateToDateTime(Date(it))
                 }
 
                 if (displayTime == null) {
@@ -292,19 +298,9 @@ class TargetTranslationInfoDialog : DialogFragment(),
                 lastBackup.text = displayTime ?: getString(R.string.label_unknown)
                 lastBackupGroup.visibility = View.VISIBLE
 
-                val savedUpload = preferenceRepository.getPrivatePref<String>(
-                    preferenceRepository.lastUploaded + item.translation.id
-                )
-                var displayUploadTime: String? = null
-                if (!savedUpload.isNullOrEmpty()) {
-                    try {
-                        val date = DateUtils.parseDateString(savedUpload)
-                        if (date != null) {
-                            displayUploadTime = DateUtils.dateToDateTime(date)
-                        }
-                    } catch (_: Exception) {
-                        displayUploadTime = savedUpload
-                    }
+                val savedUpload = readTimestamp(preferenceRepository.lastUploaded + item.translation.id)
+                val displayUploadTime: String? = savedUpload?.let {
+                    DateUtils.dateToDateTime(Date(it))
                 }
 
                 lastUploaded.text = displayUploadTime ?: getString(R.string.label_unknown)
@@ -348,11 +344,6 @@ class TargetTranslationInfoDialog : DialogFragment(),
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
-    }
-
-    override fun onDismiss() {
-        refreshContributors()
-        refreshBackupAndUploadStatus()
     }
 
     private fun refreshContributors() {

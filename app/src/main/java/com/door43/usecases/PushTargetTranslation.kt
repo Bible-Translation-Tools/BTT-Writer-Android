@@ -9,7 +9,6 @@ import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.git.Repo
 import com.door43.translationstudio.git.TransportCallback
-import com.door43.util.DateUtils
 import dagger.hilt.android.qualifiers.ApplicationContext
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.errors.JGitInternalException
@@ -47,8 +46,10 @@ class PushTargetTranslation @Inject constructor(
                 val result = push(repo, repository!!.sshUrl, progressListener)
                 if (result.status == Status.OK) {
                     val trId = targetTranslation.id
-                    val datetime = DateUtils.getCurrentDateTime()
-                    preferenceRepository.setPrivatePref(preferenceRepository.lastUploaded + trId, datetime)
+                    preferenceRepository.setPrivatePref(
+                        preferenceRepository.lastUploaded + trId,
+                        System.currentTimeMillis()
+                    )
                 }
                 return result
             } catch (e: Exception) {

@@ -93,7 +93,7 @@ class BackupRC @Inject constructor(
                         val trId = targetTranslation.id
                         preferenceRepository.setPrivatePref(
                             preferenceRepository.lastBackup + trId,
-                            datetime
+                            System.currentTimeMillis()
                         )
                     }
 

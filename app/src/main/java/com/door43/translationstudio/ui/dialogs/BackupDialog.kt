@@ -74,10 +74,6 @@ class BackupDialog : DialogFragment() {
     @Inject lateinit var translator: Translator
     @Inject lateinit var library: Door43Client
 
-    interface BackupEventListener {
-        fun onDismiss()
-    }
-
     private val viewModel: ExportViewModel by viewModels()
 
     private lateinit var targetTranslation: TargetTranslation
@@ -86,8 +82,6 @@ class BackupDialog : DialogFragment() {
 
     private var _binding: DialogBackupBinding? = null
     private val binding get() = _binding!!
-
-    private var eventListener: BackupEventListener? = null
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val dialog = super.onCreateDialog(savedInstanceState)
@@ -780,18 +774,12 @@ class BackupDialog : DialogFragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
-        eventListener?.onDismiss()
-        eventListener = null
         _binding = null
     }
 
     override fun onDismiss(dialog: DialogInterface) {
         super.onDismiss(dialog)
-        setFragmentResult("backup_dialog_result", Bundle())
-    }
-
-    fun setEventListener(listener: BackupEventListener) {
-        eventListener = listener
+        setFragmentResult(RESULT_KEY, Bundle())
     }
 
     private fun clearResults() {
@@ -823,6 +811,9 @@ class BackupDialog : DialogFragment() {
     companion object {
         const val TAG: String = "BackupDialog"
         const val ARG_TARGET_TRANSLATION_ID: String = "target_translation_id"
+
+        /** Fragment result key signalling the dialog was dismissed. */
+        const val RESULT_KEY: String = "backup_dialog_result"
 
         private const val STATE_SETTING_DEVICE_ALIAS = "state_setting_device_alias"
         private const val STATE_DIALOG_SHOWN: String = "state_dialog_shown"
