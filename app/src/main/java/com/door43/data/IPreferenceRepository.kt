@@ -11,6 +11,10 @@ interface IPreferenceRepository {
     val selectedSourceTranslation get() = "selected_source_translation_"
     val lastCheckedServerForUpdates get() = "last_checked_server_for_updates"
     val lastTranslation get() = "last_translation"
+    val lastBackup get() = "last_backup_"
+    val lastUploaded get() = "last_uploaded_"
+
+
 
     // default values
     val githubBugReportRepoUrl get() = "https://api.github.com/repos/Bible-Translation-Tools/BTT-Writer-Android/issues"

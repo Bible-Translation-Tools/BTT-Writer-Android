@@ -167,7 +167,7 @@ jobs:
           sudo apt-get remove --purge -yq \
             "php*" "mongodb*" "mysql*" "postgresql*" \
             firefox google-chrome-stable microsoft-edge-stable powershell \
-            ruby kubectl google-cloud-cli azure-cli google-cloud-cli-anthoscli
+            ruby kubectl google-cloud-cli azure-cli
           sudo apt-get autoremove -yq
           sudo apt-get clean
 

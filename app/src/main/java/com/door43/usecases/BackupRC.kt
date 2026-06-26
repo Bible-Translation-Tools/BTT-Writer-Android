@@ -2,20 +2,20 @@ package com.door43.usecases
 
 import android.content.Context
 import com.door43.data.IDirectoryProvider
+import com.door43.data.IPreferenceRepository
+import com.door43.data.setPrivatePref
 import com.door43.translationstudio.core.ArchiveDetails
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TargetTranslation
 import com.door43.translationstudio.core.TargetTranslationMigrator
 import com.door43.translationstudio.core.Translator
+import com.door43.util.DateUtils
 import com.door43.util.FileUtilities
 import dagger.hilt.android.qualifiers.ApplicationContext
 import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.door43client.models.Translation
 import org.unfoldingword.resourcecontainer.ResourceContainer
 import java.io.File
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 import javax.inject.Inject
 
 class BackupRC @Inject constructor(
@@ -24,7 +24,8 @@ class BackupRC @Inject constructor(
     private val migrator: TargetTranslationMigrator,
     private val exportProjects: ExportProjects,
     private val profile: Profile,
-    private val library: Door43Client
+    private val library: Door43Client,
+    private val preferenceRepository: IPreferenceRepository
 ) {
     fun backupResourceContainer(translation: Translation): File {
         val dest = File(
@@ -43,13 +44,14 @@ class BackupRC @Inject constructor(
     @Throws(Exception::class)
     fun backupTargetTranslation(
         targetTranslation: TargetTranslation?,
-        orphaned: Boolean
+        orphaned: Boolean,
+        updateTimestamp: Boolean = false
     ): Boolean {
         if (targetTranslation != null) {
             var name = targetTranslation.id
-            val sdf = SimpleDateFormat("yyyy-MM-dd_HH.mm.ss", Locale.US)
+            val datetime = DateUtils.getCurrentDateTime()
             if (orphaned) {
-                name += "." + sdf.format(Date())
+                name += ".$datetime"
             }
 
             var archiveExtension = Translator.TSTUDIO_EXTENSION
@@ -58,7 +60,10 @@ class BackupRC @Inject constructor(
             }
 
             // backup locations
-            val backup = File(directoryProvider.backupsDir, "$name.$archiveExtension")
+            val backup = File(
+                directoryProvider.backupsDir,
+                "$name.$archiveExtension"
+            )
 
             // check if we need to backup
             if (!orphaned) {
@@ -82,6 +87,16 @@ class BackupRC @Inject constructor(
                     // copy into backup locations
                     backup.parentFile?.mkdirs()
 
+                    // Save datetime to preferences for this translation id,
+                    // so later this value could be read in project details
+                    if (updateTimestamp) {
+                        val trId = targetTranslation.id
+                        preferenceRepository.setPrivatePref(
+                            preferenceRepository.lastBackup + trId,
+                            System.currentTimeMillis()
+                        )
+                    }
+
                     FileUtilities.copyFile(temp, backup)
                     return true
                 }
@@ -99,16 +114,21 @@ class BackupRC @Inject constructor(
      */
     @Throws(Exception::class)
     fun backupTargetTranslation(projectDir: File): Boolean {
-        val sdf = SimpleDateFormat("yyyy-MM-dd_HH.mm.ss", Locale.US)
-        val name = projectDir.name + "." + sdf.format(Date())
+        val datetime = DateUtils.getCurrentDateTime()
+        val name = "${projectDir.name}.$datetime"
 
         // backup locations
-        val backup = File(directoryProvider.backupsDir, name + "." + Translator.ZIP_EXTENSION)
+        val backup = File(
+            directoryProvider.backupsDir,
+            "$name.${Translator.ZIP_EXTENSION}"
+        )
 
         // run backup
         var temp: File? = null
         try {
-            temp = directoryProvider.createTempFile(name, "." + Translator.ZIP_EXTENSION)
+            temp = directoryProvider.createTempFile(
+                name, ".${Translator.ZIP_EXTENSION}"
+            )
             exportProjects.exportProject(projectDir, temp)
             if (temp.exists() && temp.isFile) {
                 // copy into backup locations

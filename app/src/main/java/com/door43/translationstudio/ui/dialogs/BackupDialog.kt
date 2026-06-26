@@ -2,6 +2,7 @@ package com.door43.translationstudio.ui.dialogs
 
 import android.app.Activity
 import android.app.Dialog
+import android.content.DialogInterface
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -17,6 +18,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.FileProvider
 import androidx.fragment.app.DialogFragment
+import androidx.fragment.app.setFragmentResult
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import com.door43.data.IDirectoryProvider
@@ -52,6 +54,7 @@ import org.unfoldingword.door43client.Door43Client
 import org.unfoldingword.tools.logger.Logger
 import java.security.InvalidParameterException
 import javax.inject.Inject
+import androidx.core.net.toUri
 
 /**
  * Created by joel on 10/5/2015.
@@ -557,9 +560,7 @@ class BackupDialog : DialogFragment() {
             SettingsActivity.KEY_PREF_READER_SERVER,
             resources.getString(R.string.pref_default_reader_server)
         )
-        val url = Uri.parse(
-            apiURL + "/" + profile.gogsUser?.username + "/" + targetTranslation.id
-        )
+        val url = (apiURL + "/" + profile.gogsUser?.username + "/" + targetTranslation.id).toUri()
         AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
             .setTitle(R.string.upload_complete)
             .setMessage(
@@ -776,6 +777,11 @@ class BackupDialog : DialogFragment() {
         _binding = null
     }
 
+    override fun onDismiss(dialog: DialogInterface) {
+        super.onDismiss(dialog)
+        setFragmentResult(RESULT_KEY, Bundle())
+    }
+
     private fun clearResults() {
         dialogShown = DialogShown.NONE
         dialogMessage = null
@@ -805,6 +811,9 @@ class BackupDialog : DialogFragment() {
     companion object {
         const val TAG: String = "BackupDialog"
         const val ARG_TARGET_TRANSLATION_ID: String = "target_translation_id"
+
+        /** Fragment result key signalling the dialog was dismissed. */
+        const val RESULT_KEY: String = "backup_dialog_result"
 
         private const val STATE_SETTING_DEVICE_ALIAS = "state_setting_device_alias"
         private const val STATE_DIALOG_SHOWN: String = "state_dialog_shown"
