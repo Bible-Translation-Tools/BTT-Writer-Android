@@ -7,6 +7,7 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import com.door43.TestUtils
 import com.door43.data.IDirectoryProvider
+import com.door43.data.IPreferenceRepository
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.ChapterTranslation
 import com.door43.translationstudio.core.FrameTranslation
@@ -65,6 +66,8 @@ class ExportProjectsTest {
     @MockK private lateinit var packageManager: PackageManager
     @MockK private lateinit var packageInfo: PackageInfo
     @MockK private lateinit var index: Index
+    @MockK private lateinit var preferenceRepository: IPreferenceRepository
+    private lateinit var exportProjects: ExportProjects
 
     @Before
     fun setup() {
@@ -119,6 +122,15 @@ class ExportProjectsTest {
         every { anyConstructed<PdfPrinter>().includeMedia(any()) }.just(runs)
         every { anyConstructed<PdfPrinter>().includeIncomplete(any()) }.just(runs)
         every { BaseFont.createFont(any(), any(), any()) }.returns(mockk())
+        every { preferenceRepository.lastBackup }.returns("last_backup_")
+
+        exportProjects = ExportProjects(
+            context,
+            directoryProvider,
+            library,
+            typography,
+            preferenceRepository
+        )
     }
 
     @After
@@ -138,12 +150,7 @@ class ExportProjectsTest {
         every { contentResolver.openOutputStream(uri) }.returns(outputStream)
         every { outputStream.close() } just runs
 
-        ExportProjects(
-            context,
-            directoryProvider,
-            library,
-            typography
-        ).exportProject(targetTranslation, outputFile)
+        exportProjects.exportProject(targetTranslation, outputFile)
 
         verify { Uri.fromFile(any()) }
         verify { directoryProvider.createTempDir(any()) }
@@ -172,12 +179,7 @@ class ExportProjectsTest {
             } else Unit
         }
 
-        ExportProjects(
-            context,
-            directoryProvider,
-            library,
-            typography
-        ).exportProject(targetTranslation, uri)
+        exportProjects.exportProject(targetTranslation, uri)
 
         verify(exactly = 2) { directoryProvider.createTempDir(any()) }
         verify(exactly = 1) { contentResolver.openOutputStream(uri) }
@@ -193,12 +195,7 @@ class ExportProjectsTest {
         val projectDir = tempDir.newFolder("project")
         val outFile = tempDir.newFile("output.tstudio")
 
-        ExportProjects(
-            context,
-            directoryProvider,
-            library,
-            typography
-        ).exportProject(projectDir, outFile)
+        exportProjects.exportProject(projectDir, outFile)
 
         verify { Zip.zipToStream(any(), any()) }
     }
@@ -212,12 +209,7 @@ class ExportProjectsTest {
             "Output file must have '$TSTUDIO_EXTENSION' or '$ZIP_EXTENSION' extension",
             Exception::class.java
         ) {
-            ExportProjects(
-                context,
-                directoryProvider,
-                library,
-                typography
-            ).exportProject(projectDir, outFile)
+            exportProjects.exportProject(projectDir, outFile)
         }
 
         verify(exactly = 0) { Zip.zipToStream(any(), any()) }
@@ -232,12 +224,7 @@ class ExportProjectsTest {
             "Project directory doesn't exist.",
             Exception::class.java
         ) {
-            ExportProjects(
-                context,
-                directoryProvider,
-                library,
-                typography
-            ).exportProject(projectDir, outFile)
+            exportProjects.exportProject(projectDir, outFile)
         }
 
         verify(exactly = 0) { Zip.zipToStream(any(), any()) }
@@ -260,18 +247,12 @@ class ExportProjectsTest {
             every { write(any(), any(), any()) }.answers {
                 val arr = firstArg<ByteArray>()
                 outputText.append(String(arr))
-                Unit
             }
         }
         every { contentResolver.openOutputStream(uri) }.returns(outputStream)
         every { outputStream.close() } just runs
 
-        val result = ExportProjects(
-            context,
-            directoryProvider,
-            library,
-            typography
-        ).exportUSFM(targetTranslation, uri)
+        val result = exportProjects.exportUSFM(targetTranslation, uri)
 
         assertTrue(result.success)
         assertEquals(uri, result.uri)
@@ -316,18 +297,12 @@ class ExportProjectsTest {
             every { write(any(), any(), any()) }.answers {
                 val arr = firstArg<ByteArray>()
                 outputText.append(String(arr))
-                Unit
             }
         }
         every { contentResolver.openOutputStream(uri) }.throws(Exception("Bad uri"))
         every { outputStream.close() } just runs
 
-        val result = ExportProjects(
-            context,
-            directoryProvider,
-            library,
-            typography
-        ).exportUSFM(targetTranslation, uri)
+        val result = exportProjects.exportUSFM(targetTranslation, uri)
 
         assertFalse(result.success)
         assertEquals(uri, result.uri)
@@ -355,12 +330,7 @@ class ExportProjectsTest {
         every { contentResolver.openOutputStream(uri) }.returns(outputStream)
         every { outputStream.close() } just runs
 
-        val result = ExportProjects(
-            context,
-            directoryProvider,
-            library,
-            typography
-        ).exportPDF(
+        val result = exportProjects.exportPDF(
             targetTranslation,
             uri,
             includeImages = true,
@@ -389,12 +359,7 @@ class ExportProjectsTest {
         every { contentResolver.openOutputStream(uri) }.throws(Exception("Bad uri"))
         every { outputStream.close() } just runs
 
-        val result = ExportProjects(
-            context,
-            directoryProvider,
-            library,
-            typography
-        ).exportPDF(
+        val result = exportProjects.exportPDF(
             targetTranslation,
             uri,
             includeImages = true,
@@ -468,5 +433,21 @@ class ExportProjectsTest {
             .returns(bookData)
 
         return bookData
+    }
+
+    @Test
+    fun `test export project and update backup timestamp`() {
+        val uri: Uri = mockk()
+        every { directoryProvider.createTempDir() }.returns(tempDir.root)
+
+        val outputStream: OutputStream = mockk()
+        every { contentResolver.openOutputStream(uri) }.returns(outputStream)
+        every { outputStream.close() } just runs
+        every { preferenceRepository.setPrivatePref("last_backup_aa_mrk_text_ulb", any<String>(), any()) } just runs
+
+        val result = exportProjects.exportProject(targetTranslation, uri, updateTimestamp = true)
+
+        assertTrue(result.success)
+        verify { preferenceRepository.setPrivatePref("last_backup_aa_mrk_text_ulb", any<String>(), any()) }
     }
 }

@@ -60,7 +60,7 @@ class BackupService : Service(), Foreground.Listener {
             foreground = Foreground.get().apply {
                 addListener(this@BackupService)
             }
-        } catch (e: IllegalStateException) {
+        } catch (_: IllegalStateException) {
             Logger.i(TAG, "Foreground was not initialized")
         }
     }
@@ -150,7 +150,11 @@ class BackupService : Service(), Foreground.Listener {
             // run backup if there are translations
             if (t.numTranslated() > 0) {
                 try {
-                    val success = backupRC.backupTargetTranslation(t, false)
+                    val success = backupRC.backupTargetTranslation(
+                        targetTranslation = t,
+                        orphaned = false,
+                        updateTimestamp = true
+                    )
                     if (success) {
                         Logger.i(TAG, t.id + " backed up")
                         backupPerformed = true

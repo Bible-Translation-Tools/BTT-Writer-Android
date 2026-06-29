@@ -4,6 +4,8 @@ import android.content.Context
 import android.net.Uri
 import android.util.Log
 import com.door43.data.IDirectoryProvider
+import com.door43.data.IPreferenceRepository
+import com.door43.data.setPrivatePref
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.FrameTranslation
 import com.door43.translationstudio.core.PdfPrinter
@@ -33,7 +35,8 @@ class ExportProjects @Inject constructor(
     @ApplicationContext private val context: Context,
     private val directoryProvider: IDirectoryProvider,
     private val library: Door43Client,
-    private val typography: Typography
+    private val typography: Typography,
+    private val preferenceRepository: IPreferenceRepository
 ) {
 
     /**
@@ -42,8 +45,16 @@ class ExportProjects @Inject constructor(
      * @param outputFile
      */
     @Throws(Exception::class)
-    fun exportProject(targetTranslation: TargetTranslation, outputFile: File) {
-        exportProject(targetTranslation, Uri.fromFile(outputFile))
+    fun exportProject(
+        targetTranslation: TargetTranslation,
+        outputFile: File,
+        updateTimestamp: Boolean = false
+    ) {
+        exportProject(
+            targetTranslation = targetTranslation,
+            fileUri = Uri.fromFile(outputFile),
+            updateTimestamp = updateTimestamp
+        )
     }
 
     /**
@@ -54,7 +65,8 @@ class ExportProjects @Inject constructor(
     fun exportProject(
         targetTranslation: TargetTranslation,
         fileUri: Uri,
-        recoverBadRepo: Boolean = true
+        recoverBadRepo: Boolean = true,
+        updateTimestamp: Boolean = false
     ): Result {
         var success = false
         val tempDir = directoryProvider.createTempDir()
@@ -71,12 +83,26 @@ class ExportProjects @Inject constructor(
                     arrayOf(manifestFile, targetTranslation.path), out
                 )
             }
+
+            if (updateTimestamp) {
+                val trId = targetTranslation.id
+                preferenceRepository.setPrivatePref(
+                    preferenceRepository.lastBackup + trId,
+                    System.currentTimeMillis()
+                )
+            }
+
             success = true
-        } catch (e: TransportException) {
+        } catch (_: TransportException) {
             if (recoverBadRepo) {
                 // fix corrupt repo and try again
                 RepoUtils.recover(targetTranslation)
-                return exportProject(targetTranslation, fileUri, false)
+                return exportProject(
+                    targetTranslation = targetTranslation,
+                    fileUri = fileUri,
+                    recoverBadRepo = false,
+                    updateTimestamp = updateTimestamp
+                )
             }
             success = true
         } catch (e: Exception) {

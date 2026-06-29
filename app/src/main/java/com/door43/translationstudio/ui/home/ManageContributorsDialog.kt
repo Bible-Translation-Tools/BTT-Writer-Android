@@ -1,11 +1,13 @@
 package com.door43.translationstudio.ui.home
 
+import android.content.DialogInterface
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
+import androidx.fragment.app.setFragmentResult
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.door43.translationstudio.R
@@ -27,14 +29,9 @@ class ManageContributorsDialog : DialogFragment(), ContributorsAdapter.OnClickLi
     @Inject lateinit var translator: Translator
     @Inject lateinit var profile: Profile
 
-    interface ContributorEventListener {
-        fun onDismiss()
-    }
-
     private lateinit var targetTranslation: TargetTranslation
     private val adapter by lazy { ContributorsAdapter() }
     private var onNativeSpeakerDialogClick: View.OnClickListener? = null
-    private var eventListener: ContributorEventListener? = null
 
     private var _binding: FragmentContributorsBinding? = null
     val binding get() = _binding!!
@@ -117,13 +114,12 @@ class ManageContributorsDialog : DialogFragment(), ContributorsAdapter.OnClickLi
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
-        eventListener?.onDismiss()
-        eventListener = null
         onNativeSpeakerDialogClick = null
     }
 
-    fun setEventListener(listener: ContributorEventListener) {
-        eventListener = listener
+    override fun onDismiss(dialog: DialogInterface) {
+        super.onDismiss(dialog)
+        setFragmentResult(RESULT_KEY, Bundle())
     }
 
     private fun showAddNativeSpeakerDialog() {
@@ -156,5 +152,8 @@ class ManageContributorsDialog : DialogFragment(), ContributorsAdapter.OnClickLi
 
     companion object {
         const val EXTRA_TARGET_TRANSLATION_ID: String = "target_translation_id"
+
+        /** Fragment result key signalling the dialog was dismissed. */
+        const val RESULT_KEY: String = "manage_contributors_dialog_result"
     }
 }

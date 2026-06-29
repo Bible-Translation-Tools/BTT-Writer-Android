@@ -2,6 +2,8 @@ package com.door43.usecases
 
 import android.content.Context
 import com.door43.OnProgressListener
+import com.door43.data.IPreferenceRepository
+import com.door43.data.setPrivatePref
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.Profile
 import com.door43.translationstudio.core.TargetTranslation
@@ -22,7 +24,8 @@ class PushTargetTranslation @Inject constructor(
     @ApplicationContext private val context: Context,
     private val profile: Profile,
     private val getRepository: GetRepository,
-    private val transportCallback: TransportCallback
+    private val transportCallback: TransportCallback,
+    private val preferenceRepository: IPreferenceRepository
 ) {
     data class Result(
         val status: Status,
@@ -40,7 +43,15 @@ class PushTargetTranslation @Inject constructor(
             try {
                 targetTranslation.commitSync()
                 val repo: Repo = targetTranslation.repo
-                return push(repo, repository!!.sshUrl, progressListener)
+                val result = push(repo, repository!!.sshUrl, progressListener)
+                if (result.status == Status.OK) {
+                    val trId = targetTranslation.id
+                    preferenceRepository.setPrivatePref(
+                        preferenceRepository.lastUploaded + trId,
+                        System.currentTimeMillis()
+                    )
+                }
+                return result
             } catch (e: Exception) {
                 e.printStackTrace()
             }

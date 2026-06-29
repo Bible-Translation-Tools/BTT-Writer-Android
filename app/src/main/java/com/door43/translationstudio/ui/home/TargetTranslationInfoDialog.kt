@@ -18,8 +18,13 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.setFragmentResultListener
+import com.door43.data.IDirectoryProvider
+import com.door43.data.IPreferenceRepository
+import com.door43.data.getPrivatePref
 import com.door43.translationstudio.R
 import com.door43.translationstudio.core.TranslationType
+import com.door43.translationstudio.core.Translator
 import com.door43.translationstudio.core.Typography
 import com.door43.translationstudio.databinding.DialogTargetTranslationInfoBinding
 import com.door43.translationstudio.ui.dialogs.BackupDialog
@@ -27,8 +32,11 @@ import com.door43.translationstudio.ui.dialogs.PrintDialog
 import com.door43.translationstudio.ui.newtranslation.NewTargetTranslationActivity
 import com.door43.translationstudio.ui.publish.PublishActivity
 import com.door43.translationstudio.ui.viewmodels.HomeViewModel
+import com.door43.util.DateUtils
 import dagger.hilt.android.AndroidEntryPoint
 import org.unfoldingword.tools.logger.Logger
+import java.io.File
+import java.util.Date
 import javax.inject.Inject
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -37,8 +45,10 @@ import kotlin.math.roundToInt
  * Displays detailed information about a target translation
  */
 @AndroidEntryPoint
-class TargetTranslationInfoDialog : DialogFragment(), ManageContributorsDialog.ContributorEventListener {
+class TargetTranslationInfoDialog : DialogFragment() {
     @Inject lateinit var typography: Typography
+    @Inject lateinit var preferenceRepository: IPreferenceRepository
+    @Inject lateinit var directoryProvider: IDirectoryProvider
     private var targetTranslation: TranslationItem? = null
 
     private var _binding: DialogTargetTranslationInfoBinding? = null
@@ -81,6 +91,13 @@ class TargetTranslationInfoDialog : DialogFragment(), ManageContributorsDialog.C
 
         setupObservers()
 
+        setFragmentResultListener(BackupDialog.RESULT_KEY) { _, _ ->
+            refreshBackupAndUploadStatus()
+        }
+        setFragmentResultListener(ManageContributorsDialog.RESULT_KEY) { _, _ ->
+            refreshContributors()
+        }
+
         targetTranslation?.let { item ->
             // set typeface for language
             val targetLanguage = item.translation.targetLanguage
@@ -107,6 +124,7 @@ class TargetTranslationInfoDialog : DialogFragment(), ManageContributorsDialog.C
                 // list translators
                 translators.text = ""
                 refreshContributors()
+                refreshBackupAndUploadStatus()
 
                 changeLanguage.setOnClickListener {
                     val intent = Intent(activity, NewTargetTranslationActivity::class.java)
@@ -134,7 +152,7 @@ class TargetTranslationInfoDialog : DialogFragment(), ManageContributorsDialog.C
                         .setPositiveButton(R.string.confirm) { _, _ ->
                             try {
                                 deleteTargetTranslation(false)
-                            } catch (e: Exception) {
+                            } catch (_: Exception) {
                                 // If delete failed, try again as orphaned
                                 try {
                                     deleteTargetTranslation(true)
@@ -207,7 +225,6 @@ class TargetTranslationInfoDialog : DialogFragment(), ManageContributorsDialog.C
                         item.translation.id
                     )
                     dialog.arguments = args1
-                    dialog.setEventListener(this@TargetTranslationInfoDialog)
                     dialog.show(ft, "manage-contributors")
                 }
             }
@@ -248,6 +265,51 @@ class TargetTranslationInfoDialog : DialogFragment(), ManageContributorsDialog.C
     }
 
     /**
+     * Reads an epoch-millis timestamp stored under [key], or null if it is absent.
+     * Tolerates legacy values that were saved as formatted date strings (pre epoch-millis).
+     */
+    private fun readTimestamp(key: String): Long? {
+        return try {
+            preferenceRepository.getPrivatePref<Long>(key)?.takeIf { it > 0 }
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    private fun refreshBackupAndUploadStatus() {
+        targetTranslation?.let { item ->
+            with(binding) {
+                val savedBackup = readTimestamp(preferenceRepository.lastBackup + item.translation.id)
+                var displayTime: String? = savedBackup?.let {
+                    DateUtils.dateToDateTime(Date(it))
+                }
+
+                if (displayTime == null) {
+                    val backupFile = File(
+                        directoryProvider.backupsDir,
+                        "${item.translation.id}.${Translator.TSTUDIO_EXTENSION}"
+                    )
+                    if (backupFile.exists() && backupFile.isFile) {
+                        val date = Date(backupFile.lastModified())
+                        displayTime = DateUtils.dateToDateTime(date)
+                    }
+                }
+
+                lastBackup.text = displayTime ?: getString(R.string.label_unknown)
+                lastBackupGroup.visibility = View.VISIBLE
+
+                val savedUpload = readTimestamp(preferenceRepository.lastUploaded + item.translation.id)
+                val displayUploadTime: String? = savedUpload?.let {
+                    DateUtils.dateToDateTime(Date(it))
+                }
+
+                lastUploaded.text = displayUploadTime ?: getString(R.string.label_unknown)
+                lastUploadedGroup.visibility = View.VISIBLE
+            }
+        }
+    }
+
+    /**
      * returns a concatenated list of names or null if error
      */
     private fun getTranslatorNames(): String? {
@@ -282,10 +344,6 @@ class TargetTranslationInfoDialog : DialogFragment(), ManageContributorsDialog.C
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
-    }
-
-    override fun onDismiss() {
-        refreshContributors()
     }
 
     private fun refreshContributors() {
