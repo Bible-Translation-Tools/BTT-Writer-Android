@@ -1403,7 +1403,7 @@ public class ReviewModeAdapter extends ViewModeAdapter<ReviewHolder> implements 
                     // delete old span
                     if (e.getLocalState() instanceof int[] spanRange && spanRange.length >= 2) {
                         CharSequence in = editText.getText();
-                        if (spanRange[0] < in.length() && spanRange[1] < in.length()) {
+                        if (spanRange[0] < in.length() && spanRange[1] <= in.length()) {
                             CharSequence out = TextUtils.concat(
                                     in.subSequence(0, spanRange[0]),
                                     in.subSequence(spanRange[1], in.length())
