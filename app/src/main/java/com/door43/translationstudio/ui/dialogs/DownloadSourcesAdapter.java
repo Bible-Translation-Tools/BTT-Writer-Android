@@ -43,7 +43,7 @@ public class DownloadSourcesAdapter extends BaseAdapter {
     public static final String TAG = DownloadSourcesAdapter.class.getSimpleName();
     public static final int TYPE_ITEM_FILTER_SELECTION = 0;
     public static final int TYPE_ITEM_SOURCE_SELECTION = 1;
-    private Context context;
+    private final Context context;
     private List<String> selected = new ArrayList<>();
     private List<String> downloaded = new ArrayList<>();
     private List<ViewItem> items = new ArrayList<>();
@@ -74,7 +74,8 @@ public class DownloadSourcesAdapter extends BaseAdapter {
 
     private final Typography typography;
 
-    public DownloadSourcesAdapter(Typography typography) {
+    public DownloadSourcesAdapter(Context context, Typography typography) {
+        this.context = context;
         this.typography = typography;
     }
 
@@ -123,9 +124,34 @@ a     * @param task
         initializeSelections();
     }
 
+    /**
+     * Returns the item at the given position, or null if the position is out of range.
+     * Positions are unstable because the list is rebuilt on every filter step, search and
+     * selection change, so asynchronous callers may hold a position that no longer exists.
+     * @param position
+     * @return
+     */
     @Override
     public ViewItem getItem(int position) {
-        return items.get(position);
+        if(position >= 0 && position < items.size()) {
+            return items.get(position);
+        }
+        return null;
+    }
+
+    /**
+     * Finds an item by its container slug.
+     * @param containerSlug
+     * @return the item or null if it is not in the list
+     */
+    public ViewItem getItemBySlug(String containerSlug) {
+        if(containerSlug == null) return null;
+        for (ViewItem item : items) {
+            if(containerSlug.equals(item.containerSlug)) {
+                return item;
+            }
+        }
+        return null;
     }
 
     @Override
@@ -355,6 +381,8 @@ a     * @param task
         boolean found = false;
         if(sortSet.containsKey(languageFilter)) {
             List<Integer> items = sortSet.get(languageFilter);
+            if (items == null) return false;
+
             for (Integer index : items) {
                 if ((index >= 0) && (index < availableSources.size())) {
                     Translation sourceTranslation = availableSources.get(index);
@@ -405,12 +433,8 @@ a     * @param task
         }
 
         // sort by language code
-        Collections.sort(items, new Comparator<ViewItem>() { // do numeric sort
-            @Override
-            public int compare(ViewItem lhs, ViewItem rhs) {
-                return lhs.filter.compareTo(rhs.filter);
-            }
-        });
+        // do numeric sort
+        items.sort(Comparator.comparing(lhs -> lhs.filter));
     }
 
     /**
@@ -549,13 +573,12 @@ a     * @param task
         if(sort) {
             // do numeric sort
             // do numeric sort
-            Collections.sort(items, (lhs, rhs) -> lhs.title.toString().compareTo(rhs.title.toString()));
+            items.sort(Comparator.comparing(lhs -> lhs.title.toString()));
         }
     }
 
     @Override
     public View getView(final int position, View convertView, ViewGroup parent) {
-        context = parent.getContext();
         final LayoutInflater inflater = LayoutInflater.from(parent.getContext());
 
         int rowType = getItemViewType(position);
@@ -584,7 +607,9 @@ a     * @param task
             viewHolder = (BaseViewHolder) convertView.getTag();
         }
 
-        viewHolder.bind(item);
+        if(item != null) {
+            viewHolder.bind(item);
+        }
 
         return viewHolder.binding.getRoot();
     }
@@ -594,43 +619,66 @@ a     * @param task
      * @param position
      */
     public void toggleSelection(int position) {
-        if(getItem(position).selected) {
-            deselect(position);
+        ViewItem item = getSelectableItem(position);
+        if(item == null) return;
+
+        if(item.selected) {
+            deselect(item);
         } else {
-            select(position);
+            select(item);
         }
         notifyDataSetChanged();
     }
 
     public void select(int position) {
-        ViewItem item = getItem(position);
-        if(item != null) {
-            if(!item.downloaded) {
-                item.selected = true;
-                if (!selected.contains(item.containerSlug)) { // make sure we don't add entry twice (particularly during select all)
-                    selected.add(item.containerSlug);
-                }
+        select(getSelectableItem(position));
+    }
+
+    public void deselect(int position) {
+        deselect(getSelectableItem(position));
+    }
+
+    private void select(ViewItem item) {
+        if(item == null || item.containerSlug == null) return;
+
+        if(!item.downloaded) {
+            item.selected = true;
+            if (!selected.contains(item.containerSlug)) { // make sure we don't add entry twice (particularly during select all)
+                selected.add(item.containerSlug);
             }
         }
     }
 
-    public void deselect(int position) {
+    private void deselect(ViewItem item) {
+        if(item == null || item.containerSlug == null) return;
+
+        item.selected = false;
+        selected.remove(item.containerSlug);
+    }
+
+    /**
+     * Returns the item at the given position only if it represents a resource container.
+     * Filter rows (languages, categories, books) and out of range positions resolve to null.
+     * @param position
+     * @return
+     */
+    private ViewItem getSelectableItem(int position) {
         ViewItem item = getItem(position);
-        if(item != null) {
-            item.selected = false;
-            selected.remove(item.containerSlug);
-        }
+        if(item == null || item.containerSlug == null) return null;
+        return item;
     }
 
     /**
      * search items for position that matches slug
      * @param slug
-     * @return
+     * @return the position or -1 if the slug is not in the list
      */
     public int findPosition(String slug) {
+        if(slug == null) return -1;
         for (int i = 0; i < items.size(); i++) {
             ViewItem item = items.get(i);
-            if(item.containerSlug.equals(slug)) {
+            // filter rows have no container slug
+            if(slug.equals(item.containerSlug)) {
                 return i;
             }
         }
@@ -642,11 +690,35 @@ a     * @param task
      * @param position
      */
     public void markItemDownloaded(int position) {
-        ViewItem item = getItem(position);
+        markItemDownloaded(getSelectableItem(position));
+    }
+
+    /**
+     * marks an item as downloaded
+     * The state is recorded even when the item is not in the currently filtered list,
+     * so it is restored once the list is rebuilt.
+     * @param containerSlug
+     */
+    public void markItemDownloaded(String containerSlug) {
+        if(containerSlug == null) return;
+
+        ViewItem item = getItemBySlug(containerSlug);
         if(item != null) {
+            markItemDownloaded(item);
+            return;
+        }
+        if(!downloaded.contains(containerSlug)) {
+            downloaded.add(containerSlug);
+        }
+        selected.remove(containerSlug);
+        downloadErrors.remove(containerSlug);
+    }
+
+    private void markItemDownloaded(ViewItem item) {
+        if(item != null && item.containerSlug != null) {
             item.downloaded = true;
             item.error = false;
-            deselect(position);
+            deselect(item);
 
             if(!downloaded.contains(item.containerSlug)) {
                 downloaded.add(item.containerSlug);
@@ -660,8 +732,29 @@ a     * @param task
      * @param position
      */
     public void markItemError(int position, String message) {
-        ViewItem item = getItem(position);
+        markItemError(getSelectableItem(position), message);
+    }
+
+    /**
+     * marks an item as error
+     * The state is recorded even when the item is not in the currently filtered list,
+     * so it is restored once the list is rebuilt.
+     * @param containerSlug
+     */
+    public void markItemError(String containerSlug, String message) {
+        if(containerSlug == null) return;
+
+        ViewItem item = getItemBySlug(containerSlug);
         if(item != null) {
+            markItemError(item, message);
+            return;
+        }
+        downloadErrors.put(containerSlug, message);
+        downloaded.remove(containerSlug);
+    }
+
+    private void markItemError(ViewItem item, String message) {
+        if(item != null && item.containerSlug != null) {
             item.error = true;
             item.errorMessage = message;
 
@@ -798,7 +891,7 @@ a     * @param task
         source_filtered_by_language(5),
         source_filtered_by_book(6);
 
-        private int _value;
+        private final int _value;
 
         SelectionType(int Value) {
             this._value = Value;
@@ -821,7 +914,7 @@ a     * @param task
     public enum SelectedState {
         all,
         none,
-        not_empty;
+        not_empty
     }
 
     private abstract static class BaseViewHolder {
@@ -854,12 +947,14 @@ a     * @param task
             } else {
                 binding.itemIcon.setVisibility(View.GONE);
                 // if language selection, look up font
-                Typeface typeface = typography.getBestFontForLanguage(
-                        TranslationType.SOURCE,
-                        item.sourceTranslation.language.slug,
-                        item.sourceTranslation.language.direction
-                );
-                binding.title.setTypeface(typeface, Typeface.NORMAL);
+                if(item.sourceTranslation != null) {
+                    Typeface typeface = typography.getBestFontForLanguage(
+                            TranslationType.SOURCE,
+                            item.sourceTranslation.language.slug,
+                            item.sourceTranslation.language.direction
+                    );
+                    binding.title.setTypeface(typeface, Typeface.NORMAL);
+                }
             }
         }
     }
