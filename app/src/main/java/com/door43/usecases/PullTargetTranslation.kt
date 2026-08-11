@@ -12,6 +12,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import org.eclipse.jgit.api.CheckoutCommand
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.errors.CheckoutConflictException
+import org.eclipse.jgit.api.errors.RefNotAdvertisedException
 import org.eclipse.jgit.api.errors.TransportException
 import org.eclipse.jgit.errors.NoRemoteRepositoryException
 import org.eclipse.jgit.merge.MergeStrategy
@@ -111,7 +112,7 @@ class PullTargetTranslation @Inject constructor(
             .setTransportConfigCallback(transportCallback)
             .setRemote("origin")
             .setStrategy(mergeStrategy)
-            .setRemoteBranchName("master")
+            .setRemoteBranchName(REMOTE_BRANCH)
         try {
             val result = pullCommand.call()
             val mergeResult = result.mergeResult
@@ -154,6 +155,14 @@ class PullTargetTranslation @Inject constructor(
                 status = Status.UP_TO_DATE
             }
             return Result(status, "Pulled Successfully!")
+        } catch (e: RefNotAdvertisedException) {
+            // a repository that was just created has no branches yet, so there is nothing
+            // to pull. this is expected and the caller is free to push.
+            Logger.i(
+                this.javaClass.name,
+                "The remote did not advertise the $REMOTE_BRANCH branch, nothing to pull: ${e.message}"
+            )
+            return Result(Status.NO_REMOTE_BRANCH, null)
         } catch (e: TransportException) {
             Logger.e(this.javaClass.name, e.message, e)
             val cause = e.cause
@@ -201,6 +210,11 @@ class PullTargetTranslation @Inject constructor(
         OUT_OF_MEMORY,
         AUTH_FAILURE,
         NO_REMOTE_REPO,
+        NO_REMOTE_BRANCH,
         UNKNOWN
+    }
+
+    companion object {
+        private const val REMOTE_BRANCH = "master"
     }
 }

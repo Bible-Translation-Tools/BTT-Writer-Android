@@ -277,11 +277,12 @@ class BackupDialog : DialogFragment() {
         viewModel.pullTranslationResult.observe(this) {
             it?.let { result ->
                 val status = result.status
-                // TRICKY: we continue to push for unknown status in case
-                // the repo was just created (the missing branch is an error)
-                // the pull task will catch any errors
+                // TRICKY: we continue to push when the remote has no branch yet,
+                // which is the case for a repository that was just created,
+                // and for unknown status, since the pull task logged the cause
                 when (status) {
                     PullTargetTranslation.Status.UP_TO_DATE,
+                    PullTargetTranslation.Status.NO_REMOTE_BRANCH,
                     PullTargetTranslation.Status.UNKNOWN -> {
                         Logger.i(
                             this.javaClass.name,

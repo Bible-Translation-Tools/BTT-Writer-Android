@@ -25,6 +25,7 @@ import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.MergeResult
 import org.eclipse.jgit.api.PullCommand
 import org.eclipse.jgit.api.PullResult
+import org.eclipse.jgit.api.errors.RefNotAdvertisedException
 import org.eclipse.jgit.api.errors.TransportException
 import org.eclipse.jgit.errors.NoRemoteRepositoryException
 import org.eclipse.jgit.merge.MergeStrategy
@@ -516,6 +517,43 @@ class PullTargetTranslationTest {
         verify { getRepository.execute(any(), any()) }
         verify { targetTranslation.repo }
         verify { targetTranslation.path }
+        verify { pullCommand.call() }
+    }
+
+    @Test
+    fun `test pull target translation, remote has no branch yet`() {
+        every { profile.gogsUser }.returns(mockk())
+
+        val repository: Repository = mockk {
+            every { sshUrl }.returns("ssh://repo.git")
+        }
+        every { getRepository.execute(any(), any()) }.returns(repository)
+
+        every { targetTranslation.repo }.returns(repo)
+        every { targetTranslation.path }.returns(mockk())
+
+        // a repository that was just created is empty and advertises no refs
+        every { pullCommand.call() }.throws(
+            RefNotAdvertisedException("Remote origin did not advertise Ref for branch master.")
+        )
+
+        val result = PullTargetTranslation(
+            context,
+            submitNewLanguageRequests,
+            getRepository,
+            profile,
+            transportCallback
+        ).execute(
+            targetTranslation,
+            MergeStrategy.RECURSIVE,
+            null,
+            progressListener
+        )
+
+        assertEquals(PullTargetTranslation.Status.NO_REMOTE_BRANCH, result.status)
+        assertNull(result.message)
+
+        verify { progressListener.onProgress(any(), any(), "Downloading updates") }
         verify { pullCommand.call() }
     }
 }
