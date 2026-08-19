@@ -53,9 +53,10 @@ class ChooseSourcesViewModel @Inject constructor(
     private val _itemResult = MutableLiveData<ItemResult?>(null)
     val itemResult: LiveData<ItemResult?> = _itemResult
 
-    var downloadItemPosition = 0
+    var downloadItemSlug: String? = null
+        private set
 
-    data class ItemResult(val position: Int, val hasUpdates: Boolean)
+    data class ItemResult(val containerSlug: String, val hasUpdates: Boolean)
 
     fun setTargetTranslation(translationId: String) {
         _targetTranslation = translator.getTargetTranslation(translationId)
@@ -104,9 +105,9 @@ class ChooseSourcesViewModel @Inject constructor(
         }.also(jobs::add)
     }
 
-    fun downloadResourceContainer(sourceTranslation: Translation, position: Int) {
+    fun downloadResourceContainer(sourceTranslation: Translation) {
         viewModelScope.launch {
-            downloadItemPosition = position
+            downloadItemSlug = sourceTranslation.resourceContainerSlug
             _progress.value = ProgressHelper.Progress()
             _downloadResult.value = withContext(Dispatchers.IO) {
                 downloadResourceContainers.download(sourceTranslation) { progress, max, message ->
@@ -131,7 +132,7 @@ class ChooseSourcesViewModel @Inject constructor(
         return prefRepository.getOpenSourceTranslations(targetTranslationId)
     }
 
-    fun checkForContainerUpdates(containerSlug: String, position: Int) {
+    fun checkForContainerUpdates(containerSlug: String) {
         viewModelScope.launch {
             _progress.value = ProgressHelper.Progress()
             _itemResult.value = withContext(Dispatchers.IO) {
@@ -146,10 +147,10 @@ class ChooseSourcesViewModel @Inject constructor(
                         container.project.slug,
                         container.resource.slug
                     )
-                    ItemResult(position, lastModified > container.modifiedAt)
+                    ItemResult(containerSlug, lastModified > container.modifiedAt)
                 } catch (e: Exception) {
                     e.printStackTrace()
-                    ItemResult(position, false)
+                    ItemResult(containerSlug, false)
                 }
             }
             _progress.value = null
@@ -158,6 +159,8 @@ class ChooseSourcesViewModel @Inject constructor(
 
     fun clearResults() {
         _downloadResult.value = null
+        _itemResult.value = null
+        downloadItemSlug = null
     }
 
     /**

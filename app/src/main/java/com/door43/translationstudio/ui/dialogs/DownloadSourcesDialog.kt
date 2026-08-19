@@ -78,7 +78,7 @@ class DownloadSourcesDialog : DialogFragment() {
             false
         )
 
-        adapter = DownloadSourcesAdapter(typography)
+        adapter = DownloadSourcesAdapter(requireContext(), typography)
 
         with(binding) {
             searchBackButton.setOnClickListener {
@@ -121,7 +121,7 @@ class DownloadSourcesDialog : DialogFragment() {
                     if (steps.isNotEmpty()) {
                         searchString = null
                         val currentStep = steps[steps.size - 1]
-                        val item = adapter.getItem(position)
+                        val item = adapter.getItem(position) ?: return@OnItemClickListener
                         currentStep.old_label = currentStep.label
                         currentStep.label = item.title.toString()
                         currentStep.filter = item.filter
@@ -571,22 +571,17 @@ class DownloadSourcesDialog : DialogFragment() {
             for (slug in downloadedTranslations) {
                 Logger.i(TAG, "Received: $slug")
 
-                val pos = adapter.findPosition(slug)
-                if (pos >= 0) {
-                    adapter.markItemDownloaded(pos)
-                }
+                // by slug, the list may have been rebuilt while the download was running
+                adapter.markItemDownloaded(slug)
             }
 
             val failedSourceDownloads = result.failedSourceDownloads
             for (translationID in failedSourceDownloads) {
                 Logger.e(TAG, "Download failed: $translationID")
-                val pos = adapter.findPosition(translationID)
-                if (pos >= 0) {
-                    adapter.markItemError(
-                        pos,
-                        result.failureMessages[translationID]
-                    )
-                }
+                adapter.markItemError(
+                    translationID,
+                    result.failureMessages[translationID]
+                )
             }
 
             val downloads = resources.getString(
