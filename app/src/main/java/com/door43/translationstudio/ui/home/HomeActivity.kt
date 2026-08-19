@@ -299,7 +299,10 @@ class HomeActivity : BaseActivity(),
         viewModel.pullTranslationResult.observe(this) {
             it?.let { result ->
                 val status = result.status
-                if (status == PullTargetTranslation.Status.UP_TO_DATE || status == PullTargetTranslation.Status.UNKNOWN) {
+                if (status == PullTargetTranslation.Status.UP_TO_DATE ||
+                    status == PullTargetTranslation.Status.NO_REMOTE_BRANCH ||
+                    status == PullTargetTranslation.Status.UNKNOWN
+                ) {
                     AlertDialog.Builder(this, R.style.AppTheme_Dialog)
                         .setTitle(R.string.success)
                         .setMessage(R.string.success_translation_update)
