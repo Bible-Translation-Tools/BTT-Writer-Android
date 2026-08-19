@@ -1,10 +1,7 @@
 package com.door43.translationstudio.ui.translate;
 
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Typeface;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
@@ -65,21 +62,20 @@ public class ChooseSourceTranslationAdapter extends BaseAdapter {
     private OnItemClickListener itemClickListener = null;
 
     public interface OnItemClickListener {
-        void onCheckForItemUpdates(String containerSlug, int position);
-        void onTriggerDownload(RCItem item, int position, Callbacks.OnDownloadCancel callback);
+        void onCheckForItemUpdates(String containerSlug);
+        void onTriggerDownload(RCItem item, Callbacks.OnDownloadCancel callback);
         void onTriggerDeleteContainer(
                 String containerSlug,
-                int position,
                 Callbacks.OnDeleteContainer callback
         );
     }
 
     public interface Callbacks {
         interface OnDownloadCancel {
-            void onCancel(int position);
+            void onCancel(String containerSlug);
         }
         interface OnDeleteContainer {
-            void onDelete(int position);
+            void onDelete(String containerSlug);
         }
     }
 
@@ -134,14 +130,48 @@ public class ChooseSourceTranslationAdapter extends BaseAdapter {
     }
 
     /**
+     * Finds an item by its container slug.
+     * Positions are unstable because the list is resorted on every change,
+     * so the slug is the only safe way to refer to an item from an asynchronous callback.
+     * @param containerSlug
+     * @return the item or null if it is not in the list
+     */
+    public RCItem getItemBySlug(String containerSlug) {
+        if(containerSlug == null) return null;
+        return data.get(containerSlug);
+    }
+
+    /**
+     * The slugs of all selected items.
+     * Selections are kept even when the search filter hides them from the list.
+     * @return
+     */
+    public List<String> getSelectedSlugs() {
+        return new ArrayList<>(selected);
+    }
+
+    /**
      * toggle selection state for item
      * @param position
      */
     public void toggleSelection(int position) {
-        if(getItem(position).selected) {
-            deselect(position);
+        toggleSelection(getSelectableItem(position));
+    }
+
+    /**
+     * toggle selection state for item
+     * @param containerSlug
+     */
+    public void toggleSelection(String containerSlug) {
+        toggleSelection(getItemBySlug(containerSlug));
+    }
+
+    private void toggleSelection(RCItem item) {
+        if(item == null) return;
+        if(item.selected) {
+            deselect(item);
         } else {
-            select(position);
+            select(item);
         }
         sort();
     }
@@ -155,18 +185,32 @@ public class ChooseSourceTranslationAdapter extends BaseAdapter {
         return getItemViewType(position) != TYPE_SEPARATOR;
     }
 
+    /**
+     * Returns the item at the given position only if it is a real, selectable item.
+     * Section headers and out of range positions resolve to null.
+     * @param position
+     * @return
+     */
+    private RCItem getSelectableItem(int position) {
+        RCItem item = getItem(position);
+        if(item == null || item.containerSlug == null) return null;
+        return item;
+    }
+
     @Override
     public int getItemViewType(int position) {
-        int type = sectionHeader.contains(position) ? TYPE_SEPARATOR : TYPE_ITEM_SELECTABLE;
-        if(type == TYPE_ITEM_SELECTABLE) {
-            RCItem v = getItem(position);
-            if(!v.downloaded) { // check if we need to download
-                type = TYPE_ITEM_NEED_DOWNLOAD;
-            } else if(v.hasUpdates) {
-                type = TYPE_ITEM_SELECTABLE_UPDATABLE;
-            }
+        RCItem v = getItem(position);
+        // headers, unknown positions and items without a container are not selectable
+        if(sectionHeader.contains(position) || v == null || v.containerSlug == null) {
+            return TYPE_SEPARATOR;
         }
-        return type;
+        if(!v.downloaded) { // check if we need to download
+            return TYPE_ITEM_NEED_DOWNLOAD;
+        }
+        if(v.hasUpdates) {
+            return TYPE_ITEM_SELECTABLE_UPDATABLE;
+        }
+        return TYPE_ITEM_SELECTABLE;
     }
 
     @Override
@@ -194,7 +238,7 @@ public class ChooseSourceTranslationAdapter extends BaseAdapter {
         sortedData.add(selectedHeader);
         sectionHeader.add(sortedData.size() - 1);
 
-        List<RCItem> section = getViewItems(selected, null); // do not restrict selections by search string
+        List<RCItem> section = getViewItems(selected, searchText);
         sortedData.addAll(section);
 
         RCItem availableHeader = new RCItem(context.getResources().getString(R.string.available), null, false, false);
@@ -222,7 +266,10 @@ public class ChooseSourceTranslationAdapter extends BaseAdapter {
     private List<RCItem> getViewItems(List<String> data, String searchText) {
         List<RCItem> section = new ArrayList<>();
         for(String id:data) {
-            section.add(this.data.get(id));
+            RCItem item = this.data.get(id);
+            if(item != null) { // never place null items in the list
+                section.add(item);
+            }
         }
 
         // sort by language code
@@ -392,6 +439,13 @@ public class ChooseSourceTranslationAdapter extends BaseAdapter {
         // load update status
         holder.currentPosition = position;
 
+        if(item == null) { // list changed under us, render an empty row instead of crashing
+            holder.titleView.setText("");
+            view.setOnClickListener(null);
+            view.setOnLongClickListener(null);
+            return view;
+        }
+
         holder.titleView.setText(item.title);
         if(item.sourceTranslation != null) {
             setFontForLanguage(holder, item);
@@ -420,23 +474,22 @@ public class ChooseSourceTranslationAdapter extends BaseAdapter {
         }
 
         view.setOnClickListener(v -> {
-            if (itemClickListener != null && isSelectableItem(position)) {
+            if (itemClickListener != null && item.containerSlug != null) {
                 if (item.hasUpdates || !item.downloaded) {
-                    itemClickListener.onTriggerDownload(item, position, this::toggleSelection);
+                    itemClickListener.onTriggerDownload(item, this::toggleSelection);
                 } else {
-                    toggleSelection(position);
+                    toggleSelection(item.containerSlug);
                     if (!item.checkedUpdates && item.downloaded) {
-                        itemClickListener.onCheckForItemUpdates(item.containerSlug, position);
+                        itemClickListener.onCheckForItemUpdates(item.containerSlug);
                     }
                 }
             }
         });
 
         view.setOnLongClickListener(v -> {
-            if (itemClickListener != null && item.downloaded && isSelectableItem(position)) {
+            if (itemClickListener != null && item.downloaded && item.containerSlug != null) {
                 itemClickListener.onTriggerDeleteContainer(
                         item.containerSlug,
-                        position,
                         this::markItemDeleted
                 );
                 return true;
@@ -464,12 +517,12 @@ public class ChooseSourceTranslationAdapter extends BaseAdapter {
         }
     }
 
-    private void select(int position) {
+    private void select(RCItem item) {
+        if (item == null || item.containerSlug == null) return;
         if (selected.size() >= MAX_SOURCE_ITEMS) {
             return;
         }
 
-        RCItem item = getItem(position);
         item.selected = true;
         selected.remove(item.containerSlug);
         available.remove(item.containerSlug);
@@ -477,8 +530,9 @@ public class ChooseSourceTranslationAdapter extends BaseAdapter {
         selected.add(item.containerSlug);
     }
 
-    private void deselect(int position) {
-        RCItem item = getItem(position);
+    private void deselect(RCItem item) {
+        if (item == null || item.containerSlug == null) return;
+
         item.selected = false;
         selected.remove(item.containerSlug);
         available.remove(item.containerSlug);
@@ -490,9 +544,20 @@ public class ChooseSourceTranslationAdapter extends BaseAdapter {
      * Marks an item as deleted
      * @param position
      */
-    private void markItemDeleted(int position) {
-        RCItem item = getItem(position);
-        if(item != null) {
+    public void markItemDeleted(int position) {
+        markItemDeleted(getSelectableItem(position));
+    }
+
+    /**
+     * Marks an item as deleted
+     * @param containerSlug
+     */
+    public void markItemDeleted(String containerSlug) {
+        markItemDeleted(getItemBySlug(containerSlug));
+    }
+
+    private void markItemDeleted(RCItem item) {
+        if(item != null && item.containerSlug != null) {
             item.hasUpdates = false;
             item.downloaded = false;
             item.selected = false;
@@ -508,11 +573,22 @@ public class ChooseSourceTranslationAdapter extends BaseAdapter {
      * @param position
      */
     public void markItemDownloaded(int position) {
-        RCItem item = getItem(position);
-        if(item != null) {
+        markItemDownloaded(getSelectableItem(position));
+    }
+
+    /**
+     * marks an item as downloaded
+     * @param containerSlug
+     */
+    public void markItemDownloaded(String containerSlug) {
+        markItemDownloaded(getItemBySlug(containerSlug));
+    }
+
+    private void markItemDownloaded(RCItem item) {
+        if(item != null && item.containerSlug != null) {
             item.hasUpdates = false;
             item.downloaded = true;
-            select(position); // auto select download item
+            select(item); // auto select download item
         }
         sort();
     }
@@ -522,7 +598,16 @@ public class ChooseSourceTranslationAdapter extends BaseAdapter {
     }
 
     public void setItemHasUpdates(int position, boolean hasUpdates) {
-        RCItem item = getItem(position);
+        setItemHasUpdates(getSelectableItem(position), hasUpdates);
+    }
+
+    public void setItemHasUpdates(String containerSlug, boolean hasUpdates) {
+        setItemHasUpdates(getItemBySlug(containerSlug), hasUpdates);
+    }
+
+    private void setItemHasUpdates(RCItem item, boolean hasUpdates) {
+        if(item == null) return;
+
         item.hasUpdates = hasUpdates;
         item.checkedUpdates = true;
         notifyDataSetChanged();
