@@ -119,17 +119,8 @@ class ChooseSourceTranslationDialog : DialogFragment(), OnItemClickListener {
             confirmButton.setOnClickListener {
                 viewModel.cancelJobs()
                 // collect selected source translations
-                val count = adapter.count
-                val resourceContainerSlugs = arrayListOf<String>()
-                for (i in 0 until count) {
-                    if (adapter.isSelectableItem(i)) {
-                        val item = adapter.getItem(i)
-                        if (item.selected) {
-                            resourceContainerSlugs.add(item.containerSlug)
-                        }
-                    }
-                }
-                clickListener?.onConfirmTabsDialog(resourceContainerSlugs)
+                // taken from the adapter data, since the search filter may hide selected items
+                clickListener?.onConfirmTabsDialog(adapter.selectedSlugs)
                 dismiss()
             }
         }
@@ -189,7 +180,7 @@ class ChooseSourceTranslationDialog : DialogFragment(), OnItemClickListener {
                         resources.getColor(R.color.light_primary_text)
                     )
                     snack.show()
-                    adapter.markItemDownloaded(viewModel.downloadItemPosition)
+                    viewModel.downloadItemSlug?.let(adapter::markItemDownloaded)
                 } else {
                     val snack = Snackbar.make(
                         this@ChooseSourceTranslationDialog.requireView(),
@@ -206,7 +197,7 @@ class ChooseSourceTranslationDialog : DialogFragment(), OnItemClickListener {
         }
         viewModel.itemResult.observe(this) {
             it?.let { result ->
-                adapter.setItemHasUpdates(result.position, result.hasUpdates)
+                adapter.setItemHasUpdates(result.containerSlug, result.hasUpdates)
             }
         }
     }
@@ -219,13 +210,12 @@ class ChooseSourceTranslationDialog : DialogFragment(), OnItemClickListener {
         clickListener = listener
     }
 
-    override fun onCheckForItemUpdates(containerSlug: String, position: Int) {
-        viewModel.checkForContainerUpdates(containerSlug, position)
+    override fun onCheckForItemUpdates(containerSlug: String) {
+        viewModel.checkForContainerUpdates(containerSlug)
     }
 
     override fun onTriggerDownload(
         item: RCItem,
-        position: Int,
         callback: Callbacks.OnDownloadCancel
     ) {
         val format = resources.getString(R.string.download_source_language)
@@ -234,12 +224,12 @@ class ChooseSourceTranslationDialog : DialogFragment(), OnItemClickListener {
             .setTitle(R.string.title_download_source_language)
             .setMessage(message)
             .setPositiveButton(R.string.confirm) { _, _ ->
-                viewModel.downloadResourceContainer(item.sourceTranslation, position)
+                viewModel.downloadResourceContainer(item.sourceTranslation)
             }
             .setNegativeButton(R.string.no) { _, _ ->
                 if (item.downloaded) {
                     // allow selecting if downloaded already
-                    callback.onCancel(position)
+                    callback.onCancel(item.containerSlug)
                 }
             }
             .show()
@@ -247,7 +237,6 @@ class ChooseSourceTranslationDialog : DialogFragment(), OnItemClickListener {
 
     override fun onTriggerDeleteContainer(
         containerSlug: String,
-        position: Int,
         callback: Callbacks.OnDeleteContainer
     ) {
         AlertDialog.Builder(requireActivity(), R.style.AppTheme_Dialog)
@@ -255,7 +244,7 @@ class ChooseSourceTranslationDialog : DialogFragment(), OnItemClickListener {
             .setMessage(R.string.confirm_delete_project)
             .setPositiveButton(R.string.confirm) { _, _ ->
                 viewModel.deleteResourceContainer(containerSlug)
-                callback.onDelete(position)
+                callback.onDelete(containerSlug)
             }
             .setNegativeButton(R.string.menu_cancel, null)
             .show()
