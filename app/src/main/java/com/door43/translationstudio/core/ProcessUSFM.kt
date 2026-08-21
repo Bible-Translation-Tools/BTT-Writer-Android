@@ -750,11 +750,12 @@ class ProcessUSFM {
     }
 
     private fun processBook(
-        book: String,
+        rawBook: String,
         name: String,
         promptForName: Boolean = true,
         useName: String? = null
     ): Boolean {
+        val book = stripWordMarkup(rawBook)
         var successOverall: Boolean
         var success: Boolean
         bookShortName = ""
@@ -1711,6 +1712,30 @@ class ProcessUSFM {
         @JvmField
         val PATTERN_USFM_VERSE_SPAN: Pattern = Pattern.compile(USFMVerseSpan.PATTERN)
         const val END_MARKER: Int = 999999
+
+        private const val WORD_ENTRY_MARKER: String = """\\\+?w\s([^|\\]*)(?:\|[^\\]*)?\\\+?w\*"""
+        private val PATTERN_WORD_ENTRY_MARKER: Pattern = Pattern.compile(WORD_ENTRY_MARKER)
+
+        /**
+         * Reduces word-level markup (\w term|attributes \w*) to the bare term, so
+         * alignment attributes (strong, x-morph, etc.) don't end up in the
+         * translation text. Attribute-only entries (\w |strong="..."\w*) and empty
+         * entries (\w \w*) are removed entirely. Operating on the raw book text
+         * keeps the original spacing around the entries intact.
+         */
+        internal fun stripWordMarkup(text: String): String {
+            val matcher = PATTERN_WORD_ENTRY_MARKER.matcher(text)
+            val builder = StringBuilder()
+            var lastIndex = 0
+            while (matcher.find()) {
+                builder.append(text, lastIndex, matcher.start())
+                builder.append(matcher.group(1)?.trim() ?: "")
+                lastIndex = matcher.end()
+            }
+            if (lastIndex == 0) return text
+            builder.append(text, lastIndex, text.length)
+            return builder.toString()
+        }
 
         private fun getOptInteger(json: JSONObject, key: String): Int? {
             return getOpt(json, key) as Int?
