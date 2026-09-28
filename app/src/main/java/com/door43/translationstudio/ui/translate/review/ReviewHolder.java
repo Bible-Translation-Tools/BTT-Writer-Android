@@ -560,12 +560,13 @@ public class ReviewHolder extends RecyclerView.ViewHolder {
             tab.setTag(TAB_WORDS);
             binding.getResourceTabs().addTab(tab);
         }
-        if(!questions.isEmpty()) {
-            TabLayout.Tab tab = binding.getResourceTabs().newTab();
-            tab.setText(R.string.questions);
-            tab.setTag(TAB_QUESTIONS);
-            binding.getResourceTabs().addTab(tab);
-        }
+        // TQ hidden from helps pane
+        // if(!questions.isEmpty()) {
+        //     TabLayout.Tab tab = binding.getResourceTabs().newTab();
+        //     tab.setText(R.string.questions);
+        //     tab.setTag(TAB_QUESTIONS);
+        //     binding.getResourceTabs().addTab(tab);
+        // }
 
         // select default tab
         if(binding.getResourceTabs().getTabCount() > 0 ) {
