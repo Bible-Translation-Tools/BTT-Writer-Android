@@ -36,8 +36,9 @@ class GetAvailableSources @Inject constructor(
             App.MIN_CHECKING_LEVEL,
             -1
         )
+        sources.removeAll { it.resource.slug == "udb" } // UDB hidden from UI
 
-        val tw = library.index.findTranslations(
+        val tw =library.index.findTranslations(
             null,
             null,
             null,
