@@ -94,7 +94,7 @@ class ChooseSourcesViewModel @Inject constructor(
                     null,
                     App.MIN_CHECKING_LEVEL,
                     -1
-                )
+                ).filter { it.resource.slug != "udb" } // UDB hidden from UI
                 for (sourceTranslation in availableTranslations) {
                     _progress.postValue(ProgressHelper.Progress(sourceTranslation.resourceContainerSlug))
                     items.add(addSourceTranslation(sourceTranslation, false))
