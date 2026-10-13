@@ -6,30 +6,28 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.door43.translationstudio.R
-import com.door43.translationstudio.ui.devtools.library.ChoiceOption
 import com.door43.translationstudio.ui.devtools.library.EditableField
 import com.door43.translationstudio.ui.devtools.library.LibraryRow
 import com.door43.translationstudio.ui.devtools.library.LibraryTable
+import com.door43.translationstudio.ui.devtools.library.LibraryTableEditor
 import com.door43.translationstudio.ui.dialogs.ProgressHelper
-import com.door43.usecases.UpdateTargetLanguage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.unfoldingword.door43client.Door43Client
-import org.unfoldingword.door43client.models.TargetLanguage
 import org.unfoldingword.tools.logger.Logger
 import javax.inject.Inject
 
 @HiltViewModel
 class EditLibraryViewModel @Inject constructor(
-    private val application: Application
+    private val application: Application,
+    editors: Set<@JvmSuppressWildcards LibraryTableEditor>
 ) : AndroidViewModel(application) {
 
-    @Inject lateinit var library: Door43Client
-    @Inject lateinit var updateTargetLanguage: UpdateTargetLanguage
+    private val editors: Map<LibraryTable, LibraryTableEditor> = editors.associateBy { it.table }
 
-    val tables: List<LibraryTable> = LibraryTable.values().toList()
+    /** Tables that have a registered editor, in enum order */
+    val tables: List<LibraryTable> = LibraryTable.values().filter { it in this.editors }
 
     private val _progress = MutableLiveData<ProgressHelper.Progress?>()
     val progress: LiveData<ProgressHelper.Progress?> = _progress
@@ -44,9 +42,7 @@ class EditLibraryViewModel @Inject constructor(
         viewModelScope.launch {
             _progress.value = ProgressHelper.Progress(application.getString(R.string.please_wait))
             val rows: List<LibraryRow> = withContext(Dispatchers.IO) {
-                when (table) {
-                    LibraryTable.TARGET_LANGUAGES -> loadTargetLanguageRows()
-                }
+                editorFor(table).loadRows()
             }
             _rows.value = rows
             _progress.value = null
@@ -54,24 +50,21 @@ class EditLibraryViewModel @Inject constructor(
     }
 
     fun getFields(table: LibraryTable, rowId: String): List<EditableField> {
-        return when (table) {
-            LibraryTable.TARGET_LANGUAGES -> targetLanguageFields(rowId)
-        }
+        return editorFor(table).getFields(rowId)
     }
 
     fun save(table: LibraryTable, rowId: String, values: Map<String, String>) {
         viewModelScope.launch {
             _progress.value = ProgressHelper.Progress(application.getString(R.string.edit_library_saving))
-            _saveResult.value = withContext(Dispatchers.IO) {
+            val result: Boolean = withContext(Dispatchers.IO) {
                 try {
-                    when (table) {
-                        LibraryTable.TARGET_LANGUAGES -> saveTargetLanguage(rowId, values)
-                    }
+                    editorFor(table).save(rowId, values)
                 } catch (e: Exception) {
                     Logger.e(TAG, "Failed to save $table row $rowId", e)
                     false
                 }
             }
+            _saveResult.value = result
             _progress.value = null
         }
     }
@@ -80,51 +73,11 @@ class EditLibraryViewModel @Inject constructor(
         _saveResult.value = null
     }
 
-    private fun loadTargetLanguageRows(): List<LibraryRow> {
-        val languages: List<TargetLanguage> = library.index.targetLanguages ?: emptyList()
-        return languages.map { LibraryRow(it.slug, it.name, it.slug) }
-    }
-
-    private fun targetLanguageFields(slug: String): List<EditableField> {
-        val language = library.index.getTargetLanguage(slug) ?: return emptyList()
-        return listOf(
-            EditableField.Text("slug", R.string.field_slug, language.slug, readOnly = true),
-            EditableField.Text("name", R.string.field_name, language.name),
-            EditableField.Text("anglicized_name", R.string.field_anglicized_name, language.anglicizedName ?: ""),
-            EditableField.Choice(
-                "direction",
-                R.string.field_direction,
-                language.direction,
-                listOf(
-                    ChoiceOption("ltr", application.getString(R.string.direction_ltr)),
-                    ChoiceOption("rtl", application.getString(R.string.direction_rtl))
-                )
-            ),
-            EditableField.Choice(
-                "region",
-                R.string.field_region,
-                language.region ?: "",
-                REGIONS.map { ChoiceOption(it, it) }
-            ),
-            EditableField.Bool("is_gateway_language", R.string.field_is_gateway_language, language.isGatewayLanguage)
-        )
-    }
-
-    private fun saveTargetLanguage(slug: String, values: Map<String, String>): Boolean {
-        val current = library.index.getTargetLanguage(slug) ?: return false
-        val language = TargetLanguage(
-            slug,
-            values["name"] ?: current.name,
-            values["anglicized_name"] ?: current.anglicizedName,
-            values["direction"] ?: current.direction,
-            values["region"] ?: current.region,
-            values["is_gateway_language"]?.toBoolean() ?: current.isGatewayLanguage
-        )
-        return updateTargetLanguage.execute(language)
+    private fun editorFor(table: LibraryTable): LibraryTableEditor {
+        return editors[table] ?: throw IllegalStateException("No editor registered for $table")
     }
 
     companion object {
         private const val TAG = "EditLibraryViewModel"
-        private val REGIONS = listOf("Africa", "Americas", "Asia", "Europe", "Pacific")
     }
 }
