@@ -203,7 +203,7 @@ class DeveloperToolsActivity : BaseActivity(), DeveloperViewModel.ToolsListener 
     }
 
     override fun onEditLibrary() {
-        // TODO: open library editor
+        startActivity(Intent(this, EditLibraryActivity::class.java))
     }
 
     override fun onDeleteLibrary() {

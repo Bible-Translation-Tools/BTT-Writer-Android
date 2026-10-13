@@ -231,6 +231,7 @@
     <string name="verse_out_of_bounds">Choose a verse between <xliff:g example="1" id="number">%1$s</xliff:g> and <xliff:g example="100" id="number">%2$s</xliff:g></string>
     <string name="no_key_terms">There are no Words</string>
     <string name="title_activity_developer">Developer Tools</string>
+    <string name="title_activity_edit_library">Edit Library</string>
     <string name="action_settings">Settings</string>
     <!-- displays the application build or version code -->
     <string name="app_version_code" translatable="false">BUILD <xliff:g example="61" id="verion_code">%1$d</xliff:g></string>
