@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:minWidth="@dimen/dialog_min_width">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="@dimen/dialog_content_margin">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/edit_library_warning_message"
+            android:textSize="@dimen/body"
+            android:textColor="@color/dark_primary_text" />
+
+        <CheckBox
+            android:id="@+id/dont_show_again_check"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/dialog_content_margin"
+            android:textSize="@dimen/body"
+            android:textColor="@color/dark_primary_text"
+            android:text="@string/edit_library_dont_show_again" />
+    </LinearLayout>
+</ScrollView>

@@ -977,6 +977,9 @@ Do you want to enable SD card access?  If so then:
     <string name="check_system_resources_hint">Check for minimum system resources.</string>
     <string name="edit_library">Edit Library</string>
     <string name="edit_library_hint">Edit the library database.</string>
+    <string name="edit_library_warning_title">Use with caution</string>
+    <string name="edit_library_warning_message">Changes made here modify the library database directly and are applied to existing projects. Incorrect changes can damage the database or your projects. Proceed only if you know what you are doing.</string>
+    <string name="edit_library_dont_show_again">Do not show this again</string>
     <string name="edit_library_target_languages">Target Languages</string>
     <string name="edit_library_choose_table">Choose Table</string>
     <string name="edit_library_save">Save</string>
