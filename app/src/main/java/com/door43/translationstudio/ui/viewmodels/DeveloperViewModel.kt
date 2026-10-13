@@ -6,6 +6,9 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.door43.data.IDirectoryProvider
+import com.door43.data.IPreferenceRepository
+import com.door43.data.getPrivatePref
+import com.door43.data.setPrivatePref
 import com.door43.translationstudio.R
 import com.door43.translationstudio.ui.devtools.ToolItem
 import com.door43.translationstudio.ui.dialogs.ProgressHelper
@@ -26,6 +29,7 @@ class DeveloperViewModel @Inject constructor(
 
     @Inject lateinit var directoryProvider: IDirectoryProvider
     @Inject lateinit var library: Door43Client
+    @Inject lateinit var prefRepository: IPreferenceRepository
 
     private val _progress = MutableLiveData<ProgressHelper.Progress?>()
     val progress: LiveData<ProgressHelper.Progress?> = _progress
@@ -55,6 +59,14 @@ class DeveloperViewModel @Inject constructor(
             _tools.value = list
         }
         _progress.value = null
+    }
+
+    fun shouldShowEditLibraryWarning(): Boolean {
+        return !prefRepository.getPrivatePref(PREF_HIDE_EDIT_LIBRARY_WARNING, false)
+    }
+
+    fun setHideEditLibraryWarning(hide: Boolean) {
+        prefRepository.setPrivatePref(PREF_HIDE_EDIT_LIBRARY_WARNING, hide)
     }
 
     fun setListener(listener: ToolsListener) {
@@ -192,6 +204,7 @@ class DeveloperViewModel @Inject constructor(
     }
 
     companion object {
+        private const val PREF_HIDE_EDIT_LIBRARY_WARNING = "hide_edit_library_warning"
         const val KB: Long = 1024
         const val MB: Long = KB * KB
         const val GB: Long = MB * KB
