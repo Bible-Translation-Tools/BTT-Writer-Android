@@ -133,6 +133,13 @@ public interface Index {
     boolean addTargetLanguage(TargetLanguage language) throws Exception;
 
     /**
+     * Checks if the target language is a temporary (custom) language that has not been approved yet.
+     * @param targetLanguageSlug
+     * @return true if the language is stored in the temporary target language table
+     */
+    boolean isTempTargetLanguage(String targetLanguageSlug);
+
+    /**
      * Searches for a target language by name.
      * @param namequery
      * @return

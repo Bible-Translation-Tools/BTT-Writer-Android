@@ -235,6 +235,15 @@ class Library implements Index {
         return id > 0;
     }
 
+    public boolean isTempTargetLanguage(String targetLanguageSlug) {
+        Cursor cursor = db.rawQuery("select id from temp_target_language" +
+                " where slug=? and approved_target_language_slug is null limit 1",
+                new String[]{targetLanguageSlug});
+        boolean exists = cursor.moveToFirst();
+        cursor.close();
+        return exists;
+    }
+
     public boolean addTempTargetLanguage(TargetLanguage language) throws Exception {
         validateNotEmpty(language.slug);
         validateNotEmpty(language.name);
