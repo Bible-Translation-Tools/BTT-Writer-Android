@@ -974,6 +974,8 @@ Do you want to enable SD card access?  If so then:
     <string name="simulate_crash">Simulate crash</string>
     <string name="check_system_resources">Check system resources</string>
     <string name="check_system_resources_hint">Check for minimum system resources.</string>
+    <string name="edit_library">Edit Library</string>
+    <string name="edit_library_hint">Edit the library database.</string>
     <string name="delete_library">Delete Library</string>
     <string name="delete_library_hint">Deletes the entire library database so it can be rebuilt from scratch</string>
     <string name="recreate_keys">Regenerating keys</string>
