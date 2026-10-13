@@ -43,13 +43,12 @@ class EditLibraryViewModel @Inject constructor(
     fun loadRows(table: LibraryTable) {
         viewModelScope.launch {
             _progress.value = ProgressHelper.Progress(application.getString(R.string.please_wait))
-            _rows.value = withContext(Dispatchers.IO) {
+            val rows: List<LibraryRow> = withContext(Dispatchers.IO) {
                 when (table) {
-                    LibraryTable.TARGET_LANGUAGES -> library.index.targetLanguages.map {
-                        LibraryRow(it.slug, it.name, it.slug)
-                    }
+                    LibraryTable.TARGET_LANGUAGES -> loadTargetLanguageRows()
                 }
             }
+            _rows.value = rows
             _progress.value = null
         }
     }
@@ -79,6 +78,11 @@ class EditLibraryViewModel @Inject constructor(
 
     fun clearSaveResult() {
         _saveResult.value = null
+    }
+
+    private fun loadTargetLanguageRows(): List<LibraryRow> {
+        val languages: List<TargetLanguage> = library.index.targetLanguages ?: emptyList()
+        return languages.map { LibraryRow(it.slug, it.name, it.slug) }
     }
 
     private fun targetLanguageFields(slug: String): List<EditableField> {
