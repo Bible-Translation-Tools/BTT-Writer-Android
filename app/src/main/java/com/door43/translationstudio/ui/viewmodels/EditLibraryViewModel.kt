@@ -27,7 +27,7 @@ class EditLibraryViewModel @Inject constructor(
     private val editors: Map<LibraryTable, LibraryTableEditor> = editors.associateBy { it.table }
 
     /** Tables that have a registered editor, in enum order */
-    val tables: List<LibraryTable> = LibraryTable.values().filter { it in this.editors }
+    val tables: List<LibraryTable> = LibraryTable.entries.filter { it in this.editors }
 
     private val _progress = MutableLiveData<ProgressHelper.Progress?>()
     val progress: LiveData<ProgressHelper.Progress?> = _progress
