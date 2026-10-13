@@ -202,6 +202,10 @@ class DeveloperToolsActivity : BaseActivity(), DeveloperViewModel.ToolsListener 
             .show()
     }
 
+    override fun onEditLibrary() {
+        // TODO: open library editor
+    }
+
     override fun onDeleteLibrary() {
         val snack = Snackbar.make(
             findViewById(android.R.id.content),

@@ -49,6 +49,7 @@ class DeveloperViewModel @Inject constructor(
                 readLogItem(),
                 simulateCrashItem(),
                 checkSystemResourcesItem(),
+                editLibraryItem(),
                 deleteLibraryItem()
             )
             _tools.value = list
@@ -138,6 +139,16 @@ class DeveloperViewModel @Inject constructor(
         }
     }
 
+    private fun editLibraryItem(): ToolItem {
+        return ToolItem(
+            application.getString(R.string.edit_library),
+            application.getString(R.string.edit_library_hint),
+            R.drawable.ic_mode_edit_secondary_24dp
+        ) {
+            listener?.onEditLibrary()
+        }
+    }
+
     private fun deleteLibraryItem(): ToolItem {
         return ToolItem(
             application.getString(R.string.delete_library),
@@ -176,6 +187,7 @@ class DeveloperViewModel @Inject constructor(
     interface ToolsListener {
         fun onReadLog()
         fun onCheckSystemResources()
+        fun onEditLibrary()
         fun onDeleteLibrary()
     }
 
