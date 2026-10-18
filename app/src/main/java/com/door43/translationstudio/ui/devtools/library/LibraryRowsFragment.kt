@@ -48,7 +48,7 @@ class LibraryRowsFragment : BaseFragment(), Searchable {
             adapter.setRows(it)
             if (query.isNotEmpty()) adapter.getFilter().filter(query)
         }
-        viewModel.loadRows(table)
+        if (viewModel.rows.value == null) viewModel.loadRows(table)
 
         return binding.root
     }
