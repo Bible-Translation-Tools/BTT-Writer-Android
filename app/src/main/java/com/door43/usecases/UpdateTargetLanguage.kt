@@ -27,8 +27,12 @@ class UpdateTargetLanguage @Inject constructor(
         }
 
         for (translation in translator.targetTranslations) {
-            if (translation.targetLanguage?.slug == language.slug) {
+            if (translation.targetLanguage?.slug != language.slug) continue
+            try {
                 translation.changeTargetLanguage(language)
+            } catch (e: Exception) {
+                // keep going: one broken project must not block the others
+                Logger.e(TAG, "Failed to update project ${translation.id}", e)
             }
         }
         return true
