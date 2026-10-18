@@ -980,8 +980,6 @@ Do you want to enable SD card access?  If so then:
     <string name="edit_library_warning_title">Use with caution</string>
     <string name="edit_library_warning_message">Changes made here modify the library database directly and are applied to existing projects. Incorrect changes can damage the database or your projects. Proceed only if you know what you are doing.</string>
     <string name="edit_library_dont_show_again">Do not show this again</string>
-    <string name="edit_library_target_languages">Target Languages</string>
-    <string name="edit_library_choose_table">Choose Table</string>
     <string name="edit_library_save">Save</string>
     <string name="edit_library_saving">Saving changes</string>
     <string name="edit_library_confirm_save">The library will be updated and the app will restart. Continue?</string>
