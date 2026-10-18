@@ -2,7 +2,6 @@ package com.door43.translationstudio.ui.devtools
 
 import android.os.Bundle
 import android.view.Menu
-import android.view.MenuItem
 import androidx.activity.viewModels
 import androidx.appcompat.widget.SearchView
 import com.door43.translationstudio.R
@@ -83,13 +82,6 @@ class EditLibraryActivity : BaseActivity(),
             }
         })
         return true
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when (item.itemId) {
-            R.id.action_search -> true
-            else -> super.onOptionsItemSelected(item)
-        }
     }
 
     override fun onTableSelected(table: LibraryTable) {
