@@ -38,6 +38,13 @@ class EditTargetLanguageFragment : BaseFragment() {
             slugText.text = language.slug
             nameText.setText(language.name)
             anglicizedNameText.setText(language.anglicizedName)
+            for (region in viewModel.getRegions()) {
+                regionGroup.addView(RadioButton(requireContext()).apply {
+                    id = View.generateViewId()
+                    tag = region
+                    text = region
+                })
+            }
             directionGroup.check(
                 if (language.direction == "rtl") R.id.direction_rtl else R.id.direction_ltr
             )
