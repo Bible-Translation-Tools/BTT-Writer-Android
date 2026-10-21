@@ -32,6 +32,9 @@ class EditLibraryViewModel @Inject constructor(
 
     fun getTargetLanguage(slug: String): TargetLanguage? = library.index.getTargetLanguage(slug)
 
+    fun getRegions(): List<String> = library.index.targetLanguages
+        .mapNotNull { it.region }.filter { it.isNotBlank() }.distinct().sorted()
+
     fun save(language: TargetLanguage) {
         viewModelScope.launch {
             _progress.value = ProgressHelper.Progress(application.getString(R.string.edit_library_saving))
