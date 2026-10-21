@@ -90,7 +90,7 @@ class EditTargetLanguageFragment : BaseFragment() {
                 .setTitle(R.string.edit_library)
                 .setMessage(R.string.edit_library_save_success)
                 .setCancelable(false)
-                .setPositiveButton(R.string.dismiss) { _, _ -> App.restart() }
+                .setPositiveButton(R.string.dismiss, null)
                 .setOnDismissListener { App.restart() }
                 .show()
         } else {

@@ -6,9 +6,7 @@ import com.door43.translationstudio.core.Translator
 import io.mockk.MockKAnnotations
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
-import io.mockk.just
 import io.mockk.mockk
-import io.mockk.runs
 import io.mockk.verify
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -38,7 +36,7 @@ class UpdateTargetLanguageTest {
     private fun project(lang: TargetLanguage): TargetTranslation = mockk {
         every { id }.returns("${lang.slug}_mrk")
         every { targetLanguage }.returns(lang)
-        every { changeTargetLanguage(any()) }.just(runs)
+        every { changeTargetLanguage(any()) }.returns(true)
     }
 
     @Test
@@ -68,14 +66,16 @@ class UpdateTargetLanguageTest {
     }
 
     @Test
-    fun brokenProjectDoesNotBlockOthers() {
+    fun brokenProjectDoesNotBlockOthersButFailsResult() {
         every { index.isTempTargetLanguage("aa") }.returns(false)
         val broken = project(language)
         every { broken.changeTargetLanguage(any()) }.throws(RuntimeException("disk"))
+        val unsaved = project(language)
+        every { unsaved.changeTargetLanguage(any()) }.returns(false)
         val healthy = project(language)
-        every { translator.targetTranslations }.returns(arrayOf(broken, healthy))
+        every { translator.targetTranslations }.returns(arrayOf(broken, unsaved, healthy))
 
-        assertTrue(UpdateTargetLanguage(library, translator).execute(language))
+        assertFalse(UpdateTargetLanguage(library, translator).execute(language))
 
         verify { healthy.changeTargetLanguage(language) }
     }
