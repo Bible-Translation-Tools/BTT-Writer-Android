@@ -177,10 +177,11 @@ jobs:
       - name: Cleanup before emulator
         run: |
           echo "Removing not necessary packages to cleanup space for the emulator"
-          sudo apt-get remove --purge -yq \
+          # only packages present on the image, so a dropped package does not abort the step
+          sudo apt-get remove --purge -yq $(dpkg-query -W -f='${Package}\n' \
             "php*" "mongodb*" "mysql*" "postgresql*" \
             firefox google-chrome-stable microsoft-edge-stable powershell \
-            ruby kubectl google-cloud-cli azure-cli
+            ruby kubectl google-cloud-cli azure-cli 2>/dev/null)
           sudo apt-get autoremove -yq
           sudo apt-get clean
 
