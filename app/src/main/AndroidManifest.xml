@@ -89,6 +89,15 @@
                 android:value="com.door43.translationstudio.ui.SettingsActivity" />
         </activity>
         <activity
+            android:name=".ui.devtools.EditLibraryActivity"
+            android:label="@string/title_activity_edit_library"
+            android:configChanges="orientation|screenSize"
+            android:exported="false">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.door43.translationstudio.ui.devtools.DeveloperToolsActivity" />
+        </activity>
+        <activity
             android:name=".ui.home.HomeActivity"
             android:launchMode="singleTask"
             android:alwaysRetainTaskState="true"

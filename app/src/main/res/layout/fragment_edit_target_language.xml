@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background_color">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="@dimen/activity_horizontal_margin">
+
+            <TextView
+                style="@style/EditLibraryLabel"
+                android:text="@string/field_slug" />
+
+            <TextView
+                android:id="@+id/slug_text"
+                style="@style/EditLibraryValue" />
+
+            <TextView
+                style="@style/EditLibraryLabel"
+                android:text="@string/field_name" />
+
+            <EditText
+                android:id="@+id/name_text"
+                style="@style/EditLibraryValue"
+                android:inputType="text" />
+
+            <TextView
+                style="@style/EditLibraryLabel"
+                android:text="@string/field_anglicized_name" />
+
+            <EditText
+                android:id="@+id/anglicized_name_text"
+                style="@style/EditLibraryValue"
+                android:inputType="text" />
+
+            <TextView
+                style="@style/EditLibraryLabel"
+                android:text="@string/field_direction" />
+
+            <RadioGroup
+                android:id="@+id/direction_group"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <RadioButton
+                    android:id="@+id/direction_ltr"
+                    style="@style/EditLibraryValue"
+                    android:text="@string/direction_ltr" />
+
+                <RadioButton
+                    android:id="@+id/direction_rtl"
+                    style="@style/EditLibraryValue"
+                    android:text="@string/direction_rtl" />
+            </RadioGroup>
+
+            <TextView
+                style="@style/EditLibraryLabel"
+                android:text="@string/field_region" />
+
+            <RadioGroup
+                android:id="@+id/region_group"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <CheckBox
+                android:id="@+id/gateway_check"
+                style="@style/EditLibraryValue"
+                android:text="@string/field_is_gateway_language" />
+        </LinearLayout>
+    </ScrollView>
+
+    <Button
+        android:id="@+id/save_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/activity_horizontal_margin"
+        android:text="@string/edit_library_save" />
+</LinearLayout>

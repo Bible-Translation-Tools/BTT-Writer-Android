@@ -115,12 +115,13 @@ public class Manifest {
      * @param key
      * @param json
      */
-    public void put(String key, JSONObject json) {
+    public boolean put(String key, JSONObject json) {
         try {
             mManifest.put(key, json);
-            save();
+            return save();
         } catch (JSONException e) {
             e.printStackTrace();
+            return false;
         }
     }
 
@@ -192,11 +193,16 @@ public class Manifest {
     /**
      * Saves the manifest to the disk
      */
-    public void save() {
+    /**
+     * @return true if the manifest was written to disk
+     */
+    public boolean save() {
         try {
             FileUtilities.writeStringToFile(mManifestFile, mManifest.toString());
+            return true;
         } catch (IOException e) {
             e.printStackTrace();
+            return false;
         }
     }
 

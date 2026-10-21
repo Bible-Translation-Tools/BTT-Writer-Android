@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.view.WindowManager
 import android.widget.AdapterView
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
@@ -12,6 +13,7 @@ import com.door43.translationstudio.App
 import com.door43.translationstudio.App.Companion.udid
 import com.door43.translationstudio.R
 import com.door43.translationstudio.databinding.ActivityDeveloperToolsBinding
+import com.door43.translationstudio.databinding.DialogEditLibraryWarningBinding
 import com.door43.translationstudio.services.BackupService
 import com.door43.translationstudio.ui.BaseActivity
 import com.door43.translationstudio.ui.dialogs.ErrorLogDialog
@@ -200,6 +202,32 @@ class DeveloperToolsActivity : BaseActivity(), DeveloperViewModel.ToolsListener 
             .setCancelable(false)
             .setNegativeButton(R.string.label_close, null)
             .show()
+    }
+
+    override fun onEditLibrary() {
+        if (!viewModel.shouldShowEditLibraryWarning()) {
+            openEditLibrary()
+            return
+        }
+
+        val dialogBinding = DialogEditLibraryWarningBinding.inflate(layoutInflater)
+        AlertDialog.Builder(this, R.style.AppTheme_Dialog)
+            .setTitle(R.string.edit_library_warning_title)
+            .setView(dialogBinding.root)
+            .setPositiveButton(R.string.label_continue) { _, _ ->
+                viewModel.setHideEditLibraryWarning(dialogBinding.dontShowAgainCheck.isChecked)
+                openEditLibrary()
+            }
+            .setNegativeButton(R.string.title_cancel, null)
+            .show()
+            .window?.setLayout(
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.WRAP_CONTENT
+            )
+    }
+
+    private fun openEditLibrary() {
+        startActivity(Intent(this, EditLibraryActivity::class.java))
     }
 
     override fun onDeleteLibrary() {
