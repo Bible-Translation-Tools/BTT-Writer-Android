@@ -277,7 +277,7 @@ class PullTargetTranslationTest {
 
         every { Manifest.generate(any()) }.returns(mockk())
         val localManifest: Manifest = mockk {
-            every { save() }.just(runs)
+            every { save() }.returns(true)
         }
         every { TargetTranslation.mergeManifests(any(), any()) }.returns(localManifest)
 

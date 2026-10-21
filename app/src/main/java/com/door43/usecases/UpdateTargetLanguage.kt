@@ -26,16 +26,22 @@ class UpdateTargetLanguage @Inject constructor(
             return false
         }
 
+        var allSaved = true
         for (translation in translator.targetTranslations) {
             if (translation.targetLanguage?.slug != language.slug) continue
-            try {
+            // keep going: one broken project must not block the others
+            val saved = try {
                 translation.changeTargetLanguage(language)
             } catch (e: Exception) {
-                // keep going: one broken project must not block the others
                 Logger.e(TAG, "Failed to update project ${translation.id}", e)
+                false
+            }
+            if (!saved) {
+                Logger.e(TAG, "Failed to save manifest of project ${translation.id}")
+                allSaved = false
             }
         }
-        return true
+        return allSaved
     }
 
     companion object {
