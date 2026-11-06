@@ -1285,19 +1285,22 @@ public class TargetTranslation {
      * Changes the target language for this target translation
      * This does not change the name of the directory where the target translation is stored.
      * @param targetLanguage
+     * @return true if the manifest was saved
      */
-    public void changeTargetLanguage(TargetLanguage targetLanguage) {
+    public boolean changeTargetLanguage(TargetLanguage targetLanguage) {
         JSONObject languageJson = this.manifest.getJSONObject("target_language");
         try {
             languageJson.put("name", targetLanguage.name);
             languageJson.put("direction", targetLanguage.direction);
             languageJson.put("id", targetLanguage.slug);
-            this.manifest.put("target_language", languageJson);
+            boolean saved = this.manifest.put("target_language", languageJson);
             this.targetLanguageDirection = targetLanguage.direction;
             this.targetLanguageId = targetLanguage.slug;
             this.targetLanguageName = targetLanguage.name;
+            return saved;
         } catch (JSONException e) {
             e.printStackTrace();
+            return false;
         }
     }
 
