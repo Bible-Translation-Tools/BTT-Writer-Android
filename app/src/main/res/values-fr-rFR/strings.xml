@@ -284,7 +284,6 @@
     <string name="dismiss">Rejeter</string>
     <string name="done">Terminé</string>
     <string name="translate_first">Merci de fournir une traduction d\'abord</string>
-    <string name="too_many_paragraphs">There are too many paragraphs in the translation.\nSource translation: <xliff:g example="1" id="src">%1$d</xliff:g>\nTarget translation: <xliff:g example="1" id="target">%2$d</xliff:g></string>
     <string name="consecutive_verse_markers">Les marqueurs de verset sont placés trop près les uns des autres. Veuillez vérifier les positions du marqueur.</string>
     <string name="outoforder_verse_markers">Les marqueurs de verset ne sont pas en ordre</string>
     <string name="outofrange_verse_marker">Le marqueur de verset est hors de portée</string>
